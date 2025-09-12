@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<!-- saved from url=(0138)file:///private/var/folders/yk/n6122fxd40bgln_v_1n7lww00000gn/T/remote-file-preview-988AA5E9-646F-465F-BF3B-95F47E147D91/beatbox_v1_1.html -->
+<html lang="en" style="--step-size: 48px;"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Guitar Drone &amp; Beats – Mobile Ready</title>
+  <style>
+    /*
+      Basic colour palette for a dark, high-contrast interface. Custom properties allow
+      easy theming tweaks. Use CSS variables for sizing so elements can be scaled
+      dynamically (e.g. performance mode toggles the size of the step buttons).
+    */
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #f59e0b;
+      --step-size: 48px; /* default size, updated by performance mode */
+    }
+    * {
+      box-sizing: border-box;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .wrap {
+      max-width: 880px;
+      margin: 24px auto;
+      padding: 20px;
+      background: var(--panel);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    }
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      margin: 6px 0 18px;
+    }
+    /* Transport controls including play button, tempo display and metronome pulse */
+    .transport {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin: 18px 0 28px;
+    }
+    .btn {
+      cursor: pointer;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 22px;
+      font-weight: 700;
+      transition: .15s ease;
+    }
+    .btn-play {
+      background: #16a34a;
+      color: #fff;
+    }
+    .btn-play:hover {
+      filter: brightness(1.05);
+    }
+    .badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    /* Metronome pulse circle; opacity/pulsing updated via JS */
+    #pulse {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: .25;
+      pointer-events: none;
+    }
+    .section {
+      margin: 22px 0;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0;
+    }
+    .label {
+      width: 80px;
+      text-align: right;
+      font-weight: 600;
+    }
+    .grid {
+      background: var(--panel2);
+      padding: 10px;
+      border-radius: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    /* Step buttons: size controlled via CSS variable. They scale up in performance mode. */
+    .step {
+      width: var(--step-size);
+      height: var(--step-size);
+      border-radius: 10px;
+      border: 2px solid #374151;
+      background: #334155;
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s, background .12s, border-color .12s;
+    }
+    .step:hover {
+      border-color: #9ca3af;
+      background: #3b4658;
+    }
+    /* Active step colouring by drum type */
+    .step.active.kick {
+      background: #ef4444;
+      border-color: #fff;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
+    }
+    .step.active.snare {
+      background: #f59e0b;
+      border-color: #fff;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
+    }
+    .step.active.hihat {
+      background: #3b82f6;
+      border-color: #fff;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
+    }
+    /* Playing indicator for current step */
+    .step.playing {
+      outline: 4px solid var(--accent);
+      transform: scale(1.06);
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .preset .btn {
+      background: #4f46e5;
+      color: #fff;
+      border-radius: 8px;
+      padding: 8px 14px;
+    }
+    .preset .btn.alt {
+      background: #7c3aed;
+    }
+    .preset .btn.clear {
+      background: #4b5563;
+    }
+    /* Control panels use CSS grid to lay out evenly across screen widths */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+    }
+    .control {
+      background: var(--panel2);
+      padding: 14px;
+      border-radius: 10px;
+    }
+    .control label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .range, .select {
+      width: 100%;
+      background: #374151;
+      border: 1px solid #4b5563;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .muted {
+      color: var(--muted);
+      text-align: center;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    /* Orientation-specific layouts: expand width in landscape mode */
+    @media (orientation: landscape) {
+      .wrap { max-width: 1100px; }
+      .controls { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Simple Guitar Drone &amp; Beats</h1>
+
+    <!-- Transport controls: play/stop, tempo display, metronome pulse -->
+    <div class="transport">
+      <button id="playBtn" class="btn btn-play">Play</button>
+      <div class="badge"><span id="bpmLabel">90</span> BPM</div>
+      <div id="pulse" aria-hidden="true" style="transition: transform 0.08s, opacity 0.08s; transform: scale(1); opacity: 0.25;"></div>
+    </div>
+
+    <!-- Primary step sequencer and presets -->
+    <div class="section">
+      <div class="topbar">
+        <h2 style="margin:0;font-size:18px;">Beat Pattern</h2>
+        <div class="preset" style="display:flex; gap:8px;">
+          <button class="btn" id="presetSimple">Simple</button>
+          <button class="btn alt" id="presetBasic">Basic</button>
+          <button class="btn clear" id="presetClear">Clear</button>
+        </div>
+      </div>
+      <!-- Step numbers header; filled by JS -->
+      <div class="row" style="justify-content:center; color:#cbd5e1; font-weight:700; margin:8px 0;">
+        <div class="label"></div>
+        <div class="grid" id="numbers"><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">1</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">2</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">3</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">4</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">5</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">6</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">7</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">8</div></div>
+      </div>
+      <!-- Drum rows: Kick, Snare, Hi-Hat populated by JS -->
+      <div class="row"><div class="label">Kick</div><div class="grid" id="row-kick"><button class="step kick" aria-label="kick step 1"></button><button class="step kick" aria-label="kick step 2"></button><button class="step kick" aria-label="kick step 3"></button><button class="step kick" aria-label="kick step 4"></button><button class="step kick" aria-label="kick step 5"></button><button class="step kick" aria-label="kick step 6"></button><button class="step kick" aria-label="kick step 7"></button><button class="step kick" aria-label="kick step 8"></button></div></div>
+      <div class="row"><div class="label">Snare</div><div class="grid" id="row-snare"><button class="step snare" aria-label="snare step 1"></button><button class="step snare" aria-label="snare step 2"></button><button class="step snare" aria-label="snare step 3"></button><button class="step snare" aria-label="snare step 4"></button><button class="step snare" aria-label="snare step 5"></button><button class="step snare" aria-label="snare step 6"></button><button class="step snare" aria-label="snare step 7"></button><button class="step snare" aria-label="snare step 8"></button></div></div>
+      <div class="row"><div class="label">Hi-Hat</div><div class="grid" id="row-hihat"><button class="step hihat" aria-label="hihat step 1"></button><button class="step hihat" aria-label="hihat step 2"></button><button class="step hihat" aria-label="hihat step 3"></button><button class="step hihat" aria-label="hihat step 4"></button><button class="step hihat" aria-label="hihat step 5"></button><button class="step hihat" aria-label="hihat step 6"></button><button class="step hihat" aria-label="hihat step 7"></button><button class="step hihat" aria-label="hihat step 8"></button></div></div>
+    </div>
+
+    <!-- Parameter controls and advanced options -->
+    <div class="section controls">
+      <div class="control">
+        <label for="bpm">Tempo</label>
+        <input id="bpm" class="range" type="range" min="60" max="180" value="120">
+        <div class="muted" style="display:flex; justify-content:space-between;"><span>60</span><span>180</span></div>
+      </div>
+
+      <div class="control">
+        <label for="note">Drone Note</label>
+        <select id="note" class="select"><option value="E2">E2</option><option value="A2">A2</option><option value="D3">D3</option><option value="G3">G3</option><option value="B3">B3</option><option value="E4">E4</option><option value="C3">C3</option><option value="F3">F3</option><option value="F#3">F#3</option><option value="G#3">G#3</option><option value="A3">A3</option></select>
+      </div>
+
+      <div class="control">
+        <label>Volumes</label>
+        <div style="margin-top:6px;">Drone</div>
+        <input id="volDrone" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
+        <div style="margin-top:10px;">Drums</div>
+        <input id="volDrums" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
+      </div>
+
+      <!-- Tap tempo and performance mode inside advanced details for minimal UI -->
+      <div class="control">
+        <details id="advanced">
+          <summary style="cursor:pointer;font-weight:700; margin-bottom:4px;">Advanced</summary>
+          <div style="display:flex; flex-direction: column; gap:10px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input id="perfMode" type="checkbox">
+              Performance Mode
+            </label>
+            <div>
+              <label for="latency">Latency Offset (ms)</label>
+              <input id="latency" class="range" type="range" min="-120" max="120" value="0">
+              <div class="muted">Use for Bluetooth delay</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap: wrap;">
+              <button class="btn clear" id="tapTempo">Tap</button>
+              <button class="btn" id="saveLocal">Save</button>
+              <button class="btn alt" id="loadLocal">Load</button>
+              <button class="btn clear" id="shareUrl">Share</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="muted">Tap squares to create your beat</div>
+  </div>
+
+  <script>
+  (() => {
+    /*
+      State and configuration. We keep patterns in a plain object with arrays of booleans.
+      We reference DOM elements by ID for minimal overhead.
+    */
+    const steps = 8;
+    const drumTypes = ['kick', 'snare', 'hihat'];
+    const patterns = { kick: Array(steps).fill(false), snare: Array(steps).fill(false), hihat: Array(steps).fill(false) };
+    let currentStep = 0;
+
+    // Audio graph references; these persist between starts/stops to allow cleanup
+    let audioCtx = null;
+    let unlocked = false;
+    let master = { gain: null, comp: null };
+    let drone = { oscs: [], gains: [], filter: null, chorusDelay: null, chorusLFO: null, chorusDepth: null };
+    let drumGain = 0.6;
+    let droneGain = 0.6;
+
+    // Scheduler parameters for sample-accurate timing
+    let isPlaying = false;
+    let bpm = 120;
+    const lookahead = 25 / 1000;        // interval for scheduler loop (25ms)
+    const scheduleAhead = 0.10;         // schedule 100ms ahead
+    let nextNoteTime = 0;
+    let schedulerTimer = null;
+
+    // Note frequencies for the drone; extended guitar tuning palette
+    const noteFreq = {
+      'E2': 82.41, 'A2': 110.00, 'D3': 146.83, 'G3': 196.00,
+      'B3': 246.94, 'E4': 329.63, 'C3': 130.81, 'F3': 174.61,
+      'F#3': 185.00, 'G#3': 207.65, 'A3': 220.00
+    };
+    let droneNote = 'E2';
+
+    // DOM element shortcuts
+    const $ = (id) => document.getElementById(id);
+    const playBtn = $('playBtn');
+    const bpmSlider = $('bpm');
+    const bpmLabel = $('bpmLabel');
+    const noteSelect = $('note');
+    const volDrone = $('volDrone');
+    const volDrums = $('volDrums');
+    const perfMode = $('perfMode');
+    const latencySlider = $('latency');
+    const tapTempo = $('tapTempo');
+    const saveLocal = $('saveLocal');
+    const loadLocal = $('loadLocal');
+    const shareUrl = $('shareUrl');
+    const pulse = $('pulse');
+
+    // Containers for step buttons and numbers
+    const numbers = $('numbers');
+    const rows = { kick: $('row-kick'), snare: $('row-snare'), hihat: $('row-hihat') };
+    const buttons = { kick: [], snare: [], hihat: [] };
+
+    /*
+      Helper: ensure audio context exists. Sets up master compressor and gain once.
+    */
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AC();
+        master.comp = audioCtx.createDynamicsCompressor();
+        master.comp.threshold.setValueAtTime(-8, audioCtx.currentTime);
+        master.comp.knee.setValueAtTime(8, audioCtx.currentTime);
+        master.comp.ratio.setValueAtTime(8, audioCtx.currentTime);
+        master.comp.attack.setValueAtTime(0.003, audioCtx.currentTime);
+        master.comp.release.setValueAtTime(0.25, audioCtx.currentTime);
+        master.gain = audioCtx.createGain();
+        master.gain.gain.setValueAtTime(0.9, audioCtx.currentTime);
+        master.comp.connect(master.gain).connect(audioCtx.destination);
+      }
+      return audioCtx;
+    }
+
+    /*
+      Some iOS browsers require a user gesture to unlock audio playback. Play a silent buffer
+      once to allow subsequent audio. We call this on the first play.
+    */
+    function unlockiOSOnce() {
+      if (unlocked) return;
+      const ctx = ensureAudioContext();
+      const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.connect(ctx.destination);
+      try { src.start(0); } catch (e) {}
+      unlocked = true;
+    }
+
+    /*
+      Drum synthesis functions: Kick, Snare, Hi-Hat. Each schedules short noise bursts
+      and pitched oscillators with envelopes, filter shaping, and volume control. They
+      connect to the master compressor for consistent output levels.
+    */
+    function playKick(time) {
+      const ctx = audioCtx;
+      const osc = ctx.createOscillator();
+      const click = ctx.createOscillator();
+      const gKick = ctx.createGain();
+      const gClick = ctx.createGain();
+      const lp = ctx.createBiquadFilter();
+      const mix = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(65, time);
+      osc.frequency.exponentialRampToValueAtTime(20, time + 0.05);
+      osc.frequency.exponentialRampToValueAtTime(8, time + 0.35);
+
+      click.type = 'square';
+      click.frequency.setValueAtTime(1000, time);
+      click.frequency.exponentialRampToValueAtTime(120, time + 0.02);
+
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(180, time);
+      lp.Q.setValueAtTime(0.9, time);
+
+      gKick.gain.setValueAtTime(Math.max(drumGain * 0.8, 0.0001), time);
+      gKick.gain.exponentialRampToValueAtTime(0.001, time + 0.35);
+
+      gClick.gain.setValueAtTime(Math.max(drumGain * 0.22, 0.0001), time);
+      gClick.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
+
+      osc.connect(gKick).connect(lp).connect(mix);
+      click.connect(gClick).connect(mix);
+      mix.connect(master.comp);
+
+      osc.start(time); osc.stop(time + 0.4);
+      click.start(time); click.stop(time + 0.03);
+    }
+
+    function makeNoiseBuffer(lenSec) {
+      const ctx = audioCtx;
+      const frames = Math.max(1, Math.floor(ctx.sampleRate * lenSec));
+      const buf = ctx.createBuffer(1, frames, ctx.sampleRate);
+      const ch = buf.getChannelData(0);
+      for (let i = 0; i < frames; i++) {
+        ch[i] = (Math.random() * 2 - 1);
+      }
+      return buf;
+    }
+
+    function playSnare(time) {
+      const ctx = audioCtx;
+      const tone = ctx.createOscillator();
+      const gTone = ctx.createGain();
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = makeNoiseBuffer(0.15);
+      const bp = ctx.createBiquadFilter();
+      const gNoise = ctx.createGain();
+
+      tone.type = 'triangle';
+      tone.frequency.setValueAtTime(200, time);
+
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(800, time);
+      bp.Q.setValueAtTime(2, time);
+
+      gTone.gain.setValueAtTime(Math.max(drumGain * 0.3, 0.0001), time);
+      gTone.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+
+      gNoise.gain.setValueAtTime(Math.max(drumGain * 0.5, 0.0001), time);
+      gNoise.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+
+      tone.connect(gTone).connect(master.comp);
+      noise.connect(bp).connect(gNoise).connect(master.comp);
+
+      tone.start(time); tone.stop(time + 0.12);
+      noise.start(time); noise.stop(time + 0.16);
+    }
+
+    function playHiHat(time) {
+      const ctx = audioCtx;
+      const noise = ctx.createBufferSource();
+      noise.buffer = makeNoiseBuffer(0.09);
+      const hp = ctx.createBiquadFilter();
+      const bp = ctx.createBiquadFilter();
+      const g = ctx.createGain();
+
+      hp.type = 'highpass';
+      hp.frequency.setValueAtTime(8000, time);
+      hp.Q.setValueAtTime(0.7, time);
+
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(12000, time);
+      bp.Q.setValueAtTime(1.5, time);
+
+      g.gain.setValueAtTime(Math.max(drumGain * 0.4, 0.0001), time);
+      g.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+
+      noise.connect(hp).connect(bp).connect(g).connect(master.comp);
+      noise.start(time); noise.stop(time + 0.09);
+    }
+
+    /*
+      Trigger the appropriate drum voices for a given step index at a scheduled time.
+    */
+    function triggerDrumAtStep(stepIdx, when) {
+      if (patterns.kick[stepIdx]) playKick(when);
+      if (patterns.snare[stepIdx]) playSnare(when);
+      if (patterns.hihat[stepIdx]) playHiHat(when);
+    }
+
+    /*
+      Drone synthesis. Creates oscillators for fundamental, octave, fifth plus a chorus effect.
+      Gains are ramped depending on fadeIn flag. All connections go through a low-pass filter
+      and then to master compressor.
+    */
+    function startDrone(fadeIn) {
+      const ctx = audioCtx;
+      const base = noteFreq[droneNote];
+      // Low-pass filter
+      drone.filter = ctx.createBiquadFilter();
+      drone.filter.type = 'lowpass';
+      drone.filter.frequency.setValueAtTime(3000, ctx.currentTime);
+      drone.filter.Q.setValueAtTime(0.5, ctx.currentTime);
+      // Oscillators
+      const oFund = ctx.createOscillator(); oFund.type = 'sine'; oFund.frequency.setValueAtTime(base, ctx.currentTime);
+      const oOct = ctx.createOscillator(); oOct.type = 'sine'; oOct.frequency.setValueAtTime(base * 2, ctx.currentTime);
+      const oFifth = ctx.createOscillator(); oFifth.type = 'sine'; oFifth.frequency.setValueAtTime(base * 1.5, ctx.currentTime);
+      // Gains
+      const gFund = ctx.createGain();
+      const gOct = ctx.createGain();
+      const gFifth = ctx.createGain();
+      // Chorus: delay and LFO
+      const delay = ctx.createDelay(0.03);
+      delay.delayTime.setValueAtTime(0.010, ctx.currentTime);
+      const gChorus = ctx.createGain();
+      const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.setValueAtTime(0.5, ctx.currentTime);
+      const lfoDepth = ctx.createGain(); lfoDepth.gain.setValueAtTime(0.002, ctx.currentTime);
+      lfo.connect(lfoDepth).connect(delay.delayTime);
+      // Gains ramp based on fadeIn
+      if (fadeIn) {
+        gFund.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gFund.gain.linearRampToValueAtTime(droneGain * 0.7, ctx.currentTime + 0.3);
+        gOct.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gOct.gain.linearRampToValueAtTime(droneGain * 0.2, ctx.currentTime + 0.3);
+        gFifth.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gFifth.gain.linearRampToValueAtTime(droneGain * 0.15, ctx.currentTime + 0.3);
+        gChorus.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gChorus.gain.linearRampToValueAtTime(droneGain * 0.2, ctx.currentTime + 0.3);
+      } else {
+        gFund.gain.setValueAtTime(droneGain * 0.7, ctx.currentTime);
+        gOct.gain.setValueAtTime(droneGain * 0.2, ctx.currentTime);
+        gFifth.gain.setValueAtTime(droneGain * 0.15, ctx.currentTime);
+        gChorus.gain.setValueAtTime(droneGain * 0.2, ctx.currentTime);
+      }
+      // Routing: fundamental, octave, fifth to their gains then to filter; chorus path
+      oFund.connect(gFund).connect(drone.filter);
+      oOct.connect(gOct).connect(drone.filter);
+      oFifth.connect(gFifth).connect(drone.filter);
+      // Chorus effect: connect fundamental through delay to chorus gain then to filter
+      oFund.connect(delay).connect(gChorus).connect(drone.filter);
+      // Filter then goes to master compressor
+      drone.filter.connect(master.comp);
+      // Start oscillators and LFO
+      oFund.start(); oOct.start(); oFifth.start(); lfo.start();
+      drone.oscs = [oFund, oOct, oFifth];
+      drone.gains = [gFund, gOct, gFifth, gChorus];
+      drone.chorusDelay = delay;
+      drone.chorusLFO = lfo;
+      drone.chorusDepth = lfoDepth;
+    }
+
+    /*
+      Stop and clean up drone oscillators and nodes. Disconnect everything to avoid leaks.
+    */
+    function stopDrone() {
+      const stopNode = (n) => { try { n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} };
+      const disc = (n) => { try { n.disconnect(); } catch (e) {} };
+      drone.oscs.forEach(stopNode);
+      if (drone.chorusLFO) stopNode(drone.chorusLFO);
+      drone.gains.forEach(disc);
+      if (drone.filter) disc(drone.filter);
+      if (drone.chorusDelay) disc(drone.chorusDelay);
+      if (drone.chorusDepth) disc(drone.chorusDepth);
+      drone = { oscs: [], gains: [], filter: null, chorusDelay: null, chorusLFO: null, chorusDepth: null };
+    }
+
+    /*
+      Retune the drone by stopping and restarting with the new note. If playing, fade-ins are
+      skipped to avoid volume dips when switching notes.
+    */
+    function retuneDrone() {
+      if (!audioCtx) return;
+      stopDrone();
+      startDrone(false);
+    }
+
+    /*
+      Scheduler: schedule drum triggers ahead of current time. Uses global nextNoteTime and
+      advances by 8th note durations. Applies latency offset from user (ms) to allow
+      compensation for Bluetooth or other audio latency. Also triggers haptic feedback on
+      downbeats via vibrate API where supported.
+    */
+    function scheduleTime(t) {
+      // Convert latency slider value (ms) to seconds and add to base time
+      return t + (parseInt(latencySlider.value, 10) / 1000);
+    }
+    function scheduler() {
+      const ctx = audioCtx;
+      while (nextNoteTime < ctx.currentTime + scheduleAhead) {
+        const stepIdx = currentStep;
+        const when = scheduleTime(nextNoteTime);
+        triggerDrumAtStep(stepIdx, when);
+        // On downbeats (step 0), schedule haptics slightly early for perceptual sync
+        if (stepIdx === 0) {
+          const timeUntil = when - ctx.currentTime;
+          if (navigator.vibrate) {
+            setTimeout(() => { navigator.vibrate(10); }, Math.max(0, (timeUntil - 0.02) * 1000));
+          }
+        }
+        currentStep = (currentStep + 1) % steps;
+        nextNoteTime = nextStepTime(nextNoteTime);
+      }
+    }
+    function nextStepTime(curTime) {
+      const spb = 60 / bpm;         // seconds per quarter note
+      const stepDur = spb / 2;      // eighth-note grid
+      return curTime + stepDur;
+    }
+
+    /*
+      UI update loop: marks the current step as playing and animates the pulse indicator. Uses
+      requestAnimationFrame for smooth visual updates. Also updates numbers row and resets to
+      default when not playing.
+    */
+    let lastPulseStep = -1;
+    function uiTick() {
+      if (!isPlaying) {
+        render();
+        return;
+      }
+      // Estimate the current playing step by subtracting one from currentStep
+      const estStep = (currentStep - 1 + steps) % steps;
+      if (estStep !== lastPulseStep) {
+        lastPulseStep = estStep;
+        const isDownbeat = (estStep === 0);
+        pulse.style.transition = 'transform .08s, opacity .08s';
+        pulse.style.transform = 'scale(1.8)';
+        pulse.style.opacity = isDownbeat ? '1' : '.6';
+        setTimeout(() => {
+          pulse.style.transform = 'scale(1)';
+          pulse.style.opacity = '.25';
+        }, 90);
+      }
+      // Mark step as playing
+      drumTypes.forEach(type => {
+        buttons[type].forEach((btn, i) => {
+          btn.classList.toggle('playing', i === estStep);
+        });
+      });
+      requestAnimationFrame(uiTick);
+    }
+
+    /*
+      Render function updates button classes based on patterns and playing state. Should be
+      called whenever patterns change or playhead moves. Also updates performance mode size.
+    */
+    function render() {
+      drumTypes.forEach(type => {
+        for (let i = 0; i < steps; i++) {
+          const btn = buttons[type][i];
+          const active = !!patterns[type][i];
+          btn.classList.toggle('active', active);
+          btn.classList.toggle('kick', type === 'kick');
+          btn.classList.toggle('snare', type === 'snare');
+          btn.classList.toggle('hihat', type === 'hihat');
+          if (!isPlaying) btn.classList.remove('playing');
+        }
+      });
+    }
+
+    /*
+      Apply performance mode: toggles larger step sizes. Updates CSS variable and triggers
+      a render to update button sizes.
+    */
+    function applyPerfMode() {
+      const size = perfMode.checked ? 72 : 48; // pixels
+      document.documentElement.style.setProperty('--step-size', size + 'px');
+      render();
+    }
+
+    /*
+      Encode patterns into a compact string for save/share. Each track becomes a string
+      of 1s and 0s joined by hyphens.
+    */
+    function encodePattern(pat) {
+      return ['kick', 'snare', 'hihat'].map(t => pat[t].map(x => x ? '1' : '0').join('')).join('-');
+    }
+    /*
+      Decode patterns from encoded string. Returns an object with arrays or null if invalid.
+    */
+    function decodePattern(str) {
+      const parts = str.split('-');
+      if (parts.length !== 3) return null;
+      try {
+        return {
+          kick: parts[0].split('').map(c => c === '1'),
+          snare: parts[1].split('').map(c => c === '1'),
+          hihat: parts[2].split('').map(c => c === '1'),
+        };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    /*
+      Start the sequencer: ensure audio context is ready, unlock iOS audio, set up next
+      note time and start the scheduler. Also start the drone with fade-in. Starts UI
+      update loop. Changes play button text.
+    */
+    function start() {
+      unlockiOSOnce();
+      ensureAudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      isPlaying = true;
+      playBtn.textContent = 'Stop';
+      currentStep = 0;
+      nextNoteTime = audioCtx.currentTime + 0.05;
+      startDrone(true);
+      schedulerTimer = setInterval(() => { scheduler(); }, lookahead * 1000);
+      requestAnimationFrame(uiTick);
+    }
+
+    /*
+      Stop the sequencer: clear interval, stop drone, reset play button and state.
+    */
+    function stop() {
+      isPlaying = false;
+      playBtn.textContent = 'Play';
+      if (schedulerTimer) { clearInterval(schedulerTimer); schedulerTimer = null; }
+      stopDrone();
+      render();
+    }
+
+    /*
+      Initialise note select, step buttons and event handlers. Called once on page load.
+    */
+    function init() {
+      // Populate note select options
+      Object.keys(noteFreq).forEach(note => {
+        const option = document.createElement('option');
+        option.value = note;
+        option.textContent = note;
+        noteSelect.appendChild(option);
+      });
+      noteSelect.value = droneNote;
+      // Populate step numbers
+      for (let i = 0; i < steps; i++) {
+        const d = document.createElement('div');
+        d.textContent = i + 1;
+        d.style.width = 'var(--step-size)';
+        d.style.height = '24px';
+        d.style.display = 'flex';
+        d.style.alignItems = 'center';
+        d.style.justifyContent = 'center';
+        d.style.fontWeight = '700';
+        d.style.color = '#cbd5e1';
+        numbers.appendChild(d);
+      }
+      // Create step buttons for each drum type
+      drumTypes.forEach(type => {
+        for (let i = 0; i < steps; i++) {
+          const btn = document.createElement('button');
+          btn.className = 'step';
+          btn.setAttribute('aria-label', `${type} step ${i+1}`);
+          btn.addEventListener('click', () => {
+            patterns[type][i] = !patterns[type][i];
+            render();
+          });
+          rows[type].appendChild(btn);
+          buttons[type].push(btn);
+        }
+      });
+      render();
+    }
+
+    // --- Event listeners ---
+    playBtn.addEventListener('click', () => {
+      if (!isPlaying) start(); else stop();
+    });
+    bpmSlider.addEventListener('input', e => {
+      bpm = parseInt(e.target.value, 10);
+      bpmLabel.textContent = bpm;
+    });
+    noteSelect.addEventListener('change', e => {
+      droneNote = e.target.value;
+      if (isPlaying) retuneDrone();
+    });
+    volDrone.addEventListener('input', e => {
+      droneGain = parseFloat(e.target.value);
+      if (drone.gains.length) {
+        const [gFund, gOct, gFifth, gChorus] = drone.gains;
+        const t = audioCtx.currentTime;
+        if (gFund) gFund.gain.setValueAtTime(droneGain * 0.7, t);
+        if (gOct) gOct.gain.setValueAtTime(droneGain * 0.2, t);
+        if (gFifth) gFifth.gain.setValueAtTime(droneGain * 0.15, t);
+        if (gChorus) gChorus.gain.setValueAtTime(droneGain * 0.2, t);
+      }
+    });
+    volDrums.addEventListener('input', e => {
+      drumGain = parseFloat(e.target.value);
+    });
+    perfMode.addEventListener('change', applyPerfMode);
+    // Tap tempo: collects tap timestamps, calculates median spacing to set BPM
+    let taps = [];
+    tapTempo.addEventListener('click', () => {
+      const now = performance.now();
+      taps = taps.filter(t => now - t < 5000);
+      taps.push(now);
+      if (taps.length >= 3) {
+        const ds = [];
+        for (let i = 1; i < taps.length; i++) ds.push(taps[i] - taps[i-1]);
+        ds.sort((a, b) => a - b);
+        const mid = Math.floor(ds.length / 2);
+        const med = ds.length % 2 ? ds[mid] : ((ds[mid - 1] + ds[mid]) / 2);
+        const newBpm = Math.max(60, Math.min(180, Math.round(60000 / med)));
+        bpm = newBpm;
+        bpmSlider.value = newBpm;
+        bpmLabel.textContent = newBpm;
+      }
+    });
+    // Save to local storage
+    saveLocal.addEventListener('click', () => {
+      try {
+        localStorage.setItem('beatbox.pattern', encodePattern(patterns));
+      } catch (e) {
+        alert('Unable to save pattern');
+      }
+    });
+    // Load from local storage
+    loadLocal.addEventListener('click', () => {
+      try {
+        const s = localStorage.getItem('beatbox.pattern');
+        if (!s) return;
+        const p = decodePattern(s);
+        if (p) {
+          patterns.kick = p.kick;
+          patterns.snare = p.snare;
+          patterns.hihat = p.hihat;
+          render();
+        }
+      } catch (e) {
+        alert('Unable to load pattern');
+      }
+    });
+    // Share pattern by copying URL with hash encoding
+    shareUrl.addEventListener('click', () => {
+      const hash = encodeURIComponent(encodePattern(patterns));
+      const url = location.origin + location.pathname + '#p=' + hash;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          alert('Share link copied');
+        }, () => {
+          alert('Unable to copy link');
+        });
+      } else {
+        // Fallback: prompt to copy
+        window.prompt('Copy this link', url);
+      }
+    });
+    // Preset patterns
+    $('presetSimple').addEventListener('click', () => {
+      patterns.kick = [true,false,false,false,false,false,false,false];
+      patterns.snare = [false,false,false,false,true,false,false,false];
+      patterns.hihat = [true,false,true,false,true,false,true,false];
+      render();
+    });
+    $('presetBasic').addEventListener('click', () => {
+      patterns.kick = [true,false,false,false,true,false,false,false];
+      patterns.snare = [false,false,true,false,false,false,true,false];
+      patterns.hihat = [true,true,true,true,true,true,true,true];
+      render();
+    });
+    $('presetClear').addEventListener('click', () => {
+      patterns.kick.fill(false);
+      patterns.snare.fill(false);
+      patterns.hihat.fill(false);
+      render();
+    });
+    // Initialise step sequencer and UI on page load
+    init();
+    applyPerfMode();
+    // Restore pattern from URL hash or local storage on load
+    (function bootstrapFromHash() {
+      const m = location.hash.match(/#p=([^&]+)/);
+      if (m) {
+        const p = decodePattern(decodeURIComponent(m[1]));
+        if (p) {
+          patterns.kick = p.kick;
+          patterns.snare = p.snare;
+          patterns.hihat = p.hihat;
+          render();
+        }
+      }
+    })();
+    // Stop sequencer when page becomes hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && isPlaying) stop();
+    }, { passive: true });
+  })();
+  </script>
+
+</body></html>
