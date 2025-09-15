@@ -25,6 +25,8 @@ open "initial/Guitar Drone & Beats – Mobile Ready.html"
 - `Product_Requirements_Document.md` - Complete product vision and technical roadmap
 - `initial/Guitar Drone & Beats – Mobile Ready.html` - Current working MVP
 - `README.md` - Project overview and quick start guide
+- `.github/workflows/claude.yml` - Claude Code integration for GitHub issues/PRs
+- `.github/workflows/claude-code-review.yml` - Automated PR reviews by Claude
 
 ### Code Standards
 - The current MVP uses vanilla JavaScript for simplicity
@@ -42,6 +44,11 @@ open "initial/Guitar Drone & Beats – Mobile Ready.html"
 ### Development Commands
 Currently no build process - the MVP is a single HTML file.
 
+**Git & GitHub:**
+- `git push` - Push changes to GitHub
+- `git pull` - Pull latest changes
+- Tag `@claude` in GitHub issues/PRs for AI assistance
+
 When transitioning to the full platform:
 - `npm run lint` - Code linting
 - `npm run typecheck` - TypeScript validation  
@@ -54,6 +61,15 @@ When transitioning to the full platform:
 - Mobile touch interface is critical for user experience
 - Maintain low latency (<20ms) for real-time audio
 - Current version has no server dependencies - runs entirely in browser
+
+## GitHub Integration
+
+**Repository**: https://github.com/hashslingers/beat-box
+
+**GitHub Actions enabled:**
+- Automatic pull request reviews by Claude
+- Tag `@claude` in issues/comments for AI assistance
+- CI/CD workflows ready for future development phases
 
 ## Project Vision
 

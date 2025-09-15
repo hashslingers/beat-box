@@ -213,14 +213,14 @@
         </div>
       </div>
       <!-- Step numbers header; filled by JS -->
-      <div class="row" style="justify-content:center; color:#cbd5e1; font-weight:700; margin:8px 0;">
+      <div class="row" style="justify-content: flex-start; color:#cbd5e1; font-weight:700; margin:8px 0;">
         <div class="label"></div>
-        <div class="grid" id="numbers"><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">1</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">2</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">3</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">4</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">5</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">6</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">7</div><div style="width: var(--step-size); height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: rgb(203, 213, 225);">8</div></div>
+        <div class="grid" id="numbers"></div>
       </div>
       <!-- Drum rows: Kick, Snare, Hi-Hat populated by JS -->
-      <div class="row"><div class="label">Kick</div><div class="grid" id="row-kick"><button class="step kick" aria-label="kick step 1"></button><button class="step kick" aria-label="kick step 2"></button><button class="step kick" aria-label="kick step 3"></button><button class="step kick" aria-label="kick step 4"></button><button class="step kick" aria-label="kick step 5"></button><button class="step kick" aria-label="kick step 6"></button><button class="step kick" aria-label="kick step 7"></button><button class="step kick" aria-label="kick step 8"></button></div></div>
-      <div class="row"><div class="label">Snare</div><div class="grid" id="row-snare"><button class="step snare" aria-label="snare step 1"></button><button class="step snare" aria-label="snare step 2"></button><button class="step snare" aria-label="snare step 3"></button><button class="step snare" aria-label="snare step 4"></button><button class="step snare" aria-label="snare step 5"></button><button class="step snare" aria-label="snare step 6"></button><button class="step snare" aria-label="snare step 7"></button><button class="step snare" aria-label="snare step 8"></button></div></div>
-      <div class="row"><div class="label">Hi-Hat</div><div class="grid" id="row-hihat"><button class="step hihat" aria-label="hihat step 1"></button><button class="step hihat" aria-label="hihat step 2"></button><button class="step hihat" aria-label="hihat step 3"></button><button class="step hihat" aria-label="hihat step 4"></button><button class="step hihat" aria-label="hihat step 5"></button><button class="step hihat" aria-label="hihat step 6"></button><button class="step hihat" aria-label="hihat step 7"></button><button class="step hihat" aria-label="hihat step 8"></button></div></div>
+      <div class="row"><div class="label">Kick</div><div class="grid" id="row-kick"></div></div>
+      <div class="row"><div class="label">Snare</div><div class="grid" id="row-snare"></div></div>
+      <div class="row"><div class="label">Hi-Hat</div><div class="grid" id="row-hihat"></div></div>
     </div>
 
     <!-- Parameter controls and advanced options -->
@@ -233,7 +233,7 @@
 
       <div class="control">
         <label for="note">Drone Note</label>
-        <select id="note" class="select"><option value="E2">E2</option><option value="A2">A2</option><option value="D3">D3</option><option value="G3">G3</option><option value="B3">B3</option><option value="E4">E4</option><option value="C3">C3</option><option value="F3">F3</option><option value="F#3">F#3</option><option value="G#3">G#3</option><option value="A3">A3</option></select>
+        <select id="note" class="select"><option value="C2">C2</option><option value="G2">G2</option><option value="D2">D2</option><option value="A2">A2</option><option value="E2">E2</option><option value="A2">A2</option><option value="D3">D3</option><option value="G3">G3</option><option value="B3">B3</option><option value="E4">E4</option><option value="C3">C3</option><option value="F3">F3</option><option value="F#3">F#3</option><option value="G#3">G#3</option><option value="A3">A3</option></select>
       </div>
 
       <div class="control">
@@ -269,7 +269,7 @@
       </div>
     </div>
 
-    <div class="muted">Tap squares to create your beat</div>
+    <div class="muted">Tap squares to create your beat. Made with BeatBox Pro.</div>
   </div>
 
   <script>
