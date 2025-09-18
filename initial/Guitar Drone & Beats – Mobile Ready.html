@@ -68,8 +68,21 @@
     }
     .badge {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background .15s;
+    }
+    .badge:hover {
+      background: var(--panel2);
+    }
+    .badge:active {
+      background: var(--accent);
+      color: var(--bg);
     }
     /* Metronome pulse circle; opacity/pulsing updated via JS */
     #pulse {
@@ -159,6 +172,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 18px;
+      margin-bottom: 20px;
     }
     .control {
       background: var(--panel2);
@@ -195,10 +209,28 @@
   <div class="wrap">
     <h1>Simple Guitar Drone &amp; Beats</h1>
 
+    <!-- Volume and drone controls at top for easy mobile access -->
+    <div class="section controls">
+      <div class="control">
+        <label for="volDrone">Drone Volume</label>
+        <input id="volDrone" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
+      </div>
+
+      <div class="control">
+        <label for="volDrums">Drums Volume</label>
+        <input id="volDrums" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
+      </div>
+
+      <div class="control">
+        <label for="note">Drone Note</label>
+        <select id="note" class="select"><option value="C2">C2</option><option value="G2">G2</option><option value="D2">D2</option><option value="A2">A2</option><option value="E2">E2</option><option value="A2">A2</option><option value="D3">D3</option><option value="G3">G3</option><option value="B3">B3</option><option value="E4">E4</option><option value="C3">C3</option><option value="F3">F3</option><option value="F#3">F#3</option><option value="G#3">G#3</option><option value="A3">A3</option></select>
+      </div>
+    </div>
+
     <!-- Transport controls: play/stop, tempo display, metronome pulse -->
     <div class="transport">
       <button id="playBtn" class="btn btn-play">Play</button>
-      <div class="badge"><span id="bpmLabel">90</span> BPM</div>
+      <div id="bpmBadge" class="badge"><span id="bpmLabel">90</span> BPM</div>
       <div id="pulse" aria-hidden="true" style="transition: transform 0.08s, opacity 0.08s; transform: scale(1); opacity: 0.25;"></div>
     </div>
 
@@ -229,19 +261,6 @@
         <label for="bpm">Tempo</label>
         <input id="bpm" class="range" type="range" min="60" max="180" value="120">
         <div class="muted" style="display:flex; justify-content:space-between;"><span>60</span><span>180</span></div>
-      </div>
-
-      <div class="control">
-        <label for="note">Drone Note</label>
-        <select id="note" class="select"><option value="C2">C2</option><option value="G2">G2</option><option value="D2">D2</option><option value="A2">A2</option><option value="E2">E2</option><option value="A2">A2</option><option value="D3">D3</option><option value="G3">G3</option><option value="B3">B3</option><option value="E4">E4</option><option value="C3">C3</option><option value="F3">F3</option><option value="F#3">F#3</option><option value="G#3">G#3</option><option value="A3">A3</option></select>
-      </div>
-
-      <div class="control">
-        <label>Volumes</label>
-        <div style="margin-top:6px;">Drone</div>
-        <input id="volDrone" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
-        <div style="margin-top:10px;">Drums</div>
-        <input id="volDrums" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
       </div>
 
       <!-- Tap tempo and performance mode inside advanced details for minimal UI -->
@@ -781,7 +800,7 @@
     perfMode.addEventListener('change', applyPerfMode);
     // Tap tempo: collects tap timestamps, calculates median spacing to set BPM
     let taps = [];
-    tapTempo.addEventListener('click', () => {
+    const handleTapTempo = () => {
       const now = performance.now();
       taps = taps.filter(t => now - t < 5000);
       taps.push(now);
@@ -796,7 +815,12 @@
         bpmSlider.value = newBpm;
         bpmLabel.textContent = newBpm;
       }
-    });
+    };
+    tapTempo.addEventListener('click', handleTapTempo);
+
+    // Add tap tempo to BPM badge
+    const bpmBadge = $('bpmBadge');
+    bpmBadge.addEventListener('click', handleTapTempo);
     // Save to local storage
     saveLocal.addEventListener('click', () => {
       try {
