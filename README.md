@@ -59,6 +59,35 @@ Works in all modern browsers supporting Web Audio API:
 - Safari
 - Edge
 
+## GitHub Integration with Claude
+
+This repository has Claude AI integration enabled through GitHub Actions. You can get AI assistance directly in GitHub issues and pull requests.
+
+### How to Use Claude Integration
+
+**In GitHub Issues:**
+- Create a new issue or comment on existing ones
+- Type `@claude` followed by your request
+- Example: `@claude can you review the audio latency in the drum sequencer?`
+
+**In Pull Requests:**
+- Comment with `@claude` and your question
+- Example: `@claude please review this code for performance issues`
+- Claude automatically reviews new pull requests
+
+### What Claude Can Help With
+- Review code changes
+- Suggest improvements
+- Answer questions about the codebase
+- Help with debugging
+- Provide implementation guidance
+
+### Example Usage
+1. Go to https://github.com/hashslingers/beat-box/issues
+2. Click "New issue"
+3. Write: `@claude help me optimize the Web Audio API performance`
+4. Claude will respond with analysis and suggestions
+
 ## License
 
 [License information needed]

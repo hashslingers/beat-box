@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>BeatBox Pro - Design System & Mockups</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@200;300;400;500;600&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff, #666);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .subtitle {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 60px;
+      font-weight: 300;
+    }
+    
+    .concept {
+      margin-bottom: 120px;
+      padding: 60px;
+      border: 1px solid #1a1a1a;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .concept::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #333, transparent);
+      animation: scan 3s linear infinite;
+    }
+    
+    @keyframes scan {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    
+    .concept-header {
+      margin-bottom: 40px;
+    }
+    
+    .concept-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .concept-description {
+      font-size: 16px;
+      color: #888;
+      max-width: 600px;
+    }
+    
+    .mockup {
+      background: #000;
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+    }
+    
+    /* CONCEPT 1: Studio Rack */
+    .studio-rack {
+      background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+      border: 2px solid #2a2a2a;
+      box-shadow: 
+        inset 0 2px 4px rgba(0,0,0,0.5),
+        0 20px 40px rgba(0,0,0,0.8);
+    }
+    
+    .rack-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+      border-radius: 8px 8px 0 0;
+      border-bottom: 2px solid #000;
+      margin: -40px -40px 30px -40px;
+    }
+    
+    .rack-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #f0f0f0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .rack-screws {
+      display: flex;
+      gap: 200px;
+    }
+    
+    .screw {
+      width: 24px;
+      height: 24px;
+      background: radial-gradient(circle at 30% 30%, #666, #333);
+      border-radius: 50%;
+      box-shadow: 
+        inset -2px -2px 4px rgba(0,0,0,0.8),
+        inset 2px 2px 2px rgba(255,255,255,0.1);
+      position: relative;
+    }
+    
+    .screw::after {
+      content: '+';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(45deg);
+      font-size: 16px;
+      color: #1a1a1a;
+      font-weight: 100;
+    }
+    
+    .rack-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    
+    .knob-group {
+      text-align: center;
+    }
+    
+    .knob {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 12px;
+      background: radial-gradient(circle at 40% 40%, #4a4a4a, #1a1a1a);
+      border-radius: 50%;
+      box-shadow: 
+        0 8px 16px rgba(0,0,0,0.8),
+        inset 0 -2px 4px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    
+    .knob::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      width: 2px;
+      height: 20px;
+      background: #ff6b00;
+      transform: translateX(-50%);
+      box-shadow: 0 0 8px #ff6b00;
+    }
+    
+    .knob-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #888;
+      font-weight: 500;
+    }
+    
+    .rack-sequencer {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      padding: 20px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+    }
+    
+    .rack-step {
+      aspect-ratio: 1;
+      background: #1a1a1a;
+      border: 2px solid #2a2a2a;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .rack-step.active {
+      background: linear-gradient(135deg, #ff6b00, #ff8c00);
+      border-color: #ffaa00;
+      box-shadow: 
+        0 0 20px rgba(255, 107, 0, 0.5),
+        inset 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+    
+    /* CONCEPT 2: Guitar Pedal */
+    .pedal-design {
+      background: linear-gradient(180deg, #2c2416, #1a140d);
+      border: 3px solid #4a3820;
+      border-radius: 20px;
+      box-shadow: 
+        0 30px 60px rgba(0,0,0,0.8),
+        inset 0 2px 4px rgba(255,255,255,0.1);
+      position: relative;
+    }
+    
+    .pedal-design::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      background: linear-gradient(135deg, #6a5030, #3a2818);
+      border-radius: 20px;
+      z-index: -1;
+    }
+    
+    .pedal-brand {
+      text-align: center;
+      padding: 30px 20px 20px;
+    }
+    
+    .pedal-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #d4af37;
+      text-shadow: 
+        0 2px 4px rgba(0,0,0,0.8),
+        0 0 20px rgba(212, 175, 55, 0.3);
+      margin-bottom: 8px;
+    }
+    
+    .pedal-model {
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: #8a7040;
+      text-transform: uppercase;
+    }
+    
+    .pedal-display {
+      margin: 20px;
+      padding: 20px;
+      background: #000;
+      border: 2px solid #3a2818;
+      border-radius: 12px;
+      box-shadow: 
+        inset 0 4px 8px rgba(0,0,0,0.8),
+        0 1px 2px rgba(212, 175, 55, 0.2);
+    }
+    
+    .pedal-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+    }
+    
+    .pedal-pad {
+      aspect-ratio: 1;
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .pedal-pad.active {
+      background: linear-gradient(135deg, #d4af37, #f4d03f);
+      border-color: #fff;
+      box-shadow: 
+        0 0 15px rgba(212, 175, 55, 0.6),
+        inset 0 0 10px rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+    
+    .pedal-controls {
+      display: flex;
+      justify-content: space-around;
+      padding: 20px;
+    }
+    
+    .pedal-knob {
+      text-align: center;
+    }
+    
+    .pedal-knob-visual {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 8px;
+      background: 
+        radial-gradient(circle at 30% 30%, #d4af37, #8a7040),
+        conic-gradient(from 0deg, #3a2818, #6a5030, #3a2818);
+      border-radius: 50%;
+      box-shadow: 
+        0 4px 8px rgba(0,0,0,0.6),
+        inset 0 -2px 4px rgba(0,0,0,0.4);
+      position: relative;
+    }
+    
+    .pedal-knob-visual::after {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      width: 2px;
+      height: 15px;
+      background: #fff;
+      transform: translateX(-50%);
+      box-shadow: 0 0 4px rgba(255,255,255,0.6);
+    }
+    
+    .pedal-knob-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #8a7040;
+      font-weight: 600;
+    }
+    
+    .pedal-footswitch {
+      width: 80px;
+      height: 80px;
+      margin: 20px auto;
+      background: radial-gradient(circle at 40% 40%, #666, #333);
+      border: 4px solid #4a3820;
+      border-radius: 50%;
+      box-shadow: 
+        0 8px 16px rgba(0,0,0,0.8),
+        inset 0 -4px 8px rgba(0,0,0,0.6);
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .pedal-footswitch.active {
+      background: radial-gradient(circle at 40% 40%, #d4af37, #8a7040);
+      box-shadow: 
+        0 8px 16px rgba(0,0,0,0.8),
+        inset 0 -4px 8px rgba(0,0,0,0.6),
+        0 0 30px rgba(212, 175, 55, 0.6);
+    }
+    
+    /* CONCEPT 3: Minimalist Pro */
+    .minimal-pro {
+      background: #000;
+      border: 1px solid #111;
+      position: relative;
+    }
+    
+    .minimal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 40px 40px 20px;
+      border-bottom: 1px solid #111;
+    }
+    
+    .minimal-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 200;
+      letter-spacing: 0.3em;
+      color: #fff;
+    }
+    
+    .minimal-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #333;
+      letter-spacing: 0.1em;
+    }
+    
+    .minimal-tempo {
+      padding: 60px 40px;
+      text-align: center;
+      border-bottom: 1px solid #111;
+    }
+    
+    .minimal-bpm {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 120px;
+      font-weight: 100;
+      line-height: 1;
+      color: #fff;
+      position: relative;
+    }
+    
+    .minimal-bpm::after {
+      content: 'BPM';
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.3em;
+      color: #666;
+    }
+    
+    .minimal-grid-container {
+      padding: 40px;
+    }
+    
+    .minimal-track {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .minimal-track-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      color: #666;
+      text-align: right;
+    }
+    
+    .minimal-steps {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 1px;
+    }
+    
+    .minimal-step {
+      aspect-ratio: 2/1;
+      background: #000;
+      border: 1px solid #111;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+    }
+    
+    .minimal-step::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      opacity: 0;
+      transition: opacity 0.15s ease-out;
+    }
+    
+    .minimal-step:hover {
+      border-color: #333;
+    }
+    
+    .minimal-step.active::after {
+      opacity: 1;
+    }
+    
+    .minimal-step.playing {
+      transform: scaleY(1.2);
+      border-color: #fff;
+    }
+    
+    .minimal-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: #111;
+      padding: 1px;
+      margin: 40px;
+    }
+    
+    .minimal-control {
+      background: #000;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    
+    .minimal-control-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 100;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    
+    .minimal-control-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      color: #666;
+      text-transform: uppercase;
+    }
+    
+    /* Interactive Demo */
+    .demo-note {
+      padding: 20px;
+      background: #111;
+      border-radius: 8px;
+      margin-top: 40px;
+      border: 1px solid #222;
+    }
+    
+    .demo-note h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #888;
+    }
+    
+    .demo-note p {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .feature {
+      padding: 16px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      border: 1px solid #1a1a1a;
+    }
+    
+    .feature-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    
+    .feature-value {
+      font-size: 14px;
+      color: #fff;
+    }
+    
+    /* Signature Elements */
+    .signature-elements {
+      margin-top: 80px;
+      padding: 60px;
+      background: #050505;
+      border-radius: 20px;
+      border: 1px solid #111;
+    }
+    
+    .signature-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 40px;
+      color: #fff;
+    }
+    
+    .color-palette {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    
+    .color-swatch {
+      flex: 1;
+      height: 80px;
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      padding: 12px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .color-swatch:hover {
+      transform: translateY(-4px);
+    }
+    
+    .typography-samples {
+      display: grid;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    
+    .type-sample {
+      padding: 20px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      border: 1px solid #1a1a1a;
+    }
+    
+    .type-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    
+    .type-example {
+      font-size: 24px;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BeatBox Pro Design System</h1>
+    <p class="subtitle">Three signature aesthetics for your guitar instruction & practice tool ecosystem</p>
+    
+    <!-- CONCEPT 1: Studio Rack -->
+    <div class="concept">
+      <div class="concept-header">
+        <h2 class="concept-title">Concept 1: Studio Rack</h2>
+        <p class="concept-description">
+          Inspired by professional rack-mount studio equipment. Features realistic knobs, LED-style indicators, 
+          and brushed metal textures. Perfect for serious musicians who appreciate professional gear aesthetics.
+        </p>
+      </div>
+      
+      <div class="mockup studio-rack">
+        <div class="rack-header">
+          <div class="screw"></div>
+          <div class="rack-logo">BEATBOX PRO</div>
+          <div class="screw"></div>
+        </div>
+        
+        <div class="rack-controls">
+          <div class="knob-group">
+            <div class="knob"></div>
+            <div class="knob-label">Tempo</div>
+          </div>
+          <div class="knob-group">
+            <div class="knob"></div>
+            <div class="knob-label">Swing</div>
+          </div>
+          <div class="knob-group">
+            <div class="knob"></div>
+            <div class="knob-label">Volume</div>
+          </div>
+          <div class="knob-group">
+            <div class="knob"></div>
+            <div class="knob-label">Filter</div>
+          </div>
+        </div>
+        
+        <div class="rack-sequencer">
+          <div class="rack-step active"></div>
+          <div class="rack-step"></div>
+          <div class="rack-step"></div>
+          <div class="rack-step active"></div>
+          <div class="rack-step"></div>
+          <div class="rack-step active"></div>
+          <div class="rack-step"></div>
+          <div class="rack-step"></div>
+        </div>
+      </div>
+      
+      <div class="demo-note">
+        <h3>Design Features</h3>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-title">Visual Style</div>
+            <div class="feature-value">Brushed metal, LED indicators</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Typography</div>
+            <div class="feature-value">Space Grotesk, technical</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Interactions</div>
+            <div class="feature-value">Realistic knob rotation</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Best For</div>
+            <div class="feature-value">Pro musicians, studios</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CONCEPT 2: Guitar Pedal -->
+    <div class="concept">
+      <div class="concept-header">
+        <h2 class="concept-title">Concept 2: Boutique Pedal</h2>
+        <p class="concept-description">
+          Inspired by high-end guitar effects pedals. Features warm metallic tones, vintage-style knobs, 
+          and that satisfying stomp-box aesthetic. Perfect for guitarists who love boutique gear.
+        </p>
+      </div>
+      
+      <div class="mockup pedal-design">
+        <div class="pedal-brand">
+          <div class="pedal-logo">BEATBOX</div>
+          <div class="pedal-model">Rhythm Machine</div>
+        </div>
+        
+        <div class="pedal-display">
+          <div class="pedal-grid">
+            <div class="pedal-pad active"></div>
+            <div class="pedal-pad"></div>
+            <div class="pedal-pad active"></div>
+            <div class="pedal-pad"></div>
+            <div class="pedal-pad active"></div>
+            <div class="pedal-pad"></div>
+            <div class="pedal-pad active"></div>
+            <div class="pedal-pad"></div>
+          </div>
+        </div>
+        
+        <div class="pedal-controls">
+          <div class="pedal-knob">
+            <div class="pedal-knob-visual"></div>
+            <div class="pedal-knob-label">Rate</div>
+          </div>
+          <div class="pedal-knob">
+            <div class="pedal-knob-visual"></div>
+            <div class="pedal-knob-label">Depth</div>
+          </div>
+          <div class="pedal-knob">
+            <div class="pedal-knob-visual"></div>
+            <div class="pedal-knob-label">Mix</div>
+          </div>
+        </div>
+        
+        <div class="pedal-footswitch"></div>
+      </div>
+      
+      <div class="demo-note">
+        <h3>Design Features</h3>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-title">Visual Style</div>
+            <div class="feature-value">Vintage gold, warm metals</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Typography</div>
+            <div class="feature-value">Classic, hand-painted feel</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Interactions</div>
+            <div class="feature-value">Tactile, physical feedback</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Best For</div>
+            <div class="feature-value">Guitarists, pedal enthusiasts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CONCEPT 3: Minimalist Pro -->
+    <div class="concept">
+      <div class="concept-header">
+        <h2 class="concept-title">Concept 3: Minimalist Pro</h2>
+        <p class="concept-description">
+          Ultra-minimal design inspired by high-end audio software and modern architecture. 
+          Monochromatic palette, precise typography, and subtle animations. Perfect for the modern musician.
+        </p>
+      </div>
+      
+      <div class="mockup minimal-pro">
+        <div class="minimal-header">
+          <div class="minimal-logo">BEATBOX/PRO</div>
+          <div class="minimal-status">■ READY</div>
+        </div>
+        
+        <div class="minimal-tempo">
+          <div class="minimal-bpm">120</div>
+        </div>
+        
+        <div class="minimal-grid-container">
+          <div class="minimal-track">
+            <div class="minimal-track-label">KICK</div>
+            <div class="minimal-steps">
+              <div class="minimal-step active"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step active"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step active"></div>
+              <div class="minimal-step"></div>
+            </div>
+          </div>
+          <div class="minimal-track">
+            <div class="minimal-track-label">SNARE</div>
+            <div class="minimal-steps">
+              <div class="minimal-step"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step active"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step active"></div>
+              <div class="minimal-step"></div>
+            </div>
+          </div>
+          <div class="minimal-track">
+            <div class="minimal-track-label">HAT</div>
+            <div class="minimal-steps">
+              <div class="minimal-step active"></div>
+              <div class="minimal-step active"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step active"></div>
+              <div class="minimal-step active"></div>
+              <div class="minimal-step active"></div>
+              <div class="minimal-step"></div>
+              <div class="minimal-step active"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="minimal-controls">
+          <div class="minimal-control">
+            <div class="minimal-control-value">75%</div>
+            <div class="minimal-control-label">Swing</div>
+          </div>
+          <div class="minimal-control">
+            <div class="minimal-control-value">E2</div>
+            <div class="minimal-control-label">Drone</div>
+          </div>
+          <div class="minimal-control">
+            <div class="minimal-control-value">0.8</div>
+            <div class="minimal-control-label">Volume</div>
+          </div>
+          <div class="minimal-control">
+            <div class="minimal-control-value">16</div>
+            <div class="minimal-control-label">Steps</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="demo-note">
+        <h3>Design Features</h3>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-title">Visual Style</div>
+            <div class="feature-value">Pure monochrome, geometric</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Typography</div>
+            <div class="feature-value">JetBrains Mono, precise</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Interactions</div>
+            <div class="feature-value">Subtle, refined animations</div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Best For</div>
+            <div class="feature-value">Modern producers, minimalists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Signature Elements -->
+    <div class="signature-elements">
+      <h2 class="signature-title">Unified Design Language</h2>
+      
+      <h3 style="font-size: 16px; margin-bottom: 20px; color: #888;">Core Principles for Guitar Tool Ecosystem</h3>
+      
+      <div class="color-palette">
+        <div class="color-swatch" style="background: #000; color: #666;">#000000</div>
+        <div class="color-swatch" style="background: #0a0a0a; color: #666;">#0A0A0A</div>
+        <div class="color-swatch" style="background: #1a1a1a; color: #888;">#1A1A1A</div>
+        <div class="color-swatch" style="background: linear-gradient(135deg, #d4af37, #ff6b00); color: #000;">ACCENT</div>
+        <div class="color-swatch" style="background: #fff; color: #000;">#FFFFFF</div>
+      </div>
+      
+      <div class="typography-samples">
+        <div class="type-sample">
+          <div class="type-label">Headers - Space Grotesk</div>
+          <div class="type-example" style="font-family: 'Space Grotesk', sans-serif;">
+            Guitar Practice Tools
+          </div>
+        </div>
+        <div class="type-sample">
+          <div class="type-label">Data/Technical - JetBrains Mono</div>
+          <div class="type-example" style="font-family: 'JetBrains Mono', monospace; font-weight: 200;">
+            120 BPM / E2 / 4:4
+          </div>
+        </div>
+        <div class="type-sample">
+          <div class="type-label">Body Text - Inter</div>
+          <div class="type-example" style="font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 300;">
+            Professional tools for modern guitar education and practice
+          </div>
+        </div>
+      </div>
+      
+      <div class="demo-note" style="background: #050505; border-color: #111;">
+        <h3>Implementation Strategy</h3>
+        <p style="margin-bottom: 16px;">
+          Each concept can be adapted across your guitar instruction tools while maintaining consistency:
+        </p>
+        <ul style="color: #888; font-size: 14px; line-height: 2;">
+          <li><strong style="color: #fff;">Metronome:</strong> Use the tempo display style from chosen concept</li>
+          <li><strong style="color: #fff;">Tuner:</strong> Adapt the visual meters and indicators</li>
+          <li><strong style="color: #fff;">Chord Library:</strong> Apply grid layouts and interaction patterns</li>
+          <li><strong style="color: #fff;">Practice Logger:</strong> Use consistent data visualization</li>
+          <li><strong style="color: #fff;">Tab Player:</strong> Maintain typography and control styles</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Add interactive hover effects to mockups
+    document.querySelectorAll('.rack-step, .pedal-pad, .minimal-step').forEach(el => {
+      el.addEventListener('click', function() {
+        this.classList.toggle('active');
+      });
+    });
+    
+    // Animate knobs on hover
+    document.querySelectorAll('.knob, .pedal-knob-visual').forEach(knob => {
+      knob.addEventListener('mouseenter', function() {
+        this.style.transform = 'rotate(30deg)';
+      });
+      knob.addEventListener('mouseleave', function() {
+        this.style.transform = 'rotate(0deg)';
+      });
+    });
+    
+    // Footswitch interaction
+    document.querySelector('.pedal-footswitch')?.addEventListener('click', function() {
+      this.classList.toggle('active');
+    });
+  </script>
+</body>
+</html>
