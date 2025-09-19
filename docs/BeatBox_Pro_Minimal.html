@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>BEATBOX/PRO</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600&display=swap');
+    
+    :root {
+      --bg: #000000;
+      --surface: #050505;
+      --border: #111111;
+      --text: #ffffff;
+      --text-muted: #666666;
+      --text-dim: #333333;
+      --accent: #ffffff;
+      --grid-gap: 1px;
+      --transition: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      touch-action: manipulation;
+      scroll-behavior: auto;
+    }
+
+    .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 40px 40px 20px;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.6s var(--transition);
+    }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 200;
+      letter-spacing: 0.3em;
+      color: var(--text);
+    }
+
+    .status {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--text-dim);
+      display: inline-block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status.playing::before {
+      background: var(--text);
+      animation: pulse 0.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* Main Tempo Display with Volume Controls */
+    .tempo-section {
+      padding: 60px 40px;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.8s var(--transition) 0.1s both;
+      position: relative;
+    }
+    
+    .tempo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 60px;
+    }
+    
+    .vertical-volume {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .volume-value {
+      font-size: 14px;
+      font-weight: 200;
+      color: #999;
+      min-width: 35px;
+      text-align: center;
+    }
+    
+    .volume-track {
+      width: 3px;
+      height: 140px;
+      background: #111;
+      position: relative;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .volume-track:hover {
+      background: #1a1a1a;
+    }
+    
+    .volume-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(180deg, #fff, #666);
+      border-radius: 2px;
+      transition: height 0.3s;
+      pointer-events: none;
+    }
+    
+    .volume-thumb {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      pointer-events: none;
+    }
+    
+    .volume-track:hover .volume-thumb {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .volume-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      color: #999;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+    
+    .tempo-display {
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      padding: 20px;
+      border-radius: 4px;
+      user-select: none;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .tempo-display:hover {
+      background: rgba(255,255,255,0.02);
+    }
+    
+    .tempo-display:active {
+      transform: scale(0.98);
+    }
+
+    .tempo-value {
+      font-size: clamp(80px, 12vw, 140px);
+      font-weight: 100;
+      line-height: 1;
+      color: var(--text);
+      position: relative;
+      transition: transform 0.3s var(--transition);
+    }
+
+    .tempo-label {
+      margin-top: 16px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      color: #999;
+      text-transform: uppercase;
+    }
+    
+    .tap-hint {
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #999;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .tempo-display:hover .tap-hint {
+      opacity: 1;
+    }
+
+    /* Play/Stop Button */
+    .play-button {
+      position: absolute;
+      top: 50%;
+      right: 40px;
+      transform: translateY(-50%);
+      width: 60px;
+      height: 60px;
+      background: transparent;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s var(--transition);
+    }
+
+    .play-button:hover {
+      border-color: var(--text-muted);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .play-button.playing {
+      background: var(--text);
+    }
+
+    .play-icon {
+      width: 0;
+      height: 0;
+      border-left: 16px solid var(--text);
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      margin-left: 4px;
+      transition: all 0.3s var(--transition);
+    }
+
+    .play-button.playing .play-icon {
+      width: 16px;
+      height: 16px;
+      border: none;
+      background: var(--bg);
+      margin-left: 0;
+    }
+
+    /* Sequencer Grid */
+    .sequencer {
+      padding: 40px;
+      animation: fadeIn 0.8s var(--transition) 0.2s both;
+    }
+    
+    .step-numbers {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .number-spacer {
+      width: 80px;
+    }
+    
+    .numbers-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      padding: 12px;
+    }
+    
+    .step-number {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 500;
+      color: #666;
+      letter-spacing: 0.1em;
+      padding: 4px 0;
+    }
+
+    .track {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    
+    .track::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, transparent, #444, transparent);
+    }
+    
+    .track[data-track="kick"]::before {
+      background: linear-gradient(180deg, transparent, #ff4444, transparent);
+    }
+    
+    .track[data-track="snare"]::before {
+      background: linear-gradient(180deg, transparent, #ffaa00, transparent);
+    }
+    
+    .track[data-track="hihat"]::before {
+      background: linear-gradient(180deg, transparent, #00aaff, transparent);
+    }
+
+    .track-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: #999;
+      text-align: right;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .track-label:hover {
+      color: var(--text);
+    }
+
+    .track-label.muted {
+      color: var(--text-dim);
+      text-decoration: line-through;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      padding: 12px;
+      background: #0f0f0f;
+      border: 1px solid #1a1a1a;
+      border-radius: 4px;
+    }
+
+    .step {
+      aspect-ratio: 2/1;
+      background: #1a1a1a;
+      border: 2px solid #333;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease-out;
+      overflow: hidden;
+      box-shadow: 
+        inset 0 2px 4px rgba(0,0,0,0.8),
+        0 1px 3px rgba(0,0,0,0.4);
+      border-radius: 2px;
+    }
+
+    .step::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--text);
+      transform: scale(0);
+      transition: transform 0.3s var(--transition);
+    }
+
+    .step:hover {
+      border-color: #666;
+      background: #2a2a2a;
+      transform: translateY(-2px);
+      box-shadow: 
+        inset 0 2px 4px rgba(0,0,0,0.8),
+        0 4px 12px rgba(0,0,0,0.6);
+    }
+
+    .step.active::before {
+      transform: scale(1);
+    }
+
+    .step.playing {
+      transform: scaleY(1.15);
+      border-color: var(--text);
+      z-index: 1;
+      box-shadow: 
+        inset 0 1px 2px rgba(0,0,0,0.5),
+        0 0 15px rgba(255,255,255,0.3),
+        0 0 5px rgba(255,255,255,0.5);
+    }
+
+    .step.playing.active::before {
+      animation: flash 0.2s ease-out;
+    }
+
+    @keyframes flash {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+
+    /* Control Grid */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      padding: 1px;
+      margin: 40px;
+      animation: fadeIn 0.8s var(--transition) 0.3s both;
+    }
+
+    .control {
+      background: var(--bg);
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .control:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .control-value {
+      font-size: 32px;
+      font-weight: 100;
+      color: var(--text);
+      margin-bottom: 8px;
+      transition: transform 0.2s;
+    }
+
+    .control:hover .control-value {
+      transform: translateY(-2px);
+    }
+
+    .control-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      color: #999;
+      text-transform: uppercase;
+    }
+
+    /* Pattern Presets */
+    .presets {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      padding: 1px;
+      margin: 0 40px 40px;
+      animation: fadeIn 0.8s var(--transition) 0.4s both;
+    }
+
+    .preset-btn {
+      background: var(--bg);
+      border: none;
+      color: #999;
+      padding: 20px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s var(--transition);
+    }
+
+    .preset-btn:hover {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    /* Advanced Section */
+    .advanced {
+      margin-top: auto;
+      padding: 40px;
+      border-top: 1px solid var(--border);
+      animation: fadeIn 0.8s var(--transition) 0.5s both;
+    }
+
+    .advanced-toggle {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #999;
+      cursor: pointer;
+      display: inline-block;
+      transition: color 0.3s;
+    }
+
+    .advanced-toggle:hover {
+      color: var(--text-muted);
+    }
+
+    .advanced-toggle.open {
+      color: var(--text-muted);
+    }
+
+    .advanced-content {
+      display: none;
+      margin-top: 30px;
+      gap: 30px;
+    }
+
+    .advanced-content.show {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      animation: fadeIn 0.4s var(--transition);
+    }
+
+    /* Sliders */
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .slider-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: #999;
+      text-transform: uppercase;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      outline: none;
+      transition: background 0.3s;
+    }
+
+    .slider:hover {
+      background: var(--text-dim);
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 10px;
+      height: 10px;
+      background: var(--text);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.5);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 10px;
+      height: 10px;
+      background: var(--text);
+      cursor: pointer;
+      border: none;
+      transition: transform 0.2s;
+    }
+
+    .slider::-moz-range-thumb:hover {
+      transform: scale(1.5);
+    }
+
+    .slider-value {
+      font-size: 14px;
+      font-weight: 200;
+      color: var(--text);
+      margin-top: 4px;
+    }
+
+    /* Action Buttons */
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 12px 20px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: #999;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s var(--transition);
+    }
+
+    .action-btn:hover {
+      color: var(--text);
+      border-color: var(--text-muted);
+      background: rgba(255,255,255,0.02);
+    }
+
+    /* Select */
+    .select {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 200;
+      cursor: pointer;
+      transition: border-color 0.3s;
+      outline: none;
+    }
+
+    .select:hover {
+      border-color: var(--text-dim);
+    }
+
+    .select:focus {
+      border-color: var(--text-muted);
+    }
+
+    /* Performance Mode */
+    body.performance .step {
+      border-width: 2px;
+    }
+    
+    body.performance .steps {
+      gap: 3px;
+    }
+    
+    body.performance .step.playing {
+      box-shadow: 0 0 20px rgba(255,255,255,0.3);
+      transform: scaleY(1.2);
+    }
+
+    body.performance .tempo-value {
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { text-shadow: none; }
+      50% { text-shadow: 0 0 30px rgba(255,255,255,0.3); }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Mobile Optimization */
+    @media (max-width: 768px) {
+      .header {
+        padding: 20px;
+      }
+      
+      .tempo-section {
+        padding: 40px 20px;
+      }
+      
+      .tempo-container {
+        gap: 30px;
+      }
+      
+      .vertical-volume {
+        gap: 8px;
+      }
+      
+      .volume-track {
+        height: 100px;
+      }
+      
+      .tempo-value {
+        font-size: 70px;
+      }
+      
+      .play-button {
+        position: static;
+        transform: none;
+        margin: 30px auto 0;
+      }
+      
+      .sequencer {
+        padding: 20px;
+      }
+      
+      .track {
+        grid-template-columns: 60px 1fr;
+        gap: 15px;
+      }
+      
+      /* Enhanced step touch targets for mobile */
+      .step {
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 3px;
+        border-width: 1px;
+      }
+      
+      /* Improved grid spacing for easier touch */
+      .steps {
+        gap: 8px;
+        padding: 16px;
+        border-radius: 6px;
+      }
+      
+      /* Better preset button spacing */
+      .preset-btn {
+        padding: 24px 16px;
+        font-size: 10px;
+        letter-spacing: 0.05em;
+      }
+      
+      /* Optimized volume controls for touch */
+      .volume-track {
+        width: 6px;
+        height: 80px;
+      }
+      
+      .volume-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+      }
+      
+      .controls {
+        margin: 20px;
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .presets {
+        margin: 0 20px 20px;
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .advanced {
+        padding: 20px;
+      }
+      
+      .advanced-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Landscape Mobile - Optimized for Touch */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .tempo-section {
+        padding: 15px;
+      }
+      
+      .tempo-container {
+        gap: 20px;
+      }
+      
+      .tempo-value {
+        font-size: 50px;
+      }
+      
+      .volume-track {
+        height: 60px;
+      }
+      
+      .sequencer {
+        padding: 10px;
+      }
+      
+      .track {
+        margin-bottom: 12px;
+      }
+      
+      .steps {
+        gap: 6px;
+        padding: 12px;
+      }
+      
+      .step {
+        min-height: 36px;
+      }
+      
+      .presets {
+        margin: 0 10px 10px;
+      }
+      
+      .preset-btn {
+        padding: 16px 12px;
+        font-size: 9px;
+      }
+    }
+
+    /* Enhanced Touch Feedback & Performance */
+    @media (hover: none) {
+      /* Reduce animations for better mobile performance */
+      * {
+        transition-duration: 0.1s !important;
+      }
+      
+      .step {
+        /* Better touch targets */
+        padding: 2px;
+        transition: all 0.05s ease-out;
+      }
+      
+      .step:active {
+        transform: scale(0.92);
+        background: #444;
+        border-color: #777;
+      }
+      
+      .step.playing {
+        /* Optimized playing animation for mobile */
+        transform: scaleY(1.1);
+        box-shadow: 0 0 8px rgba(255,255,255,0.4);
+      }
+      
+      .preset-btn:active,
+      .action-btn:active {
+        transform: scale(0.96);
+        background: rgba(255,255,255,0.1);
+      }
+      
+      .tempo-display:active {
+        transform: scale(0.98);
+      }
+      
+      .volume-track:active {
+        background: #333;
+      }
+      
+      /* Disable complex animations on mobile for performance */
+      .tempo-value {
+        animation: none !important;
+      }
+      
+      /* Simpler glow effect for mobile */
+      body.performance .step.playing {
+        box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        transform: scaleY(1.15);
+      }
+    }
+
+    /* Loading State */
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeOut 0.5s 0.5s forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
+
+    .loading-text {
+      font-size: 12px;
+      font-weight: 200;
+      letter-spacing: 0.3em;
+      color: var(--text-muted);
+      animation: pulse 1s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading">
+    <div class="loading-text">INITIALIZING</div>
+  </div>
+
+  <div class="container">
+    <header class="header">
+      <div class="logo">BEATBOX/PRO</div>
+      <div class="status" id="status">READY</div>
+    </header>
+
+    <section class="tempo-section">
+      <div class="tempo-container">
+        <div class="vertical-volume">
+          <div class="volume-value" id="droneVolumeValue">60%</div>
+          <div class="volume-track" id="droneVolumeTrack">
+            <div class="volume-fill" id="droneVolumeFill" style="height: 60%"></div>
+            <div class="volume-thumb" id="droneVolumeThumb" style="bottom: 60%"></div>
+          </div>
+          <div class="volume-label">DRONE</div>
+        </div>
+        
+        <div class="tempo-display" id="tempoDisplay" tabindex="-1">
+          <div class="tempo-value" id="tempoValue">120</div>
+          <div class="tempo-label">BPM</div>
+          <div class="tap-hint">TAP TO SET TEMPO</div>
+        </div>
+        
+        <div class="vertical-volume">
+          <div class="volume-value" id="drumVolumeValue">70%</div>
+          <div class="volume-track" id="drumVolumeTrack">
+            <div class="volume-fill" id="drumVolumeFill" style="height: 70%"></div>
+            <div class="volume-thumb" id="drumVolumeThumb" style="bottom: 70%"></div>
+          </div>
+          <div class="volume-label">DRUMS</div>
+        </div>
+      </div>
+      
+      <button class="play-button" id="playBtn">
+        <span class="play-icon"></span>
+      </button>
+    </section>
+
+    <section class="presets">
+      <button class="preset-btn" id="preset1">PATTERN 01</button>
+      <button class="preset-btn" id="preset2">PATTERN 02</button>
+      <button class="preset-btn" id="preset3">PATTERN 03</button>
+      <button class="preset-btn" id="stepToggle">4/8 STEPS</button>
+    </section>
+
+    <section class="sequencer">
+      <div class="step-numbers">
+        <div class="number-spacer"></div>
+        <div class="numbers-grid" id="stepNumbers"></div>
+      </div>
+      
+      <div class="track" data-track="kick">
+        <div class="track-label" data-track="kick">KICK</div>
+        <div class="steps" id="kick-steps"></div>
+      </div>
+      
+      <div class="track" data-track="snare">
+        <div class="track-label" data-track="snare">SNARE</div>
+        <div class="steps" id="snare-steps"></div>
+      </div>
+      
+      <div class="track" data-track="hihat">
+        <div class="track-label" data-track="hihat">HI-HAT</div>
+        <div class="steps" id="hihat-steps"></div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="control" id="swingControl">
+        <div class="control-value" id="swingValue">0%</div>
+        <div class="control-label">SWING</div>
+      </div>
+      
+      <div class="control" id="droneControl">
+        <div class="control-value" id="droneValue">E2</div>
+        <div class="control-label">DRONE</div>
+      </div>
+      
+      <div class="control" id="droneVolControl">
+        <div class="control-value" id="droneVolValue">60%</div>
+        <div class="control-label">DRONE VOL</div>
+      </div>
+      
+      <div class="control" id="drumVolControl">
+        <div class="control-value" id="drumVolValue">70%</div>
+        <div class="control-label">DRUM VOL</div>
+      </div>
+    </section>
+
+    <section class="advanced">
+      <div class="advanced-toggle" id="advancedToggle">ADVANCED OPTIONS</div>
+      
+      <div class="advanced-content" id="advancedContent">
+        <div class="slider-group">
+          <label class="slider-label">TEMPO</label>
+          <input type="range" class="slider" id="tempoSlider" min="60" max="180" value="120">
+          <div class="slider-value" id="tempoSliderValue">120 BPM</div>
+        </div>
+        
+        <div class="slider-group">
+          <label class="slider-label">SWING AMOUNT</label>
+          <input type="range" class="slider" id="swingSlider" min="0" max="75" value="0">
+          <div class="slider-value" id="swingSliderValue">0%</div>
+        </div>
+        
+        <div class="slider-group">
+          <label class="slider-label">DRONE NOTE</label>
+          <select class="select" id="droneSelect">
+            <option value="C2">C2 - 65.41 Hz</option>
+            <option value="D2">D2 - 73.42 Hz</option>
+            <option value="E2" selected>E2 - 82.41 Hz</option>
+            <option value="F2">F2 - 87.31 Hz</option>
+            <option value="F#2">F#2 - 92.50 Hz</option>
+            <option value="G2">G2 - 98.00 Hz</option>
+            <option value="A2">A2 - 110.00 Hz</option>
+            <option value="B2">B2 - 123.47 Hz</option>
+            <option value="C3">C3 - 130.81 Hz</option>
+            <option value="D3">D3 - 146.83 Hz</option>
+            <option value="E3">E3 - 164.81 Hz</option>
+          </select>
+        </div>
+        
+        <div class="slider-group">
+          <label class="slider-label">DRONE VOLUME</label>
+          <input type="range" class="slider" id="droneVolSlider" min="0" max="100" value="60">
+          <div class="slider-value" id="droneVolSliderValue">60%</div>
+        </div>
+        
+        <div class="slider-group">
+          <label class="slider-label">DRUM VOLUME</label>
+          <input type="range" class="slider" id="drumVolSlider" min="0" max="100" value="70">
+          <div class="slider-value" id="drumVolSliderValue">70%</div>
+        </div>
+        
+        <div class="slider-group">
+          <label class="slider-label">LATENCY COMPENSATION</label>
+          <input type="range" class="slider" id="latencySlider" min="-100" max="100" value="0">
+          <div class="slider-value" id="latencyValue">0ms</div>
+        </div>
+        
+        <div>
+          <label class="slider-label" style="display: block; margin-bottom: 12px;">PERFORMANCE MODE</label>
+          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <input type="checkbox" id="perfMode" style="width: 16px; height: 16px;">
+            <span style="font-size: 11px; color: var(--text-muted);">Enhanced Visuals</span>
+          </label>
+        </div>
+        
+        <div class="actions">
+          <button class="action-btn" id="tapTempo">TAP TEMPO</button>
+          <button class="action-btn" id="savePattern">SAVE</button>
+          <button class="action-btn" id="loadPattern">LOAD</button>
+          <button class="action-btn" id="sharePattern">SHARE</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+    
+    // Audio Context and State
+    let audioCtx = null;
+    let isPlaying = false;
+    let currentStep = 0;
+    let bpm = 120;
+    let swing = 0;
+    let nextNoteTime = 0;
+    let schedulerTimer = null;
+    let unlocked = false;
+    
+    // Pattern State
+    let STEPS = 8;
+    const patterns = {
+      kick: new Array(8).fill(false),
+      snare: new Array(8).fill(false),
+      hihat: new Array(8).fill(false)
+    };
+    
+    const muted = {
+      kick: false,
+      snare: false,
+      hihat: false
+    };
+    
+    // Audio Nodes
+    let masterGain = null;
+    let compressor = null;
+    let droneNodes = [];
+    let droneGain = 0.6;
+    let drumGain = 0.7;
+    let droneNote = 'E2';
+    
+    // Note Frequencies
+    const noteFreqs = {
+      'C2': 65.41, 'D2': 73.42, 'E2': 82.41, 'F2': 87.31, 'F#2': 92.50,
+      'G2': 98.00, 'A2': 110.00, 'B2': 123.47,
+      'C3': 130.81, 'D3': 146.83, 'E3': 164.81
+    };
+    
+    // DOM Elements
+    const $ = id => document.getElementById(id);
+    const playBtn = $('playBtn');
+    const status = $('status');
+    const tempoValue = $('tempoValue');
+    const tempoSlider = $('tempoSlider');
+    const tempoSliderValue = $('tempoSliderValue');
+    const swingValue = $('swingValue');
+    const swingSlider = $('swingSlider');
+    const swingSliderValue = $('swingSliderValue');
+    const droneValue = $('droneValue');
+    const droneSelect = $('droneSelect');
+    const droneVolValue = $('droneVolValue');
+    const droneVolSlider = $('droneVolSlider');
+    const droneVolSliderValue = $('droneVolSliderValue');
+    const drumVolValue = $('drumVolValue');
+    const drumVolSlider = $('drumVolSlider');
+    const drumVolSliderValue = $('drumVolSliderValue');
+    const latencySlider = $('latencySlider');
+    const latencyValue = $('latencyValue');
+    const perfMode = $('perfMode');
+    const advancedToggle = $('advancedToggle');
+    const advancedContent = $('advancedContent');
+    
+    // Initialize Audio Context
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.value = -24;
+        compressor.knee.value = 30;
+        compressor.ratio.value = 12;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.25;
+        
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.9;
+        
+        compressor.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+      }
+      return audioCtx;
+    }
+    
+    // Unlock iOS Audio
+    function unlockAudio() {
+      if (unlocked) return;
+      const ctx = initAudio();
+      const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      unlocked = true;
+    }
+    
+    // Drum Synthesis
+    function playKick(time) {
+      if (muted.kick) return;
+      const ctx = audioCtx;
+      
+      // Tone oscillator
+      const osc = ctx.createOscillator();
+      osc.frequency.setValueAtTime(150, time);
+      osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
+      
+      // Click oscillator for punch
+      const click = ctx.createOscillator();
+      click.frequency.setValueAtTime(1500, time);
+      click.frequency.exponentialRampToValueAtTime(100, time + 0.02);
+      
+      // Gain envelopes
+      const oscGain = ctx.createGain();
+      oscGain.gain.setValueAtTime(drumGain, time);
+      oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+      
+      const clickGain = ctx.createGain();
+      clickGain.gain.setValueAtTime(drumGain * 0.3, time);
+      clickGain.gain.exponentialRampToValueAtTime(0.01, time + 0.02);
+      
+      // Connect
+      osc.connect(oscGain);
+      oscGain.connect(compressor);
+      
+      click.connect(clickGain);
+      clickGain.connect(compressor);
+      
+      // Schedule
+      osc.start(time);
+      osc.stop(time + 0.5);
+      click.start(time);
+      click.stop(time + 0.03);
+    }
+    
+    function playSnare(time) {
+      if (muted.snare) return;
+      const ctx = audioCtx;
+      
+      // Noise buffer
+      const bufferSize = ctx.sampleRate * 0.15;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+      }
+      
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      
+      // Tone component
+      const osc = ctx.createOscillator();
+      osc.frequency.value = 200;
+      osc.type = 'triangle';
+      
+      // Filters
+      const highpass = ctx.createBiquadFilter();
+      highpass.type = 'highpass';
+      highpass.frequency.value = 1000;
+      
+      const bandpass = ctx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.value = 3000;
+      bandpass.Q.value = 2;
+      
+      // Gain envelopes
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(drumGain * 0.8, time);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+      
+      const oscGain = ctx.createGain();
+      oscGain.gain.setValueAtTime(drumGain * 0.3, time);
+      oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+      
+      // Connect
+      noise.connect(highpass);
+      highpass.connect(bandpass);
+      bandpass.connect(noiseGain);
+      noiseGain.connect(compressor);
+      
+      osc.connect(oscGain);
+      oscGain.connect(compressor);
+      
+      // Schedule
+      noise.start(time);
+      osc.start(time);
+      osc.stop(time + 0.1);
+    }
+    
+    function playHiHat(time) {
+      if (muted.hihat) return;
+      const ctx = audioCtx;
+      
+      // Noise buffer
+      const bufferSize = ctx.sampleRate * 0.05;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+      }
+      
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      
+      // Filters for metallic sound
+      const highpass = ctx.createBiquadFilter();
+      highpass.type = 'highpass';
+      highpass.frequency.value = 8000;
+      highpass.Q.value = 0.7;
+      
+      const bandpass = ctx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.value = 10000;
+      bandpass.Q.value = 1.5;
+      
+      // Gain envelope
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(drumGain * 0.5, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+      
+      // Connect
+      noise.connect(highpass);
+      highpass.connect(bandpass);
+      bandpass.connect(gain);
+      gain.connect(compressor);
+      
+      // Schedule
+      noise.start(time);
+    }
+    
+    // Drone Synthesis
+    function startDrone() {
+      const ctx = audioCtx;
+      const freq = noteFreqs[droneNote];
+      
+      // Clean up old drone
+      stopDrone();
+      
+      // Create oscillators with slight detuning for richness
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const osc3 = ctx.createOscillator();
+      
+      osc1.type = 'sawtooth';
+      osc2.type = 'square';
+      osc3.type = 'triangle';
+      
+      osc1.frequency.value = freq;
+      osc2.frequency.value = freq * 2.01; // Slight detune
+      osc3.frequency.value = freq * 0.5;  // Sub octave
+      
+      // Individual gains
+      const gain1 = ctx.createGain();
+      const gain2 = ctx.createGain();
+      const gain3 = ctx.createGain();
+      const mixGain = ctx.createGain();
+      
+      gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(droneGain * 0.3, ctx.currentTime + 0.5);
+      
+      gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(droneGain * 0.2, ctx.currentTime + 0.5);
+      
+      gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain3.gain.exponentialRampToValueAtTime(droneGain * 0.4, ctx.currentTime + 0.5);
+      
+      mixGain.gain.value = 1;
+      
+      // Filter for warmth
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2000;
+      filter.Q.value = 2;
+      
+      // Subtle chorus effect
+      const delay = ctx.createDelay(0.1);
+      delay.delayTime.value = 0.01;
+      
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.5;
+      lfo.type = 'sine';
+      
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.002;
+      
+      lfo.connect(lfoGain);
+      lfoGain.connect(delay.delayTime);
+      
+      // Connect graph
+      osc1.connect(gain1);
+      osc2.connect(gain2);
+      osc3.connect(gain3);
+      
+      gain1.connect(mixGain);
+      gain2.connect(mixGain);
+      gain3.connect(mixGain);
+      
+      // Main path
+      mixGain.connect(filter);
+      filter.connect(compressor);
+      
+      // Chorus path
+      mixGain.connect(delay);
+      delay.connect(filter);
+      
+      // Start oscillators
+      osc1.start();
+      osc2.start();
+      osc3.start();
+      lfo.start();
+      
+      // Store references
+      droneNodes = [osc1, osc2, osc3, gain1, gain2, gain3, mixGain, filter, delay, lfo, lfoGain];
+    }
+    
+    function stopDrone() {
+      droneNodes.forEach(node => {
+        try {
+          if (node.stop) node.stop();
+          node.disconnect();
+        } catch(e) {}
+      });
+      droneNodes = [];
+    }
+    
+    function updateDroneVolume() {
+      if (droneNodes.length > 3) {
+        const ctx = audioCtx;
+        droneNodes[3].gain.exponentialRampToValueAtTime(droneGain * 0.3, ctx.currentTime + 0.1);
+        droneNodes[4].gain.exponentialRampToValueAtTime(droneGain * 0.2, ctx.currentTime + 0.1);
+        droneNodes[5].gain.exponentialRampToValueAtTime(droneGain * 0.4, ctx.currentTime + 0.1);
+      }
+    }
+    
+    // Mobile-Optimized Scheduler with Swing
+    function scheduler() {
+      const ctx = audioCtx;
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const lookaheadTime = isMobile ? 0.08 : 0.1;
+      const scheduleAheadTime = isMobile ? 0.08 : 0.1;
+      
+      while (nextNoteTime < ctx.currentTime + scheduleAheadTime) {
+        const latencyOffset = parseInt(latencySlider.value) / 1000;
+        
+        // Apply swing to off-beats
+        let swingOffset = 0;
+        if (currentStep % 2 === 1) {
+          swingOffset = (swing / 100) * (60 / bpm / 4); // Swing as fraction of 16th note
+        }
+        
+        const adjustedTime = nextNoteTime + latencyOffset + swingOffset;
+        
+        // Schedule drums
+        if (patterns.kick[currentStep]) playKick(adjustedTime);
+        if (patterns.snare[currentStep]) playSnare(adjustedTime);
+        if (patterns.hihat[currentStep]) playHiHat(adjustedTime);
+        
+        // Update UI
+        updateStepUI(currentStep);
+        
+        // Haptic feedback on downbeat
+        if (currentStep === 0 && navigator.vibrate) {
+          const timeUntil = adjustedTime - ctx.currentTime;
+          setTimeout(() => navigator.vibrate(10), Math.max(0, timeUntil * 1000));
+        }
+        
+        // Advance
+        currentStep = (currentStep + 1) % STEPS;
+        nextNoteTime += 60 / bpm / 2; // 8th notes
+      }
+    }
+    
+    function updateStepUI(step) {
+      // Clear previous playing states
+      document.querySelectorAll('.step.playing').forEach(el => {
+        el.classList.remove('playing');
+      });
+      
+      // Add playing state to current step
+      ['kick', 'snare', 'hihat'].forEach(track => {
+        const steps = document.querySelectorAll(`#${track}-steps .step`);
+        if (steps[step]) {
+          steps[step].classList.add('playing');
+        }
+      });
+    }
+    
+    // Start/Stop
+    function start() {
+      unlockAudio();
+      initAudio();
+      
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      
+      isPlaying = true;
+      currentStep = 0;
+      nextNoteTime = audioCtx.currentTime;
+      
+      playBtn.classList.add('playing');
+      status.classList.add('playing');
+      status.textContent = 'PLAYING';
+      
+      startDrone();
+      // Optimized scheduler interval for mobile performance
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const interval = isMobile ? 20 : 25;
+      schedulerTimer = setInterval(scheduler, interval);
+    }
+    
+    function stop() {
+      isPlaying = false;
+      clearInterval(schedulerTimer);
+      schedulerTimer = null;
+      
+      playBtn.classList.remove('playing');
+      status.classList.remove('playing');
+      status.textContent = 'STOPPED';
+      
+      stopDrone();
+      
+      // Clear playing states
+      document.querySelectorAll('.step.playing').forEach(el => {
+        el.classList.remove('playing');
+      });
+    }
+    
+    // Pattern Management
+    function updatePatternUI() {
+      ['kick', 'snare', 'hihat'].forEach(track => {
+        const steps = document.querySelectorAll(`#${track}-steps .step`);
+        patterns[track].forEach((active, i) => {
+          if (steps[i]) {
+            steps[i].classList.toggle('active', active);
+          }
+        });
+      });
+    }
+    
+    function encodePattern() {
+      return btoa(JSON.stringify(patterns));
+    }
+    
+    function decodePattern(str) {
+      try {
+        return JSON.parse(atob(str));
+      } catch(e) {
+        return null;
+      }
+    }
+    
+    /*
+      VERTICAL VOLUME SLIDER IMPLEMENTATION
+      
+      Custom vertical slider controls for precise audio level adjustment.
+      
+      Design rationale:
+      - Vertical orientation mimics professional mixing consoles
+      - Positioned as "bookends" flanking the tempo display
+      - Maintains minimal aesthetic while providing easy access
+      
+      Technical implementation:
+      - Inverted Y-coordinate calculation (bottom = 100%, top = 0%)
+      - Global event listeners for smooth dragging beyond slider bounds
+      - Separate touch event handling for mobile compatibility
+      - Real-time audio parameter updates via onChange callbacks
+      
+      UX considerations:
+      - Click anywhere on track to jump to that level
+      - Drag for smooth continuous adjustment
+      - Visual feedback via fill gradient and thumb expansion
+      - Percentage values displayed above for precise control
+      
+      Cross-platform compatibility:
+      - Mouse events for desktop
+      - Touch events for mobile/tablet
+      - Unified coordinate calculation for both input types
+    */
+    function initVolumeSlider(id, initialValue, onChange) {
+      const track = $(id + 'Track');
+      const fill = $(id + 'Fill');
+      const thumb = $(id + 'Thumb');
+      const valueDisplay = $(id + 'Value');
+      
+      let isDragging = false;
+      
+      function updateSlider(e) {
+        const rect = track.getBoundingClientRect();
+        // Invert Y coordinate: bottom of track = 100%, top = 0%
+        const percent = Math.max(0, Math.min(100, 
+          Math.round((1 - (e.clientY - rect.top) / rect.height) * 100)
+        ));
+        
+        // Update visual elements
+        fill.style.height = percent + '%';
+        thumb.style.bottom = percent + '%';
+        valueDisplay.textContent = percent + '%';
+        
+        // Trigger audio parameter update
+        if (onChange) onChange(percent);
+      }
+      
+      // Desktop mouse interaction
+      track.addEventListener('mousedown', e => {
+        isDragging = true;
+        updateSlider(e);
+      });
+      
+      // Global listeners for smooth dragging
+      document.addEventListener('mousemove', e => {
+        if (isDragging) updateSlider(e);
+      });
+      
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+      
+      // Mobile touch interaction
+      track.addEventListener('touchstart', e => {
+        isDragging = true;
+        const touch = e.touches[0];
+        updateSlider(touch);
+      });
+      
+      document.addEventListener('touchmove', e => {
+        if (isDragging) {
+          const touch = e.touches[0];
+          updateSlider(touch);
+        }
+      });
+      
+      document.addEventListener('touchend', () => {
+        isDragging = false;
+      });
+    }
+    
+    // Step Count Management
+    function setStepCount(newSteps) {
+      const oldSteps = STEPS;
+      STEPS = newSteps;
+      
+      // Resize patterns
+      ['kick', 'snare', 'hihat'].forEach(track => {
+        if (newSteps < oldSteps) {
+          patterns[track] = patterns[track].slice(0, newSteps);
+        } else {
+          while (patterns[track].length < newSteps) {
+            patterns[track].push(false);
+          }
+        }
+      });
+      
+      rebuildSequencer();
+      updatePatternUI();
+    }
+    
+    function rebuildSequencer() {
+      // Update step numbers grid
+      const stepNumbers = $('stepNumbers');
+      stepNumbers.innerHTML = '';
+      for (let i = 0; i < STEPS; i++) {
+        const number = document.createElement('div');
+        number.className = 'step-number';
+        number.textContent = i + 1;
+        stepNumbers.appendChild(number);
+      }
+      
+      // Update CSS grid columns for sequencer
+      const stepContainers = document.querySelectorAll('.steps, .numbers-grid');
+      stepContainers.forEach(container => {
+        container.style.gridTemplateColumns = `repeat(${STEPS}, 1fr)`;
+      });
+      
+      // Rebuild step buttons
+      ['kick', 'snare', 'hihat'].forEach(track => {
+        const container = $(`${track}-steps`);
+        container.innerHTML = '';
+        
+        for (let i = 0; i < STEPS; i++) {
+          const step = document.createElement('button');
+          step.className = 'step';
+          step.dataset.track = track;
+          step.dataset.step = i;
+          
+          // Enhanced mobile interaction with gestures
+          let swipeStart = null;
+          let longPressTimer = null;
+          
+          const handleStepClick = (e) => {
+            const t = e.currentTarget.dataset.track;
+            const s = parseInt(e.currentTarget.dataset.step);
+            patterns[t][s] = !patterns[t][s];
+            e.currentTarget.classList.toggle('active');
+            
+            // Haptic feedback on mobile
+            if (navigator.vibrate) navigator.vibrate(15);
+          };
+          
+          // Desktop click
+          step.addEventListener('click', handleStepClick);
+          
+          // Mobile touch with gesture support
+          step.addEventListener('touchstart', e => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            swipeStart = { x: touch.clientX, y: touch.clientY, time: performance.now() };
+            
+            // Long press for pattern copy (experimental)
+            longPressTimer = setTimeout(() => {
+              const trackPattern = patterns[track].map(x => x ? '1' : '0').join('');
+              
+              // Visual feedback for copy
+              step.style.boxShadow = '0 0 20px #f59e0b';
+              setTimeout(() => step.style.boxShadow = '', 300);
+              
+              // Strong haptic feedback
+              if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+              
+              longPressTimer = null;
+            }, 800);
+            
+          }, { passive: false });
+          
+          step.addEventListener('touchmove', e => {
+            if (!swipeStart) return;
+            
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - swipeStart.x;
+            const deltaY = touch.clientY - swipeStart.y;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            // Clear long press if moved too much
+            if (distance > 10 && longPressTimer) {
+              clearTimeout(longPressTimer);
+              longPressTimer = null;
+            }
+            
+            // Horizontal swipe to clear step (experimental)
+            if (Math.abs(deltaX) > 40 && Math.abs(deltaY) < 20) {
+              if (patterns[track][i]) {
+                patterns[track][i] = false;
+                step.classList.remove('active');
+                if (navigator.vibrate) navigator.vibrate(30);
+              }
+              swipeStart = null;
+            }
+          }, { passive: false });
+          
+          step.addEventListener('touchend', e => {
+            e.preventDefault();
+            
+            if (longPressTimer) {
+              clearTimeout(longPressTimer);
+              longPressTimer = null;
+            }
+            
+            if (swipeStart) {
+              const timeDiff = performance.now() - swipeStart.time;
+              // Normal tap if short duration and minimal movement
+              if (timeDiff < 200) {
+                handleStepClick(e);
+              }
+            }
+            
+            swipeStart = null;
+          }, { passive: false });
+          
+          container.appendChild(step);
+        }
+      });
+    }
+    
+    // Initialize UI
+    function initUI() {
+      // Initial sequencer build
+      rebuildSequencer();
+      
+      // Initialize volume sliders
+      initVolumeSlider('droneVolume', 60, value => {
+        droneGain = value / 100;
+        droneVolValue.textContent = value + '%';
+        droneVolSliderValue.textContent = value + '%';
+        updateDroneVolume();
+      });
+      
+      initVolumeSlider('drumVolume', 70, value => {
+        drumGain = value / 100;
+        drumVolValue.textContent = value + '%';
+        drumVolSliderValue.textContent = value + '%';
+      });
+      
+      // Step buttons are now created in rebuildSequencer()
+      
+      // Play button
+      playBtn.addEventListener('click', () => {
+        if (isPlaying) stop();
+        else start();
+      });
+      
+      // Tempo control (both slider and display click)
+      tempoSlider.addEventListener('input', e => {
+        bpm = parseInt(e.target.value);
+        tempoValue.textContent = bpm;
+        tempoSliderValue.textContent = `${bpm} BPM`;
+      });
+      
+      tempoValue.addEventListener('click', () => {
+        advancedContent.classList.add('show');
+        advancedToggle.classList.add('open');
+        tempoSlider.focus();
+      });
+      
+      // Swing control
+      swingSlider.addEventListener('input', e => {
+        swing = parseInt(e.target.value);
+        swingValue.textContent = `${swing}%`;
+        swingSliderValue.textContent = `${swing}%`;
+      });
+      
+      $('swingControl').addEventListener('click', () => {
+        advancedContent.classList.add('show');
+        advancedToggle.classList.add('open');
+        swingSlider.focus();
+      });
+      
+      // Drone controls
+      droneSelect.addEventListener('change', e => {
+        droneNote = e.target.value;
+        droneValue.textContent = droneNote;
+        if (isPlaying) {
+          stopDrone();
+          startDrone();
+        }
+      });
+      
+      $('droneControl').addEventListener('click', () => {
+        advancedContent.classList.add('show');
+        advancedToggle.classList.add('open');
+        droneSelect.focus();
+      });
+      
+      // Volume controls
+      droneVolSlider.addEventListener('input', e => {
+        droneGain = parseInt(e.target.value) / 100;
+        droneVolValue.textContent = `${e.target.value}%`;
+        droneVolSliderValue.textContent = `${e.target.value}%`;
+        updateDroneVolume();
+      });
+      
+      $('droneVolControl').addEventListener('click', () => {
+        advancedContent.classList.add('show');
+        advancedToggle.classList.add('open');
+        droneVolSlider.focus();
+      });
+      
+      drumVolSlider.addEventListener('input', e => {
+        drumGain = parseInt(e.target.value) / 100;
+        drumVolValue.textContent = `${e.target.value}%`;
+        drumVolSliderValue.textContent = `${e.target.value}%`;
+      });
+      
+      $('drumVolControl').addEventListener('click', () => {
+        advancedContent.classList.add('show');
+        advancedToggle.classList.add('open');
+        drumVolSlider.focus();
+      });
+      
+      // Latency
+      latencySlider.addEventListener('input', e => {
+        latencyValue.textContent = `${e.target.value}ms`;
+      });
+      
+      // Performance mode
+      perfMode.addEventListener('change', e => {
+        document.body.classList.toggle('performance', e.target.checked);
+      });
+      
+      // Advanced toggle
+      advancedToggle.addEventListener('click', () => {
+        advancedContent.classList.toggle('show');
+        advancedToggle.classList.toggle('open');
+      });
+      
+      // Track mute/solo (clicking labels)
+      document.querySelectorAll('.track-label').forEach(label => {
+        label.addEventListener('click', e => {
+          const track = e.target.dataset.track;
+          muted[track] = !muted[track];
+          e.target.classList.toggle('muted');
+        });
+      });
+      
+      // Adaptive preset patterns
+      $('preset1').addEventListener('click', () => {
+        if (STEPS === 4) {
+          patterns.kick =  [true,false,true,false];
+          patterns.snare = [false,true,false,true];
+          patterns.hihat = [true,false,true,false];
+        } else {
+          patterns.kick =  [true,false,false,false,true,false,false,false];
+          patterns.snare = [false,false,true,false,false,false,true,false];
+          patterns.hihat = [true,true,false,true,true,true,false,true];
+        }
+        updatePatternUI();
+      });
+      
+      $('preset2').addEventListener('click', () => {
+        if (STEPS === 4) {
+          patterns.kick =  [true,false,false,true];
+          patterns.snare = [false,false,true,false];
+          patterns.hihat = [true,true,true,true];
+        } else {
+          patterns.kick =  [true,false,true,false,false,false,true,false];
+          patterns.snare = [false,true,false,true,false,true,false,true];
+          patterns.hihat = [true,false,true,false,true,false,true,false];
+        }
+        updatePatternUI();
+      });
+      
+      $('preset3').addEventListener('click', () => {
+        if (STEPS === 4) {
+          patterns.kick =  [true,true,false,false];
+          patterns.snare = [false,false,false,true];
+          patterns.hihat = [false,true,false,true];
+        } else {
+          patterns.kick =  [true,false,false,true,false,false,true,false];
+          patterns.snare = [false,false,false,false,true,false,false,false];
+          patterns.hihat = [true,true,true,true,true,true,true,true];
+        }
+        updatePatternUI();
+      });
+      
+      // Step count toggle (replaces clear button)
+      $('stepToggle').addEventListener('click', () => {
+        const newSteps = STEPS === 8 ? 4 : 8;
+        setStepCount(newSteps);
+        $('stepToggle').textContent = `${STEPS === 4 ? '8' : '4'}/${STEPS} STEPS`;
+      });
+      
+      /*
+        TAP TEMPO IMPLEMENTATION
+        
+        Enhanced tap tempo system using median-based calculation for stability.
+        
+        Key features:
+        - Uses performance.now() for high-precision timing
+        - 4-second window for tap collection (prevents stale taps)
+        - Median calculation instead of average (more stable against erratic taps)
+        - Extended BPM range (60-200) for various musical styles
+        - Immediate response after 2 taps (faster than traditional 4-tap systems)
+        - Visual feedback with scale animation on successful detection
+        
+        Why median over average:
+        - Average is sensitive to outliers (one bad tap ruins the calculation)
+        - Median finds the "middle" interval, ignoring extreme values
+        - More stable and predictable tempo detection
+        
+        Performance timing rationale:
+        - Date.now() has ~15ms resolution on some browsers
+        - performance.now() provides microsecond precision
+        - Critical for accurate rhythm detection
+      */
+      let tapTimes = [];
+      const handleTapTempo = () => {
+        const now = performance.now();
+        const cutoff = now - 4000; // 4 second rolling window
+        
+        // Remove stale taps beyond the time window
+        tapTimes = tapTimes.filter(t => t > cutoff);
+        tapTimes.push(now);
+        
+        if (tapTimes.length >= 2) {
+          const intervals = [];
+          for (let i = 1; i < tapTimes.length; i++) {
+            intervals.push(tapTimes[i] - tapTimes[i-1]);
+          }
+          
+          // Median calculation for stability
+          intervals.sort((a, b) => a - b);
+          const median = intervals[Math.floor(intervals.length / 2)];
+          const newBpm = Math.round(60000 / median);
+          
+          if (newBpm >= 60 && newBpm <= 200) {
+            bpm = newBpm;
+            tempoSlider.value = bpm;
+            tempoValue.textContent = bpm;
+            tempoSliderValue.textContent = `${bpm} BPM`;
+            
+            // Visual feedback confirms successful tempo detection
+            tempoDisplay.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+              tempoDisplay.style.transform = 'scale(1)';
+            }, 100);
+          }
+        }
+      };
+      
+      // Add tap tempo to button and display
+      $('tapTempo').addEventListener('click', handleTapTempo);
+      
+      /*
+        TEMPO DISPLAY CLICK HANDLING
+        
+        Robust event handling to prevent browser interference with tap tempo.
+        
+        Complex event prevention required because:
+        - Some browsers auto-scroll on rapid clicks (accessibility feature)
+        - Touch events can trigger both touch and click handlers
+        - Default link/button behaviors can interfere with timing
+        - Page focus changes can disrupt the tempo detection
+        
+        Solutions implemented:
+        - preventDefault() stops default browser behaviors
+        - stopPropagation() prevents event bubbling to parent elements
+        - window.scrollTo() locks scroll position during interaction
+        - passive: false ensures preventDefault() is allowed to work
+        - Separate touch/click handlers for cross-platform compatibility
+        
+        This ensures clean, predictable tempo detection without UI interference.
+      */
+      const tempoDisplay = $('tempoDisplay');
+      
+      const handleTempoClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Lock scroll position to prevent page jumping
+        window.scrollTo(0, window.pageYOffset);
+        
+        handleTapTempo();
+        return false;
+      };
+      
+      // Desktop and mobile event handling
+      tempoDisplay.addEventListener('click', handleTempoClick, { passive: false });
+      tempoDisplay.addEventListener('touchend', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleTapTempo();
+      }, { passive: false });
+      
+      // Save/Load
+      $('savePattern').addEventListener('click', () => {
+        const data = encodePattern();
+        localStorage.setItem('beatbox-pattern', data);
+        localStorage.setItem('beatbox-bpm', bpm);
+        localStorage.setItem('beatbox-swing', swing);
+        status.textContent = 'SAVED';
+        setTimeout(() => {
+          status.textContent = isPlaying ? 'PLAYING' : 'READY';
+        }, 1000);
+      });
+      
+      $('loadPattern').addEventListener('click', () => {
+        const data = localStorage.getItem('beatbox-pattern');
+        const savedBpm = localStorage.getItem('beatbox-bpm');
+        const savedSwing = localStorage.getItem('beatbox-swing');
+        
+        if (data) {
+          const loaded = decodePattern(data);
+          if (loaded) {
+            Object.assign(patterns, loaded);
+            updatePatternUI();
+          }
+        }
+        
+        if (savedBpm) {
+          bpm = parseInt(savedBpm);
+          tempoValue.textContent = bpm;
+          tempoSlider.value = bpm;
+          tempoSliderValue.textContent = `${bpm} BPM`;
+        }
+        
+        if (savedSwing) {
+          swing = parseInt(savedSwing);
+          swingValue.textContent = `${swing}%`;
+          swingSlider.value = swing;
+          swingSliderValue.textContent = `${swing}%`;
+        }
+        
+        status.textContent = 'LOADED';
+        setTimeout(() => {
+          status.textContent = isPlaying ? 'PLAYING' : 'READY';
+        }, 1000);
+      });
+      
+      // Share
+      $('sharePattern').addEventListener('click', () => {
+        const data = encodePattern();
+        const params = new URLSearchParams({
+          p: data,
+          b: bpm,
+          s: swing
+        });
+        const url = `${window.location.origin}${window.location.pathname}?${params}`;
+        
+        navigator.clipboard.writeText(url).then(() => {
+          status.textContent = 'LINK COPIED';
+          setTimeout(() => {
+            status.textContent = isPlaying ? 'PLAYING' : 'READY';
+          }, 1500);
+        }).catch(() => {
+          window.prompt('Copy this link:', url);
+        });
+      });
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', e => {
+        if (e.code === 'Space' && e.target === document.body) {
+          e.preventDefault();
+          if (isPlaying) stop();
+          else start();
+        }
+        
+        // Number keys for patterns
+        if (e.code >= 'Digit1' && e.code <= 'Digit8') {
+          const step = parseInt(e.code.slice(-1)) - 1;
+          const track = e.shiftKey ? 'snare' : e.altKey ? 'hihat' : 'kick';
+          patterns[track][step] = !patterns[track][step];
+          updatePatternUI();
+        }
+        
+        // Arrow keys for tempo
+        if (e.code === 'ArrowUp') {
+          bpm = Math.min(180, bpm + 1);
+          tempoValue.textContent = bpm;
+          tempoSlider.value = bpm;
+          tempoSliderValue.textContent = `${bpm} BPM`;
+        }
+        if (e.code === 'ArrowDown') {
+          bpm = Math.max(60, bpm - 1);
+          tempoValue.textContent = bpm;
+          tempoSlider.value = bpm;
+          tempoSliderValue.textContent = `${bpm} BPM`;
+        }
+        
+        // Clear all patterns (C key)
+        if (e.code === 'KeyC' && e.target === document.body) {
+          Object.keys(patterns).forEach(track => {
+            for (let i = 0; i < patterns[track].length; i++) {
+              patterns[track][i] = false;
+            }
+          });
+          updatePatternUI();
+        }
+        
+        // Toggle step count (T key)
+        if (e.code === 'KeyT' && e.target === document.body) {
+          const newSteps = STEPS === 8 ? 4 : 8;
+          setStepCount(newSteps);
+          $('stepToggle').textContent = `${STEPS === 4 ? '8' : '4'}/${STEPS} STEPS`;
+        }
+      });
+    }
+    
+    // Load from URL parameters
+    function loadFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      
+      if (params.has('p')) {
+        const pattern = decodePattern(params.get('p'));
+        if (pattern) {
+          Object.assign(patterns, pattern);
+          updatePatternUI();
+        }
+      }
+      
+      if (params.has('b')) {
+        bpm = Math.max(60, Math.min(180, parseInt(params.get('b'))));
+        tempoValue.textContent = bpm;
+        tempoSlider.value = bpm;
+        tempoSliderValue.textContent = `${bpm} BPM`;
+      }
+      
+      if (params.has('s')) {
+        swing = Math.max(0, Math.min(75, parseInt(params.get('s'))));
+        swingValue.textContent = `${swing}%`;
+        swingSlider.value = swing;
+        swingSliderValue.textContent = `${swing}%`;
+      }
+    }
+    
+    // Mobile Performance Monitoring
+    const perfMonitor = {
+      frameDrops: 0,
+      audioGlitches: 0,
+      memoryUsage: [],
+      
+      startMonitoring() {
+        if (typeof performance === 'undefined') return;
+        
+        let lastTime = performance.now();
+        
+        const checkFrame = () => {
+          const now = performance.now();
+          const delta = now - lastTime;
+          
+          // Frame drop detection (target: 60fps = 16.67ms)
+          if (delta > 20) {
+            this.frameDrops++;
+          }
+          
+          // Memory monitoring (if available)
+          if (performance.memory) {
+            this.memoryUsage.push(performance.memory.usedJSHeapSize);
+            // Keep only last 100 samples
+            if (this.memoryUsage.length > 100) {
+              this.memoryUsage.shift();
+            }
+          }
+          
+          lastTime = now;
+          requestAnimationFrame(checkFrame);
+        };
+        
+        requestAnimationFrame(checkFrame);
+      },
+      
+      getStats() {
+        const avgMemory = this.memoryUsage.length > 0 
+          ? this.memoryUsage.reduce((a, b) => a + b, 0) / this.memoryUsage.length
+          : 0;
+          
+        return {
+          frameDrops: this.frameDrops,
+          audioGlitches: this.audioGlitches,
+          avgMemoryMB: Math.round(avgMemory / 1024 / 1024),
+          isPerformanceGood: this.frameDrops < 10 && this.audioGlitches < 3
+        };
+      }
+    };
+    
+    // Battery optimization for mobile
+    function optimizeForBattery() {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // Reduce visual updates when not playing
+        const originalUpdateStepUI = updateStepUI;
+        
+        window.updateStepUI = function(step) {
+          // Only update if playing or performance mode is on
+          if (isPlaying || perfMode.checked) {
+            originalUpdateStepUI(step);
+          }
+        };
+        
+        // Throttle non-critical animations
+        const style = document.createElement('style');
+        style.textContent = `
+          @media (max-width: 768px) {
+            .loading-text { animation-duration: 2s !important; }
+            .status::before { animation-duration: 4s !important; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+    
+    // Auto-detect and adjust performance settings
+    function autoOptimizePerformance() {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isLowEnd = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
+      
+      if (isMobile || isLowEnd) {
+        // Disable performance mode animations by default
+        const style = document.createElement('style');
+        style.textContent = `
+          @media (max-width: 768px) {
+            .tempo-value { animation: none !important; }
+            .step.playing { 
+              transform: scaleY(1.05) !important;
+              box-shadow: 0 0 5px rgba(255,255,255,0.2) !important;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+        
+        console.log('🔋 BeatBox Pro: Mobile optimizations enabled');
+      }
+    }
+    
+    // Pinch Gesture for Performance Mode (Experimental)
+    let initialPinchDistance = null;
+    
+    function getDistance(touch1, touch2) {
+      return Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) +
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+    }
+    
+    document.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) {
+        initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
+      }
+    }, { passive: true });
+    
+    document.addEventListener('touchmove', e => {
+      if (e.touches.length === 2 && initialPinchDistance) {
+        const currentDistance = getDistance(e.touches[0], e.touches[1]);
+        const scale = currentDistance / initialPinchDistance;
+        
+        // Pinch out to enable performance mode
+        if (scale > 1.3 && !perfMode.checked) {
+          perfMode.checked = true;
+          document.body.classList.add('performance');
+          if (navigator.vibrate) navigator.vibrate(100);
+          
+          // Visual feedback
+          const sequencer = document.querySelector('.sequencer');
+          sequencer.style.transform = 'scale(1.05)';
+          setTimeout(() => {
+            sequencer.style.transform = 'scale(1)';
+          }, 200);
+        }
+        // Pinch in to disable performance mode
+        else if (scale < 0.7 && perfMode.checked) {
+          perfMode.checked = false;
+          document.body.classList.remove('performance');
+          if (navigator.vibrate) navigator.vibrate(50);
+        }
+      }
+    }, { passive: true });
+    
+    document.addEventListener('touchend', () => {
+      initialPinchDistance = null;
+    }, { passive: true });
+    
+    // Initialize everything
+    perfMonitor.startMonitoring();
+    optimizeForBattery();
+    autoOptimizePerformance();
+    initUI();
+    loadFromURL();
+    
+    // Development performance logging
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      setTimeout(() => {
+        const stats = perfMonitor.getStats();
+        console.log('📊 BeatBox Pro Performance Stats:', stats);
+        
+        if (!stats.isPerformanceGood) {
+          console.warn('⚠️ Performance issues detected. Consider enabling performance optimizations.');
+        }
+      }, 10000); // Check after 10 seconds
+    }
+    
+    // Remove loading screen
+    setTimeout(() => {
+      document.querySelector('.loading').style.display = 'none';
+    }, 500);
+    
+    // Handle visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && isPlaying) stop();
+    });
+    
+    // Prevent scrolling on spacebar
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Space' && e.target === document.body) {
+        e.preventDefault();
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

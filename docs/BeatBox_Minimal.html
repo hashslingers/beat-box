@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>BEATBOX PRO</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+    
+    :root {
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --text: #ffffff;
+      --muted: #666666;
+      --accent: #ffffff;
+      --grid-size: 60px;
+      --gap: 2px;
+      --transition: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 60px;
+      animation: fadeDown 0.8s var(--transition) forwards;
+      opacity: 0;
+    }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.3em;
+      margin-bottom: 8px;
+    }
+
+    .status {
+      font-size: 11px;
+      font-weight: 200;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* Main Controls */
+    .main-controls {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      margin-bottom: 60px;
+      gap: 40px;
+      animation: fadeUp 0.8s var(--transition) 0.2s forwards;
+      opacity: 0;
+    }
+
+    .play-button {
+      width: 120px;
+      height: 120px;
+      background: transparent;
+      border: 2px solid var(--text);
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .play-button:hover {
+      transform: scale(1.05);
+      background: var(--text);
+    }
+
+    .play-button:hover .play-icon {
+      border-left-color: var(--bg);
+    }
+
+    .play-button:hover .stop-icon {
+      background: var(--bg);
+    }
+
+    .play-icon {
+      width: 0;
+      height: 0;
+      border-left: 20px solid var(--text);
+      border-top: 12px solid transparent;
+      border-bottom: 12px solid transparent;
+      margin-left: 5px;
+      transition: all 0.3s var(--transition);
+    }
+
+    .stop-icon {
+      width: 24px;
+      height: 24px;
+      background: var(--text);
+      transition: all 0.3s var(--transition);
+      display: none;
+    }
+
+    .play-button.playing .play-icon {
+      display: none;
+    }
+
+    .play-button.playing .stop-icon {
+      display: block;
+    }
+
+    .tempo-display {
+      text-align: center;
+    }
+
+    .tempo-value {
+      font-size: 48px;
+      font-weight: 100;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .tempo-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* Sequencer Grid */
+    .sequencer {
+      margin-bottom: 60px;
+      animation: fadeUp 0.8s var(--transition) 0.4s forwards;
+      opacity: 0;
+    }
+
+    .track {
+      margin-bottom: 20px;
+    }
+
+    .track-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    .track-name {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .track-mute {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .track-mute:hover {
+      color: var(--text);
+    }
+
+    .track-mute.muted {
+      text-decoration: line-through;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: var(--gap);
+    }
+
+    .step {
+      aspect-ratio: 1;
+      background: transparent;
+      border: 1px solid #1a1a1a;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s var(--transition);
+      overflow: hidden;
+    }
+
+    .step::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--text);
+      transform: scale(0);
+      transition: transform 0.3s var(--transition);
+    }
+
+    .step.active::before {
+      transform: scale(1);
+    }
+
+    .step.playing {
+      border-color: var(--text);
+      animation: pulse 0.2s ease-out;
+    }
+
+    .step.playing.active::before {
+      animation: flash 0.2s ease-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes flash {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    /* Controls Section */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 40px;
+      margin-bottom: 40px;
+      animation: fadeUp 0.8s var(--transition) 0.6s forwards;
+      opacity: 0;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 1px;
+      background: #1a1a1a;
+      outline: none;
+      transition: background 0.3s;
+    }
+
+    .slider:hover {
+      background: #333;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      background: var(--text);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      background: var(--text);
+      cursor: pointer;
+      border: none;
+      transition: transform 0.2s;
+    }
+
+    .slider::-moz-range-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .slider-value {
+      font-size: 24px;
+      font-weight: 200;
+      margin-top: 8px;
+    }
+
+    .select {
+      background: transparent;
+      border: 1px solid #1a1a1a;
+      color: var(--text);
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 300;
+      cursor: pointer;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+
+    .select:hover {
+      border-color: #333;
+    }
+
+    .select:focus {
+      outline: none;
+      border-color: var(--text);
+    }
+
+    /* Pattern Presets */
+    .presets {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 40px;
+      animation: fadeUp 0.8s var(--transition) 0.7s forwards;
+      opacity: 0;
+    }
+
+    .preset-btn {
+      flex: 1;
+      padding: 16px;
+      background: transparent;
+      border: 1px solid #1a1a1a;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s var(--transition);
+      font-family: inherit;
+    }
+
+    .preset-btn:hover {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    /* Advanced Section */
+    .advanced {
+      margin-top: auto;
+      padding-top: 40px;
+      border-top: 1px solid #1a1a1a;
+      animation: fadeUp 0.8s var(--transition) 0.8s forwards;
+      opacity: 0;
+    }
+
+    .advanced-toggle {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-block;
+      transition: color 0.3s;
+    }
+
+    .advanced-toggle:hover {
+      color: var(--text);
+    }
+
+    .advanced-content {
+      display: none;
+      margin-top: 24px;
+      gap: 24px;
+    }
+
+    .advanced-content.show {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .action-btn {
+      padding: 12px 24px;
+      background: transparent;
+      border: 1px solid #1a1a1a;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s var(--transition);
+      font-family: inherit;
+    }
+
+    .action-btn:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+
+    /* Animations */
+    @keyframes fadeDown {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+    }
+
+    /* Mobile Optimization */
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px 16px;
+      }
+      
+      .main-controls {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 24px;
+      }
+      
+      .tempo-display {
+        order: -1;
+      }
+      
+      .play-button {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+      }
+      
+      .steps {
+        gap: 1px;
+      }
+      
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Performance Mode */
+    body.performance .step {
+      border-width: 2px;
+    }
+    
+    body.performance .steps {
+      gap: 4px;
+    }
+    
+    body.performance .step.playing {
+      box-shadow: 0 0 20px rgba(255,255,255,0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo">BEATBOX PRO</div>
+      <div class="status">READY</div>
+    </header>
+
+    <div class="main-controls">
+      <div></div>
+      <button id="playBtn" class="play-button">
+        <span class="play-icon"></span>
+        <span class="stop-icon"></span>
+      </button>
+      <div class="tempo-display">
+        <div class="tempo-value" id="bpmValue">120</div>
+        <div class="tempo-label">BPM</div>
+      </div>
+    </div>
+
+    <div class="sequencer">
+      <div class="track">
+        <div class="track-header">
+          <span class="track-name">KICK</span>
+          <span class="track-mute" data-track="kick">MUTE</span>
+        </div>
+        <div class="steps" id="kick-steps"></div>
+      </div>
+      
+      <div class="track">
+        <div class="track-header">
+          <span class="track-name">SNARE</span>
+          <span class="track-mute" data-track="snare">MUTE</span>
+        </div>
+        <div class="steps" id="snare-steps"></div>
+      </div>
+      
+      <div class="track">
+        <div class="track-header">
+          <span class="track-name">HI-HAT</span>
+          <span class="track-mute" data-track="hihat">MUTE</span>
+        </div>
+        <div class="steps" id="hihat-steps"></div>
+      </div>
+    </div>
+
+    <div class="presets">
+      <button class="preset-btn" id="preset1">PATTERN 01</button>
+      <button class="preset-btn" id="preset2">PATTERN 02</button>
+      <button class="preset-btn" id="preset3">PATTERN 03</button>
+      <button class="preset-btn" id="clear">CLEAR</button>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label class="control-label">Tempo</label>
+        <input type="range" class="slider" id="tempoSlider" min="60" max="180" value="120">
+        <div class="slider-value" id="tempoDisplay">120</div>
+      </div>
+      
+      <div class="control-group">
+        <label class="control-label">Drone Note</label>
+        <select class="select" id="droneNote">
+          <option value="C2">C2</option>
+          <option value="D2">D2</option>
+          <option value="E2" selected>E2</option>
+          <option value="F2">F2</option>
+          <option value="G2">G2</option>
+          <option value="A2">A2</option>
+          <option value="B2">B2</option>
+          <option value="C3">C3</option>
+          <option value="D3">D3</option>
+          <option value="E3">E3</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <label class="control-label">Drone Volume</label>
+        <input type="range" class="slider" id="droneVolume" min="0" max="100" value="60">
+        <div class="slider-value" id="droneVolumeDisplay">60</div>
+      </div>
+      
+      <div class="control-group">
+        <label class="control-label">Drum Volume</label>
+        <input type="range" class="slider" id="drumVolume" min="0" max="100" value="70">
+        <div class="slider-value" id="drumVolumeDisplay">70</div>
+      </div>
+    </div>
+
+    <div class="advanced">
+      <div class="advanced-toggle" id="advancedToggle">ADVANCED OPTIONS</div>
+      <div class="advanced-content" id="advancedContent">
+        <div class="control-group">
+          <label class="control-label">Latency Compensation</label>
+          <input type="range" class="slider" id="latency" min="-100" max="100" value="0">
+          <div class="slider-value" id="latencyDisplay">0ms</div>
+        </div>
+        <div class="control-group">
+          <label class="control-label">Performance Mode</label>
+          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <input type="checkbox" id="perfMode" style="width: 16px; height: 16px;">
+            <span style="font-size: 12px; font-weight: 300;">Enhanced Visuals</span>
+          </label>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="action-btn" id="tapTempo">TAP TEMPO</button>
+          <button class="action-btn" id="savePattern">SAVE</button>
+          <button class="action-btn" id="loadPattern">LOAD</button>
+          <button class="action-btn" id="sharePattern">SHARE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    // Audio context and state
+    let audioCtx = null;
+    let isPlaying = false;
+    let currentStep = 0;
+    let bpm = 120;
+    let nextNoteTime = 0;
+    let schedulerTimer = null;
+    
+    // Pattern state
+    const patterns = {
+      kick: new Array(8).fill(false),
+      snare: new Array(8).fill(false),
+      hihat: new Array(8).fill(false)
+    };
+    
+    const muted = {
+      kick: false,
+      snare: false,
+      hihat: false
+    };
+    
+    // Audio nodes
+    let masterGain = null;
+    let compressor = null;
+    let droneNodes = [];
+    let droneGain = 0.6;
+    let drumGain = 0.7;
+    
+    // Note frequencies
+    const noteFreqs = {
+      'C2': 65.41, 'D2': 73.42, 'E2': 82.41, 'F2': 87.31,
+      'G2': 98.00, 'A2': 110.00, 'B2': 123.47,
+      'C3': 130.81, 'D3': 146.83, 'E3': 164.81
+    };
+    
+    // DOM elements
+    const $ = id => document.getElementById(id);
+    const playBtn = $('playBtn');
+    const bpmValue = $('bpmValue');
+    const tempoSlider = $('tempoSlider');
+    const tempoDisplay = $('tempoDisplay');
+    const droneNote = $('droneNote');
+    const droneVolume = $('droneVolume');
+    const droneVolumeDisplay = $('droneVolumeDisplay');
+    const drumVolume = $('drumVolume');
+    const drumVolumeDisplay = $('drumVolumeDisplay');
+    const latency = $('latency');
+    const latencyDisplay = $('latencyDisplay');
+    const perfMode = $('perfMode');
+    const advancedToggle = $('advancedToggle');
+    const advancedContent = $('advancedContent');
+    
+    // Initialize audio context
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.value = -24;
+        compressor.knee.value = 30;
+        compressor.ratio.value = 12;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.25;
+        
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.9;
+        
+        compressor.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+      }
+      return audioCtx;
+    }
+    
+    // Drum synthesis
+    function playKick(time) {
+      if (muted.kick) return;
+      const ctx = audioCtx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.frequency.setValueAtTime(150, time);
+      osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
+      
+      gain.gain.setValueAtTime(drumGain, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+      
+      osc.connect(gain);
+      gain.connect(compressor);
+      
+      osc.start(time);
+      osc.stop(time + 0.5);
+    }
+    
+    function playSnare(time) {
+      if (muted.snare) return;
+      const ctx = audioCtx;
+      const bufferSize = ctx.sampleRate * 0.15;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+      }
+      
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 1000;
+      
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(drumGain * 0.8, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+      
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(compressor);
+      
+      noise.start(time);
+    }
+    
+    function playHiHat(time) {
+      if (muted.hihat) return;
+      const ctx = audioCtx;
+      const bufferSize = ctx.sampleRate * 0.05;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+      }
+      
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 8000;
+      
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(drumGain * 0.5, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+      
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(compressor);
+      
+      noise.start(time);
+    }
+    
+    // Drone synthesis
+    function startDrone() {
+      const ctx = audioCtx;
+      const freq = noteFreqs[droneNote.value];
+      
+      // Clean up old drone
+      stopDrone();
+      
+      // Create oscillators
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const osc3 = ctx.createOscillator();
+      
+      osc1.type = 'sawtooth';
+      osc2.type = 'square';
+      osc3.type = 'triangle';
+      
+      osc1.frequency.value = freq;
+      osc2.frequency.value = freq * 2.01;
+      osc3.frequency.value = freq * 0.5;
+      
+      // Create gains
+      const gain1 = ctx.createGain();
+      const gain2 = ctx.createGain();
+      const gain3 = ctx.createGain();
+      const mixGain = ctx.createGain();
+      
+      gain1.gain.value = droneGain * 0.3;
+      gain2.gain.value = droneGain * 0.2;
+      gain3.gain.value = droneGain * 0.4;
+      mixGain.gain.value = 1;
+      
+      // Create filter
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2000;
+      filter.Q.value = 2;
+      
+      // Connect graph
+      osc1.connect(gain1);
+      osc2.connect(gain2);
+      osc3.connect(gain3);
+      
+      gain1.connect(mixGain);
+      gain2.connect(mixGain);
+      gain3.connect(mixGain);
+      
+      mixGain.connect(filter);
+      filter.connect(compressor);
+      
+      // Start oscillators
+      osc1.start();
+      osc2.start();
+      osc3.start();
+      
+      // Store references
+      droneNodes = [osc1, osc2, osc3, gain1, gain2, gain3, mixGain, filter];
+    }
+    
+    function stopDrone() {
+      droneNodes.forEach(node => {
+        try {
+          if (node.stop) node.stop();
+          node.disconnect();
+        } catch(e) {}
+      });
+      droneNodes = [];
+    }
+    
+    // Scheduler
+    function scheduler() {
+      const ctx = audioCtx;
+      const lookahead = 0.1;
+      const scheduleAheadTime = 0.1;
+      
+      while (nextNoteTime < ctx.currentTime + scheduleAheadTime) {
+        const latencyOffset = parseInt(latency.value) / 1000;
+        const adjustedTime = nextNoteTime + latencyOffset;
+        
+        // Schedule drums
+        if (patterns.kick[currentStep]) playKick(adjustedTime);
+        if (patterns.snare[currentStep]) playSnare(adjustedTime);
+        if (patterns.hihat[currentStep]) playHiHat(adjustedTime);
+        
+        // Update UI
+        updateStepUI(currentStep);
+        
+        // Advance
+        currentStep = (currentStep + 1) % 8;
+        nextNoteTime += 60 / bpm / 2; // 8th notes
+      }
+    }
+    
+    function updateStepUI(step) {
+      // Clear previous playing states
+      document.querySelectorAll('.step.playing').forEach(el => {
+        el.classList.remove('playing');
+      });
+      
+      // Add playing state to current step
+      ['kick', 'snare', 'hihat'].forEach(track => {
+        const steps = document.querySelectorAll(`#${track}-steps .step`);
+        if (steps[step]) {
+          steps[step].classList.add('playing');
+        }
+      });
+    }
+    
+    // Start/Stop
+    function start() {
+      initAudio();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      
+      isPlaying = true;
+      currentStep = 0;
+      nextNoteTime = audioCtx.currentTime;
+      
+      playBtn.classList.add('playing');
+      document.querySelector('.status').textContent = 'PLAYING';
+      
+      startDrone();
+      schedulerTimer = setInterval(scheduler, 25);
+    }
+    
+    function stop() {
+      isPlaying = false;
+      clearInterval(schedulerTimer);
+      schedulerTimer = null;
+      
+      playBtn.classList.remove('playing');
+      document.querySelector('.status').textContent = 'STOPPED';
+      
+      stopDrone();
+      
+      // Clear playing states
+      document.querySelectorAll('.step.playing').forEach(el => {
+        el.classList.remove('playing');
+      });
+    }
+    
+    // Initialize UI
+    function initUI() {
+      // Create step buttons
+      ['kick', 'snare', 'hihat'].forEach(track => {
+        const container = $(`${track}-steps`);
+        for (let i = 0; i < 8; i++) {
+          const step = document.createElement('button');
+          step.className = 'step';
+          step.dataset.track = track;
+          step.dataset.step = i;
+          step.addEventListener('click', e => {
+            const t = e.target.dataset.track;
+            const s = parseInt(e.target.dataset.step);
+            patterns[t][s] = !patterns[t][s];
+            e.target.classList.toggle('active');
+          });
+          container.appendChild(step);
+        }
+      });
+      
+      // Play button
+      playBtn.addEventListener('click', () => {
+        if (isPlaying) stop();
+        else start();
+      });
+      
+      // Tempo control
+      tempoSlider.addEventListener('input', e => {
+        bpm = parseInt(e.target.value);
+        bpmValue.textContent = bpm;
+        tempoDisplay.textContent = bpm;
+      });
+      
+      // Volume controls
+      droneVolume.addEventListener('input', e => {
+        droneGain = parseInt(e.target.value) / 100;
+        droneVolumeDisplay.textContent = e.target.value;
+        // Update live if playing
+        if (droneNodes.length > 3) {
+          droneNodes[3].gain.value = droneGain * 0.3;
+          droneNodes[4].gain.value = droneGain * 0.2;
+          droneNodes[5].gain.value = droneGain * 0.4;
+        }
+      });
+      
+      drumVolume.addEventListener('input', e => {
+        drumGain = parseInt(e.target.value) / 100;
+        drumVolumeDisplay.textContent = e.target.value;
+      });
+      
+      // Drone note
+      droneNote.addEventListener('change', () => {
+        if (isPlaying) {
+          stopDrone();
+          startDrone();
+        }
+      });
+      
+      // Latency
+      latency.addEventListener('input', e => {
+        latencyDisplay.textContent = e.target.value + 'ms';
+      });
+      
+      // Performance mode
+      perfMode.addEventListener('change', e => {
+        document.body.classList.toggle('performance', e.target.checked);
+      });
+      
+      // Advanced toggle
+      advancedToggle.addEventListener('click', () => {
+        advancedContent.classList.toggle('show');
+      });
+      
+      // Mute buttons
+      document.querySelectorAll('.track-mute').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const track = e.target.dataset.track;
+          muted[track] = !muted[track];
+          e.target.classList.toggle('muted');
+        });
+      });
+      
+      // Presets
+      $('preset1').addEventListener('click', () => {
+        patterns.kick = [true,false,false,false,true,false,false,false];
+        patterns.snare = [false,false,true,false,false,false,true,false];
+        patterns.hihat = [true,true,false,true,true,true,false,true];
+        updatePatternUI();
+      });
+      
+      $('preset2').addEventListener('click', () => {
+        patterns.kick = [true,false,true,false,false,false,true,false];
+        patterns.snare = [false,true,false,true,false,true,false,true];
+        patterns.hihat = [true,false,true,false,true,false,true,false];
+        updatePatternUI();
+      });
+      
+      $('preset3').addEventListener('click', () => {
+        patterns.kick = [true,false,false,true,false,false,true,false];
+        patterns.snare = [false,false,false,false,true,false,false,false];
+        patterns.hihat = [true,true,true,true,true,true,true,true];
+        updatePatternUI();
+      });
+      
+      $('clear').addEventListener('click', () => {
+        Object.keys(patterns).forEach(track => {
+          patterns[track].fill(false);
+        });
+        updatePatternUI();
+      });
+      
+      // Tap tempo
+      let tapTimes = [];
+      $('tapTempo').addEventListener('click', () => {
+        const now = Date.now();
+        tapTimes = tapTimes.filter(t => now - t < 3000);
+        tapTimes.push(now);
+        
+        if (tapTimes.length > 2) {
+          const intervals = [];
+          for (let i = 1; i < tapTimes.length; i++) {
+            intervals.push(tapTimes[i] - tapTimes[i-1]);
+          }
+          const avg = intervals.reduce((a,b) => a+b) / intervals.length;
+          const newBpm = Math.round(60000 / avg);
+          if (newBpm >= 60 && newBpm <= 180) {
+            bpm = newBpm;
+            tempoSlider.value = bpm;
+            bpmValue.textContent = bpm;
+            tempoDisplay.textContent = bpm;
+          }
+        }
+      });
+      
+      // Save/Load
+      $('savePattern').addEventListener('click', () => {
+        const data = JSON.stringify(patterns);
+        localStorage.setItem('beatbox-pattern', data);
+        document.querySelector('.status').textContent = 'SAVED';
+        setTimeout(() => {
+          document.querySelector('.status').textContent = isPlaying ? 'PLAYING' : 'READY';
+        }, 1000);
+      });
+      
+      $('loadPattern').addEventListener('click', () => {
+        const data = localStorage.getItem('beatbox-pattern');
+        if (data) {
+          const loaded = JSON.parse(data);
+          Object.assign(patterns, loaded);
+          updatePatternUI();
+          document.querySelector('.status').textContent = 'LOADED';
+          setTimeout(() => {
+            document.querySelector('.status').textContent = isPlaying ? 'PLAYING' : 'READY';
+          }, 1000);
+        }
+      });
+      
+      // Share
+      $('sharePattern').addEventListener('click', () => {
+        const data = btoa(JSON.stringify(patterns));
+        const url = `${window.location.origin}${window.location.pathname}#${data}`;
+        navigator.clipboard.writeText(url).then(() => {
+          document.querySelector('.status').textContent = 'LINK COPIED';
+          setTimeout(() => {
+            document.querySelector('.status').textContent = isPlaying ? 'PLAYING' : 'READY';
+          }, 1000);
+        });
+      });
+    }
+    
+    function updatePatternUI() {
+      ['kick', 'snare', 'hihat'].forEach(track => {
+        const steps = document.querySelectorAll(`#${track}-steps .step`);
+        patterns[track].forEach((active, i) => {
+          steps[i].classList.toggle('active', active);
+        });
+      });
+    }
+    
+    // Load pattern from URL
+    function loadFromHash() {
+      if (window.location.hash) {
+        try {
+          const data = JSON.parse(atob(window.location.hash.substring(1)));
+          Object.assign(patterns, data);
+          updatePatternUI();
+        } catch(e) {}
+      }
+    }
+    
+    // Initialize
+    initUI();
+    loadFromHash();
+    
+    // Stop on visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && isPlaying) stop();
+    });
+  })();
+  </script>
+</body>
+</html>

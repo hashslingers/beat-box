@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeatBox Pro - Enhanced Pattern Editor Mockup</title>
+  <style>
+    /* Enhanced Design System - Building on Current Aesthetic */
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --panel3: #374151;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --text-bright: #f8fafc;
+      --accent: #f59e0b;
+      --accent-dim: #d97706;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --purple: #8b5cf6;
+      --blue: #3b82f6;
+      --step-size: 56px;
+      --border-radius: 12px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+      min-height: 100vh;
+    }
+
+    .mockup-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .mockup-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .mockup-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .mockup-subtitle {
+      color: var(--text-dim);
+      font-size: 16px;
+    }
+
+    /* Enhanced Pattern Editor Layout */
+    .pattern-editor {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .pattern-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .pattern-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .pattern-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .pattern-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: var(--panel3);
+      border-color: var(--accent-dim);
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .btn.primary:hover {
+      background: var(--accent-dim);
+    }
+
+    /* Advanced Pattern Grid */
+    .pattern-grid-container {
+      background: var(--panel2);
+      border-radius: var(--border-radius);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .grid-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .length-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .length-input {
+      background: var(--panel3);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      width: 80px;
+      font-size: 14px;
+    }
+
+    .zoom-control {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      background: var(--panel3);
+      border: none;
+      color: var(--text);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .zoom-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Enhanced Step Grid */
+    .step-grid {
+      display: grid;
+      gap: 2px;
+      margin-bottom: 16px;
+    }
+
+    .grid-16 { grid-template-columns: repeat(16, 1fr); }
+    .grid-32 { grid-template-columns: repeat(32, 1fr); }
+
+    .track-row {
+      display: contents;
+    }
+
+    .track-label {
+      grid-column: 1;
+      background: var(--panel3);
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 6px;
+      margin-bottom: 2px;
+    }
+
+    .track-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .track-btn {
+      width: 20px;
+      height: 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .mute-btn {
+      background: var(--panel2);
+      color: var(--text-dim);
+    }
+
+    .mute-btn.active {
+      background: var(--warning);
+      color: var(--bg);
+    }
+
+    .solo-btn {
+      background: var(--panel2);
+      color: var(--text-dim);
+    }
+
+    .solo-btn.active {
+      background: var(--success);
+      color: var(--bg);
+    }
+
+    .step {
+      aspect-ratio: 1;
+      border: 1px solid var(--panel3);
+      background: var(--panel);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      transition: var(--transition);
+      min-height: 32px;
+    }
+
+    .step:hover {
+      border-color: var(--accent-dim);
+      background: var(--panel2);
+    }
+
+    .step.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .step.playing {
+      outline: 2px solid var(--text-bright);
+      outline-offset: 2px;
+      animation: pulse 0.15s ease-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* Velocity Indicators */
+    .step.active::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      right: 2px;
+      height: 3px;
+      background: var(--bg);
+      border-radius: 2px;
+      opacity: 0.8;
+    }
+
+    .step.vel-low::after { width: 25%; }
+    .step.vel-mid::after { width: 50%; }
+    .step.vel-high::after { width: 75%; }
+    .step.vel-max::after { width: 100%; }
+
+    /* Beat Markers */
+    .beat-markers {
+      display: grid;
+      gap: 2px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .beat-marker {
+      text-align: center;
+      padding: 4px;
+    }
+
+    .beat-marker.strong {
+      color: var(--text-bright);
+      font-weight: 600;
+    }
+
+    /* Track Types */
+    .kick-row .step.active { background: #ef4444; border-color: #ef4444; }
+    .snare-row .step.active { background: var(--accent); border-color: var(--accent); }
+    .hihat-row .step.active { background: var(--blue); border-color: var(--blue); }
+    .perc-row .step.active { background: var(--purple); border-color: var(--purple); }
+    .bass-row .step.active { background: var(--success); border-color: var(--success); }
+
+    /* Pattern Variations */
+    .variation-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .variation-tab {
+      padding: 8px 12px;
+      background: var(--panel3);
+      border: none;
+      color: var(--text-dim);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: var(--transition);
+    }
+
+    .variation-tab.active {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Advanced Controls Panel */
+    .advanced-controls {
+      background: var(--panel2);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-top: 16px;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .control-group {
+      background: var(--panel3);
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    .control-label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-bright);
+    }
+
+    .control-input {
+      width: 100%;
+      background: var(--panel);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .slider-container {
+      margin-top: 8px;
+    }
+
+    .slider {
+      width: 100%;
+      height: 6px;
+      background: var(--panel);
+      border-radius: 3px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .value-display {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .pattern-editor {
+        padding: 16px;
+      }
+      
+      .editor-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .grid-controls {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Status Indicators */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--panel2);
+      border-radius: var(--border-radius);
+      margin-top: 16px;
+      font-size: 14px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .status-dot.warning { background: var(--warning); }
+    .status-dot.error { background: var(--error); }
+  </style>
+</head>
+<body>
+  <div class="mockup-container">
+    <div class="mockup-header">
+      <h1 class="mockup-title">BeatBox Pro: Enhanced Pattern Editor</h1>
+      <p class="mockup-subtitle">Iterative Design - Advanced Pattern Editing with Guitar Player Workflow</p>
+    </div>
+
+    <div class="pattern-editor">
+      <div class="editor-header">
+        <div class="pattern-info">
+          <h2 class="pattern-title">Pattern A1</h2>
+          <div class="pattern-meta">
+            <span>32 Steps</span>
+            <span>•</span>
+            <span>120 BPM</span>
+            <span>•</span>
+            <span>4/4</span>
+          </div>
+        </div>
+        <div class="pattern-controls">
+          <button class="btn">
+            <span>🎲</span> Generate
+          </button>
+          <button class="btn">
+            <span>📋</span> Copy
+          </button>
+          <button class="btn primary">
+            <span>▶</span> Play
+          </button>
+        </div>
+      </div>
+
+      <div class="variation-tabs">
+        <button class="variation-tab active">A</button>
+        <button class="variation-tab">B</button>
+        <button class="variation-tab">C</button>
+        <button class="variation-tab">D</button>
+        <button class="variation-tab">+</button>
+      </div>
+
+      <div class="pattern-grid-container">
+        <div class="grid-controls">
+          <div class="length-control">
+            <label>Length:</label>
+            <input type="number" class="length-input" value="32" min="4" max="64">
+            <span>steps</span>
+          </div>
+          <div class="zoom-control">
+            <button class="zoom-btn">−</button>
+            <span>Zoom</span>
+            <button class="zoom-btn">+</button>
+          </div>
+        </div>
+
+        <div class="beat-markers grid-32">
+          <div class="beat-marker strong">1</div>
+          <div class="beat-marker">e</div>
+          <div class="beat-marker">+</div>
+          <div class="beat-marker">a</div>
+          <div class="beat-marker strong">2</div>
+          <div class="beat-marker">e</div>
+          <div class="beat-marker">+</div>
+          <div class="beat-marker">a</div>
+          <div class="beat-marker strong">3</div>
+          <div class="beat-marker">e</div>
+          <div class="beat-marker">+</div>
+          <div class="beat-marker">a</div>
+          <div class="beat-marker strong">4</div>
+          <div class="beat-marker">e</div>
+          <div class="beat-marker">+</div>
+          <div class="beat-marker">a</div>
+          <div class="beat-marker strong">1</div>
+          <div class="beat-marker">e</div>
+          <div class="beat-marker">+</div>
+          <div class="beat-marker">a</div>
+          <div class="beat-marker strong">2</div>
+          <div class="beat-marker">e</div>
+          <div class="beat-marker">+</div>
+          <div class="beat-marker">a</div>
+          <div class="beat-marker strong">3</div>
+          <div class="beat-marker">e</div>
+          <div class="beat-marker">+</div>
+          <div class="beat-marker">a</div>
+          <div class="beat-marker strong">4</div>
+          <div class="beat-marker">e</div>
+          <div class="beat-marker">+</div>
+          <div class="beat-marker">a</div>
+        </div>
+
+        <div class="step-grid grid-32">
+          <!-- Kick Track -->
+          <div class="track-row kick-row">
+            <div class="track-label">
+              Kick
+              <div class="track-controls">
+                <button class="track-btn mute-btn">M</button>
+                <button class="track-btn solo-btn">S</button>
+              </div>
+            </div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-high"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-high"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+          </div>
+
+          <!-- Snare Track -->
+          <div class="track-row snare-row">
+            <div class="track-label">
+              Snare
+              <div class="track-controls">
+                <button class="track-btn mute-btn">M</button>
+                <button class="track-btn solo-btn">S</button>
+              </div>
+            </div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+          </div>
+
+          <!-- Hi-Hat Track -->
+          <div class="track-row hihat-row">
+            <div class="track-label">
+              Hi-Hat
+              <div class="track-controls">
+                <button class="track-btn mute-btn">M</button>
+                <button class="track-btn solo-btn">S</button>
+              </div>
+            </div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step active vel-high"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step active vel-high"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step active vel-high"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step active vel-high"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+          </div>
+
+          <!-- Percussion Track -->
+          <div class="track-row perc-row">
+            <div class="track-label">
+              Perc
+              <div class="track-controls">
+                <button class="track-btn mute-btn">M</button>
+                <button class="track-btn solo-btn">S</button>
+              </div>
+            </div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-high"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step"></div>
+          </div>
+
+          <!-- Bass Track -->
+          <div class="track-row bass-row">
+            <div class="track-label">
+              Bass
+              <div class="track-controls">
+                <button class="track-btn mute-btn">M</button>
+                <button class="track-btn solo-btn">S</button>
+              </div>
+            </div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step active vel-high"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step active vel-max"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+            <div class="step active vel-high"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-mid"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step active vel-low"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="advanced-controls">
+        <div class="controls-grid">
+          <div class="control-group">
+            <div class="control-label">Swing</div>
+            <input type="range" class="slider" min="0" max="100" value="20">
+            <div class="value-display">20%</div>
+          </div>
+          <div class="control-group">
+            <div class="control-label">Humanize</div>
+            <input type="range" class="slider" min="0" max="100" value="15">
+            <div class="value-display">15%</div>
+          </div>
+          <div class="control-group">
+            <div class="control-label">Probability</div>
+            <input type="range" class="slider" min="0" max="100" value="85">
+            <div class="value-display">85%</div>
+          </div>
+          <div class="control-group">
+            <div class="control-label">Velocity Curve</div>
+            <select class="control-input">
+              <option>Linear</option>
+              <option>Exponential</option>
+              <option>Logarithmic</option>
+              <option>Custom</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span>Pattern Active</span>
+        </div>
+        <div class="status-item">
+          <span>32/32 steps</span>
+        </div>
+        <div class="status-item">
+          <span>5 tracks</span>
+        </div>
+        <div class="status-item">
+          <span>Latency: 8ms</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

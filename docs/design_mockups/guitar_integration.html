@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeatBox Pro - Guitar Integration Features</title>
+  <style>
+    /* Inherited Design System */
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --panel3: #374151;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --text-bright: #f8fafc;
+      --accent: #f59e0b;
+      --accent-dim: #d97706;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --purple: #8b5cf6;
+      --blue: #3b82f6;
+      --guitar-orange: #ff6b35;
+      --guitar-red: #e53e3e;
+      --guitar-green: #38a169;
+      --border-radius: 12px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+      min-height: 100vh;
+    }
+
+    .mockup-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .mockup-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .mockup-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .mockup-subtitle {
+      color: var(--text-dim);
+      font-size: 16px;
+    }
+
+    /* Guitar Workspace Layout */
+    .guitar-workspace {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    /* Guitar Controls Sidebar */
+    .guitar-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar-panel {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guitar-icon {
+      width: 20px;
+      height: 20px;
+      background: var(--guitar-orange);
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .guitar-icon::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 12px;
+      height: 2px;
+      background: var(--bg);
+      border-radius: 1px;
+    }
+
+    /* Tuning Reference */
+    .tuning-reference {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .string-number {
+      width: 24px;
+      height: 24px;
+      background: var(--panel2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .string-note {
+      background: var(--panel2);
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .string-note:hover {
+      background: var(--guitar-orange);
+      color: var(--bg);
+    }
+
+    .string-note.active {
+      background: var(--guitar-orange);
+      color: var(--bg);
+    }
+
+    .tuner-status {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .tuner-status.flat {
+      background: var(--error);
+    }
+
+    .tuner-status.sharp {
+      background: var(--warning);
+    }
+
+    /* Practice Mode */
+    .practice-modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .practice-btn {
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 12px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .practice-btn:hover {
+      background: var(--panel3);
+      border-color: var(--guitar-orange);
+    }
+
+    .practice-btn.active {
+      background: var(--guitar-orange);
+      color: var(--bg);
+      border-color: var(--guitar-orange);
+    }
+
+    /* Chord Progression */
+    .chord-progression {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chord-slot {
+      background: var(--panel2);
+      border: 2px dashed var(--panel3);
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chord-slot:hover {
+      border-color: var(--guitar-orange);
+      background: var(--panel3);
+    }
+
+    .chord-slot.filled {
+      background: var(--guitar-orange);
+      color: var(--bg);
+      border-style: solid;
+      border-color: var(--guitar-orange);
+      font-weight: 600;
+    }
+
+    .chord-name {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .chord-duration {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    /* Main Guitar Panel */
+    .guitar-main {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .main-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .guitar-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .control-btn {
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-btn:hover {
+      background: var(--panel3);
+      border-color: var(--guitar-orange);
+    }
+
+    .control-btn.primary {
+      background: var(--guitar-orange);
+      color: var(--bg);
+      border-color: var(--guitar-orange);
+    }
+
+    /* Strum Pattern Visualization */
+    .strum-pattern {
+      background: var(--panel2);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .pattern-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .pattern-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .pattern-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pattern-btn {
+      background: var(--panel3);
+      border: none;
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: var(--transition);
+    }
+
+    .pattern-btn:hover {
+      background: var(--guitar-orange);
+      color: var(--bg);
+    }
+
+    /* Strum Grid */
+    .strum-grid {
+      display: grid;
+      grid-template-columns: auto repeat(16, 1fr);
+      gap: 4px;
+      align-items: center;
+    }
+
+    .strum-label {
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px;
+      color: var(--text-bright);
+    }
+
+    .strum-cell {
+      aspect-ratio: 1;
+      background: var(--panel3);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .strum-cell:hover {
+      background: var(--guitar-orange);
+    }
+
+    .strum-cell.down {
+      background: var(--guitar-orange);
+      color: var(--bg);
+    }
+
+    .strum-cell.up {
+      background: var(--guitar-green);
+      color: var(--bg);
+    }
+
+    .strum-cell.mute {
+      background: var(--guitar-red);
+      color: var(--bg);
+    }
+
+    .strum-symbol {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    /* Chord Chart Display */
+    .chord-chart {
+      background: var(--panel2);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .chord-display {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 16px;
+    }
+
+    .chord-diagram {
+      background: var(--panel3);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .chord-diagram-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-bright);
+    }
+
+    .fretboard {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: 2px;
+      width: 80px;
+      height: 96px;
+      margin: 0 auto;
+      background: var(--panel);
+      border-radius: 4px;
+      padding: 4px;
+    }
+
+    .fret {
+      background: var(--panel2);
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .fret.pressed {
+      background: var(--guitar-orange);
+    }
+
+    .fret.pressed::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: var(--bg);
+      border-radius: 50%;
+    }
+
+    /* Guitar Ecosystem Integration */
+    .ecosystem-panel {
+      grid-column: 1 / -1;
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-top: 24px;
+    }
+
+    .ecosystem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .ecosystem-section {
+      background: var(--panel2);
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid var(--guitar-orange);
+    }
+
+    .ecosystem-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-bright);
+    }
+
+    .ecosystem-features {
+      list-style: none;
+      padding: 0;
+    }
+
+    .ecosystem-features li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .feature-icon {
+      width: 16px;
+      height: 16px;
+      background: var(--guitar-orange);
+      border-radius: 2px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .guitar-workspace {
+        grid-template-columns: 1fr;
+      }
+      
+      .guitar-sidebar {
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+      }
+      
+      .guitar-controls {
+        justify-content: center;
+      }
+      
+      .strum-grid {
+        grid-template-columns: auto repeat(8, 1fr);
+      }
+      
+      .chord-display {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .practice-modes {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Animation for Playing State */
+    .playing-chord {
+      animation: chord-pulse 0.5s ease-out;
+    }
+
+    @keyframes chord-pulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.7);
+      }
+      70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(255, 107, 53, 0);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 107, 53, 0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-container">
+    <div class="mockup-header">
+      <h1 class="mockup-title">BeatBox Pro: Guitar Integration Features</h1>
+      <p class="mockup-subtitle">Specialized Tools for Guitar Players and Music Practice</p>
+    </div>
+
+    <div class="guitar-workspace">
+      <!-- Guitar Controls Sidebar -->
+      <div class="guitar-sidebar">
+        <!-- Tuning Reference -->
+        <div class="sidebar-panel">
+          <h3 class="panel-title">
+            <div class="guitar-icon"></div>
+            Tuning Reference
+          </h3>
+          <div class="tuning-reference">
+            <div class="string-number">1</div>
+            <div class="string-note active">E</div>
+            <div class="tuner-status"></div>
+          </div>
+          <div class="tuning-reference">
+            <div class="string-number">2</div>
+            <div class="string-note">B</div>
+            <div class="tuner-status"></div>
+          </div>
+          <div class="tuning-reference">
+            <div class="string-number">3</div>
+            <div class="string-note">G</div>
+            <div class="tuner-status"></div>
+          </div>
+          <div class="tuning-reference">
+            <div class="string-number">4</div>
+            <div class="string-note">D</div>
+            <div class="tuner-status"></div>
+          </div>
+          <div class="tuning-reference">
+            <div class="string-number">5</div>
+            <div class="string-note">A</div>
+            <div class="tuner-status flat"></div>
+          </div>
+          <div class="tuning-reference">
+            <div class="string-number">6</div>
+            <div class="string-note">E</div>
+            <div class="tuner-status"></div>
+          </div>
+        </div>
+
+        <!-- Practice Modes -->
+        <div class="sidebar-panel">
+          <h3 class="panel-title">Practice Mode</h3>
+          <div class="practice-modes">
+            <button class="practice-btn active">Chord Practice</button>
+            <button class="practice-btn">Strum Patterns</button>
+            <button class="practice-btn">Scale Practice</button>
+            <button class="practice-btn">Rhythm Guitar</button>
+          </div>
+        </div>
+
+        <!-- Chord Progression -->
+        <div class="sidebar-panel">
+          <h3 class="panel-title">Chord Progression</h3>
+          <div class="chord-progression">
+            <div class="chord-slot filled playing-chord">
+              <div>
+                <div class="chord-name">Cmaj</div>
+                <div class="chord-duration">4 beats</div>
+              </div>
+            </div>
+            <div class="chord-slot filled">
+              <div>
+                <div class="chord-name">Am</div>
+                <div class="chord-duration">4 beats</div>
+              </div>
+            </div>
+            <div class="chord-slot filled">
+              <div>
+                <div class="chord-name">F</div>
+                <div class="chord-duration">4 beats</div>
+              </div>
+            </div>
+            <div class="chord-slot filled">
+              <div>
+                <div class="chord-name">G</div>
+                <div class="chord-duration">4 beats</div>
+              </div>
+            </div>
+            <div class="chord-slot">
+              + Add Chord
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Guitar Panel -->
+      <div class="guitar-main">
+        <div class="main-header">
+          <h2 class="main-title">Guitar Practice Studio</h2>
+          <div class="guitar-controls">
+            <button class="control-btn">
+              🎯 Auto-Tune
+            </button>
+            <button class="control-btn">
+              📊 Analytics
+            </button>
+            <button class="control-btn primary">
+              ▶ Practice
+            </button>
+          </div>
+        </div>
+
+        <!-- Strum Pattern Visualization -->
+        <div class="strum-pattern">
+          <div class="pattern-header">
+            <h3 class="pattern-title">Strum Pattern</h3>
+            <div class="pattern-controls">
+              <button class="pattern-btn">Clear</button>
+              <button class="pattern-btn">Random</button>
+              <button class="pattern-btn">Save</button>
+            </div>
+          </div>
+          <div class="strum-grid">
+            <div class="strum-label">Down</div>
+            <div class="strum-cell down"><span class="strum-symbol">↓</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell down"><span class="strum-symbol">↓</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell down"><span class="strum-symbol">↓</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell down"><span class="strum-symbol">↓</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell down"><span class="strum-symbol">↓</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell down"><span class="strum-symbol">↓</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell down"><span class="strum-symbol">↓</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell down"><span class="strum-symbol">↓</span></div>
+            <div class="strum-cell"></div>
+
+            <div class="strum-label">Up</div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell up"><span class="strum-symbol">↑</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell up"><span class="strum-symbol">↑</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell up"><span class="strum-symbol">↑</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell up"><span class="strum-symbol">↑</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell up"><span class="strum-symbol">↑</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell up"><span class="strum-symbol">↑</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell up"><span class="strum-symbol">↑</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell up"><span class="strum-symbol">↑</span></div>
+
+            <div class="strum-label">Mute</div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell mute"><span class="strum-symbol">×</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell mute"><span class="strum-symbol">×</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell mute"><span class="strum-symbol">×</span></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell"></div>
+            <div class="strum-cell mute"><span class="strum-symbol">×</span></div>
+            <div class="strum-cell"></div>
+          </div>
+        </div>
+
+        <!-- Chord Chart Display -->
+        <div class="chord-chart">
+          <div class="pattern-header">
+            <h3 class="pattern-title">Current Chords</h3>
+            <div class="pattern-controls">
+              <button class="pattern-btn">Library</button>
+              <button class="pattern-btn">Suggest</button>
+            </div>
+          </div>
+          <div class="chord-display">
+            <div class="chord-diagram">
+              <div class="chord-diagram-title">C Major</div>
+              <div class="fretboard">
+                <div class="fret"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+              </div>
+            </div>
+            <div class="chord-diagram">
+              <div class="chord-diagram-title">A Minor</div>
+              <div class="fretboard">
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret pressed"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+              </div>
+            </div>
+            <div class="chord-diagram">
+              <div class="chord-diagram-title">F Major</div>
+              <div class="fretboard">
+                <div class="fret pressed"></div>
+                <div class="fret pressed"></div>
+                <div class="fret pressed"></div>
+                <div class="fret pressed"></div>
+                <div class="fret pressed"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret pressed"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+              </div>
+            </div>
+            <div class="chord-diagram">
+              <div class="chord-diagram-title">G Major</div>
+              <div class="fretboard">
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret pressed"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+                <div class="fret"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Guitar Ecosystem Integration -->
+    <div class="ecosystem-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Guitar Instruction Tool Ecosystem Integration</h2>
+      </div>
+
+      <div class="ecosystem-grid">
+        <div class="ecosystem-section">
+          <h3 class="ecosystem-title">Lesson Integration</h3>
+          <ul class="ecosystem-features">
+            <li><div class="feature-icon"></div>Sync with lesson progress</li>
+            <li><div class="feature-icon"></div>Practice backing tracks</li>
+            <li><div class="feature-icon"></div>Skill level adaptation</li>
+            <li><div class="feature-icon"></div>Progress analytics</li>
+          </ul>
+        </div>
+
+        <div class="ecosystem-section">
+          <h3 class="ecosystem-title">Chord Library</h3>
+          <ul class="ecosystem-features">
+            <li><div class="feature-icon"></div>Interactive chord diagrams</li>
+            <li><div class="feature-icon"></div>Audio playback for each chord</li>
+            <li><div class="feature-icon"></div>Alternative fingerings</li>
+            <li><div class="feature-icon"></div>Chord progression suggestions</li>
+          </ul>
+        </div>
+
+        <div class="ecosystem-section">
+          <h3 class="ecosystem-title">Practice Tools</h3>
+          <ul class="ecosystem-features">
+            <li><div class="feature-icon"></div>Automatic tempo adjustment</li>
+            <li><div class="feature-icon"></div>Loop sections for practice</li>
+            <li><div class="feature-icon"></div>Strum pattern trainer</li>
+            <li><div class="feature-icon"></div>Timing accuracy feedback</li>
+          </ul>
+        </div>
+
+        <div class="ecosystem-section">
+          <h3 class="ecosystem-title">Performance Features</h3>
+          <ul class="ecosystem-features">
+            <li><div class="feature-icon"></div>Live performance mode</li>
+            <li><div class="feature-icon"></div>Song structure navigation</li>
+            <li><div class="feature-icon"></div>Real-time chord detection</li>
+            <li><div class="feature-icon"></div>Ensemble playing support</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

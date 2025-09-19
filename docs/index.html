@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeatBox Pro - Web-based Music Production Platform</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --text-bright: #f8fafc;
+      --accent: #f59e0b;
+      --accent-dim: #d97706;
+      --border-radius: 12px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .logo {
+      font-size: 48px;
+      font-weight: 900;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .tagline {
+      font-size: 20px;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    .description {
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .app-card {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      transition: var(--transition);
+      border: 1px solid var(--panel2);
+    }
+
+    .app-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      border-color: var(--accent);
+    }
+
+    .app-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .app-description {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .app-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: var(--bg);
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: var(--transition);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .app-link:hover {
+      background: var(--accent-dim);
+      transform: translateY(-1px);
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .status-badge.beta {
+      background: #3b82f6;
+    }
+
+    .status-badge.concept {
+      background: #8b5cf6;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 32px 0;
+      border-top: 1px solid var(--panel2);
+      margin-top: 48px;
+    }
+
+    .footer-text {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    .github-link {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .github-link:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      .apps-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .container {
+        padding: 24px 16px;
+      }
+
+      .logo {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="logo">BeatBox Pro</h1>
+      <p class="tagline">Web-based Music Production Platform</p>
+      <p class="description">
+        From simple drum sequencer to comprehensive collaborative music creation tool. 
+        Built with Web Audio API for real-time audio synthesis and mobile-first design.
+      </p>
+    </div>
+
+    <div class="apps-grid">
+      <!-- Main MVP -->
+      <div class="app-card">
+        <div class="status-badge">Main MVP</div>
+        <h2 class="app-title">Guitar Drone & Beats</h2>
+        <p class="app-description">
+          The flagship application combining an 8-step drum sequencer with guitar drone synthesizer. 
+          Features real-time audio synthesis, pattern sharing, and mobile-responsive design.
+        </p>
+        <a href="Guitar Drone & Beats – Mobile Ready.html" class="app-link">
+          Launch App →
+        </a>
+      </div>
+
+      <!-- Design Mockups -->
+      <div class="app-card">
+        <div class="status-badge concept">Design Gallery</div>
+        <h2 class="app-title">Design Mockups</h2>
+        <p class="app-description">
+          Interactive gallery showcasing the evolution of BeatBox Pro's interface design. 
+          Explore advanced features and professional workflows planned for future versions.
+        </p>
+        <a href="design_mockups/" class="app-link">
+          View Gallery →
+        </a>
+      </div>
+
+      <!-- Minimal Version -->
+      <div class="app-card">
+        <div class="status-badge beta">Minimal</div>
+        <h2 class="app-title">BeatBox Minimal</h2>
+        <p class="app-description">
+          Clean, minimal drum sequencer focusing on essential functionality. 
+          Perfect for quick beat creation with a streamlined interface.
+        </p>
+        <a href="BeatBox_Minimal.html" class="app-link">
+          Launch App →
+        </a>
+      </div>
+
+      <!-- Pro Minimal -->
+      <div class="app-card">
+        <div class="status-badge beta">Enhanced</div>
+        <h2 class="app-title">BeatBox Pro Minimal</h2>
+        <p class="app-description">
+          Enhanced version with advanced mobile interactions, gesture support, 
+          and haptic feedback for professional music creation on touch devices.
+        </p>
+        <a href="BeatBox_Pro_Minimal.html" class="app-link">
+          Launch App →
+        </a>
+      </div>
+
+      <!-- Pro Mobile -->
+      <div class="app-card">
+        <div class="status-badge beta">Mobile</div>
+        <h2 class="app-title">BeatBox Pro Mobile</h2>
+        <p class="app-description">
+          Mobile-optimized version with touch-friendly controls and performance optimizations 
+          for creating music on phones and tablets.
+        </p>
+        <a href="BeatBox_Pro_Mobile.html" class="app-link">
+          Launch App →
+        </a>
+      </div>
+
+      <!-- Volume Controls -->
+      <div class="app-card">
+        <div class="status-badge concept">UI Mockup</div>
+        <h2 class="app-title">Volume Control Mockups</h2>
+        <p class="app-description">
+          Design explorations for advanced volume and mixing controls. 
+          Showcases professional audio interface concepts for the full platform.
+        </p>
+        <a href="Volume_Control_Mockups.html" class="app-link">
+          View Mockup →
+        </a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p class="footer-text">
+        BeatBox Pro - Open source music production platform | 
+        <a href="https://github.com/hashslingers/beat-box" class="github-link">View on GitHub</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -9,7 +9,8 @@ BeatBox Pro is a web-based music production platform starting from a simple drum
 ## Current State
 
 - **MVP Status**: Functional single-file HTML application
-- **Location**: `initial/Guitar Drone & Beats – Mobile Ready.html`
+- **Location**: `docs/Guitar Drone & Beats – Mobile Ready.html`
+- **GitHub Pages**: https://hashslingers.github.io/beat-box/
 - **Technology**: Vanilla JavaScript + Web Audio API
 - **Features**: 8-step drum sequencer, guitar drone synth, mobile-responsive
 
@@ -17,13 +18,17 @@ BeatBox Pro is a web-based music production platform starting from a simple drum
 
 ### Testing the Application
 ```bash
-# Run the current MVP
-open "initial/Guitar Drone & Beats – Mobile Ready.html"
+# Run the current MVP locally
+open "docs/Guitar Drone & Beats – Mobile Ready.html"
+
+# Or access online via GitHub Pages
+open "https://hashslingers.github.io/beat-box/Guitar%20Drone%20&%20Beats%20%E2%80%93%20Mobile%20Ready.html"
 ```
 
 ### Key Files
 - `Product_Requirements_Document.md` - Complete product vision and technical roadmap
-- `initial/Guitar Drone & Beats – Mobile Ready.html` - Current working MVP
+- `docs/Guitar Drone & Beats – Mobile Ready.html` - Current working MVP
+- `docs/design_mockups/` - UI/UX design mockups and gallery
 - `README.md` - Project overview and quick start guide
 - `.github/workflows/claude.yml` - Claude Code integration for GitHub issues/PRs
 - `.github/workflows/claude-code-review.yml` - Automated PR reviews by Claude

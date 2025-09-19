@@ -4,12 +4,25 @@ A web-based drum sequencer and guitar drone synthesizer evolving into a comprehe
 
 ## Quick Start
 
-**Run the current MVP:**
-```bash
-open "initial/Guitar Drone & Beats – Mobile Ready.html"
-```
+**Option 1: GitHub Pages (Recommended)**
+Access the live applications online:
+- [Guitar Drone & Beats (Main MVP)](https://hashslingers.github.io/beat-box/Guitar%20Drone%20&%20Beats%20%E2%80%93%20Mobile%20Ready.html)
+- [Design Mockups Gallery](https://hashslingers.github.io/beat-box/design_mockups/)
+- [All Applications](https://hashslingers.github.io/beat-box/)
 
-Or simply double-click the HTML file to open it in your browser.
+**Option 2: Local Development**
+```bash
+# Clone the repository
+git clone https://github.com/hashslingers/beat-box.git
+cd beat-box
+
+# Open the main MVP
+open "docs/Guitar Drone & Beats – Mobile Ready.html"
+
+# Or serve locally with any HTTP server
+python3 -m http.server 8000
+# Then visit http://localhost:8000/docs/
+```
 
 ## Current Features (MVP v1.0)
 
@@ -33,9 +46,24 @@ Or simply double-click the HTML file to open it in your browser.
 ```
 beat-box/
 ├── Product_Requirements_Document.md  # Comprehensive product vision & roadmap
-├── initial/
-│   └── Guitar Drone & Beats – Mobile Ready.html  # Current MVP
-└── README.md  # This file
+├── docs/                             # GitHub Pages site (static web assets)
+│   ├── Guitar Drone & Beats – Mobile Ready.html  # Current MVP
+│   ├── BeatBox_Minimal.html         # Minimal drum sequencer
+│   ├── BeatBox_Pro_Minimal.html     # Enhanced version
+│   ├── BeatBox_Pro_Mobile.html      # Mobile-optimized version
+│   ├── Design_Mockups.html          # UI design mockups
+│   ├── Volume_Control_Mockups.html  # Volume control designs
+│   └── design_mockups/              # Interactive design gallery
+│       ├── index.html               # Design mockups gallery
+│       ├── enhanced_pattern_editor.html
+│       ├── rhythm_controls.html
+│       ├── guitar_integration.html
+│       ├── collaboration_interface.html
+│       ├── mobile_interactions.html
+│       ├── audio_controls.html
+│       └── design_documentation.md
+├── initial/                         # Original development files
+└── README.md                        # This file
 ```
 
 ## Development Roadmap

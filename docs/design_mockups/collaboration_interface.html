@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeatBox Pro - Collaborative Music Creation</title>
+  <style>
+    /* Inherited Design System */
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --panel3: #374151;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --text-bright: #f8fafc;
+      --accent: #f59e0b;
+      --accent-dim: #d97706;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --purple: #8b5cf6;
+      --blue: #3b82f6;
+      --pink: #ec4899;
+      --cyan: #06b6d4;
+      --lime: #84cc16;
+      --collab-user1: #3b82f6;
+      --collab-user2: #ec4899;
+      --collab-user3: #10b981;
+      --collab-user4: #f59e0b;
+      --border-radius: 12px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+      min-height: 100vh;
+    }
+
+    .mockup-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .mockup-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .mockup-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .mockup-subtitle {
+      color: var(--text-dim);
+      font-size: 16px;
+    }
+
+    /* Collaboration Layout */
+    .collaboration-workspace {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    /* Main Collaboration Area */
+    .main-collab-area {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .collab-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--panel3);
+    }
+
+    .session-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .session-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .session-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--success);
+      color: var(--bg);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse-collab 1.5s infinite;
+    }
+
+    @keyframes pulse-collab {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .collab-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .collab-btn {
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .collab-btn:hover {
+      background: var(--panel3);
+      border-color: var(--accent);
+    }
+
+    .collab-btn.primary {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .collab-btn.record {
+      background: var(--error);
+      color: var(--text-bright);
+      border-color: var(--error);
+    }
+
+    .collab-btn.record.active {
+      animation: record-pulse 1s infinite;
+    }
+
+    @keyframes record-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+
+    /* Real-time Pattern Editor */
+    .realtime-editor {
+      background: var(--panel2);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      flex: 1;
+    }
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .editor-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .track-ownership {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ownership-indicator {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 2px solid var(--panel3);
+      position: relative;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .ownership-indicator.user1 { 
+      background: var(--collab-user1); 
+      border-color: var(--collab-user1);
+    }
+    .ownership-indicator.user2 { 
+      background: var(--collab-user2); 
+      border-color: var(--collab-user2);
+    }
+    .ownership-indicator.user3 { 
+      background: var(--collab-user3); 
+      border-color: var(--collab-user3);
+    }
+    .ownership-indicator.user4 { 
+      background: var(--collab-user4); 
+      border-color: var(--collab-user4);
+    }
+
+    .ownership-indicator.editing {
+      animation: editing-pulse 0.8s infinite;
+    }
+
+    @keyframes editing-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    /* Collaborative Pattern Grid */
+    .collab-pattern-grid {
+      display: grid;
+      grid-template-columns: auto repeat(16, 1fr);
+      gap: 2px;
+      margin-bottom: 16px;
+    }
+
+    .collab-track-label {
+      background: var(--panel3);
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 6px;
+      margin-bottom: 2px;
+      position: relative;
+    }
+
+    .track-owner-badge {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      border: 2px solid var(--panel);
+    }
+
+    .collab-step {
+      aspect-ratio: 1;
+      border: 1px solid var(--panel3);
+      background: var(--panel);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      transition: var(--transition);
+      min-height: 32px;
+    }
+
+    .collab-step:hover {
+      border-color: var(--accent);
+      background: var(--panel2);
+    }
+
+    .collab-step.active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .collab-step.user1.active { background: var(--collab-user1); border-color: var(--collab-user1); }
+    .collab-step.user2.active { background: var(--collab-user2); border-color: var(--collab-user2); }
+    .collab-step.user3.active { background: var(--collab-user3); border-color: var(--collab-user3); }
+    .collab-step.user4.active { background: var(--collab-user4); border-color: var(--collab-user4); }
+
+    .collab-step.editing {
+      outline: 2px solid var(--text-bright);
+      outline-offset: 2px;
+      animation: step-editing 0.5s infinite;
+    }
+
+    @keyframes step-editing {
+      0%, 100% { outline-opacity: 1; }
+      50% { outline-opacity: 0.3; }
+    }
+
+    /* User Cursors */
+    .user-cursor {
+      position: absolute;
+      width: 2px;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0.8;
+    }
+
+    .user-cursor::before {
+      content: attr(data-user);
+      position: absolute;
+      top: -20px;
+      left: -8px;
+      background: currentColor;
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .cursor-user1 { background: var(--collab-user1); color: var(--collab-user1); }
+    .cursor-user2 { background: var(--collab-user2); color: var(--collab-user2); }
+    .cursor-user3 { background: var(--collab-user3); color: var(--collab-user3); }
+
+    /* Collaboration Sidebar */
+    .collab-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar-panel {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Active Users Panel */
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--panel2);
+      border-radius: 8px;
+      transition: var(--transition);
+    }
+
+    .user-item:hover {
+      background: var(--panel3);
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--panel3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-bright);
+      position: relative;
+    }
+
+    .user-avatar.user1 { background: var(--collab-user1); }
+    .user-avatar.user2 { background: var(--collab-user2); }
+    .user-avatar.user3 { background: var(--collab-user3); }
+    .user-avatar.user4 { background: var(--collab-user4); }
+
+    .user-status {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--panel);
+      background: var(--success);
+    }
+
+    .user-status.idle { background: var(--warning); }
+    .user-status.away { background: var(--text-dim); }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 2px;
+    }
+
+    .user-activity {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .user-action-btn {
+      width: 28px;
+      height: 28px;
+      background: var(--panel3);
+      border: none;
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      font-size: 12px;
+    }
+
+    .user-action-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Chat Panel */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 300px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chat-message {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .message-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--panel3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .message-content {
+      background: var(--panel2);
+      padding: 8px 12px;
+      border-radius: 8px;
+      flex: 1;
+    }
+
+    .message-author {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .message-text {
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .message-time {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-text-input {
+      flex: 1;
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .chat-send-btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .chat-send-btn:hover {
+      background: var(--accent-dim);
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: var(--panel2);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .activity-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 2px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bg);
+      font-size: 10px;
+    }
+
+    .activity-text {
+      flex: 1;
+      color: var(--text-dim);
+    }
+
+    .activity-time {
+      color: var(--text-dim);
+      font-size: 10px;
+    }
+
+    /* Bottom Collaboration Bar */
+    .collab-bottom-bar {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .session-stats {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .stat-label {
+      color: var(--text-dim);
+    }
+
+    .share-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .collaboration-workspace {
+        grid-template-columns: 1fr;
+      }
+      
+      .collab-sidebar {
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .collab-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+      }
+      
+      .collab-controls {
+        justify-content: center;
+      }
+      
+      .collab-pattern-grid {
+        grid-template-columns: auto repeat(8, 1fr);
+      }
+      
+      .session-stats {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .share-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-container">
+    <div class="mockup-header">
+      <h1 class="mockup-title">BeatBox Pro: Collaborative Music Creation</h1>
+      <p class="mockup-subtitle">Real-time Multi-user Music Production Interface</p>
+    </div>
+
+    <div class="collaboration-workspace">
+      <!-- Main Collaboration Area -->
+      <div class="main-collab-area">
+        <div class="collab-header">
+          <div class="session-info">
+            <h2 class="session-title">Jam Session #42</h2>
+            <div class="session-status">
+              <div class="status-dot"></div>
+              Live
+            </div>
+          </div>
+          <div class="collab-controls">
+            <button class="collab-btn">
+              🎯 Sync
+            </button>
+            <button class="collab-btn record active">
+              ⏺ Record
+            </button>
+            <button class="collab-btn primary">
+              ▶ Play
+            </button>
+          </div>
+        </div>
+
+        <!-- Real-time Pattern Editor -->
+        <div class="realtime-editor">
+          <div class="editor-header">
+            <h3 class="editor-title">Collaborative Pattern Editor</h3>
+            <div class="track-ownership">
+              <div class="ownership-indicator user1" title="Alex's tracks"></div>
+              <div class="ownership-indicator user2 editing" title="Sarah's tracks"></div>
+              <div class="ownership-indicator user3" title="Mike's tracks"></div>
+              <div class="ownership-indicator user4" title="Available"></div>
+            </div>
+          </div>
+
+          <div class="collab-pattern-grid">
+            <!-- Kick Track (User 1) -->
+            <div class="collab-track-label">
+              Kick
+              <div class="track-owner-badge" style="background: var(--collab-user1);"></div>
+            </div>
+            <div class="collab-step user1 active"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1 active"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1 active"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1 active"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1"></div>
+            <div class="collab-step user1"></div>
+
+            <!-- Snare Track (User 2) -->
+            <div class="collab-track-label">
+              Snare
+              <div class="track-owner-badge" style="background: var(--collab-user2);"></div>
+            </div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2 active editing"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2 active"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+            <div class="collab-step user2"></div>
+
+            <!-- Hi-Hat Track (User 3) -->
+            <div class="collab-track-label">
+              Hi-Hat
+              <div class="track-owner-badge" style="background: var(--collab-user3);"></div>
+            </div>
+            <div class="collab-step user3 active"></div>
+            <div class="collab-step user3"></div>
+            <div class="collab-step user3 active"></div>
+            <div class="collab-step user3"></div>
+            <div class="collab-step user3 active"></div>
+            <div class="collab-step user3"></div>
+            <div class="collab-step user3 active"></div>
+            <div class="collab-step user3"></div>
+            <div class="collab-step user3 active"></div>
+            <div class="collab-step user3"></div>
+            <div class="collab-step user3 active"></div>
+            <div class="collab-step user3"></div>
+            <div class="collab-step user3 active"></div>
+            <div class="collab-step user3"></div>
+            <div class="collab-step user3 active"></div>
+            <div class="collab-step user3"></div>
+
+            <!-- Bass Track (Available) -->
+            <div class="collab-track-label">
+              Bass
+              <div class="track-owner-badge" style="background: var(--text-dim);"></div>
+            </div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+            <div class="collab-step"></div>
+          </div>
+
+          <!-- User Cursors -->
+          <div class="user-cursor cursor-user2" style="left: 320px;" data-user="Sarah"></div>
+          <div class="user-cursor cursor-user3" style="left: 450px;" data-user="Mike"></div>
+        </div>
+      </div>
+
+      <!-- Collaboration Sidebar -->
+      <div class="collab-sidebar">
+        <!-- Active Users Panel -->
+        <div class="sidebar-panel">
+          <h3 class="panel-title">
+            👥 Active Users (4)
+          </h3>
+          <div class="user-list">
+            <div class="user-item">
+              <div class="user-avatar user1">
+                A
+                <div class="user-status"></div>
+              </div>
+              <div class="user-info">
+                <div class="user-name">Alex Chen</div>
+                <div class="user-activity">Editing drums</div>
+              </div>
+              <div class="user-actions">
+                <button class="user-action-btn" title="Mute">🔇</button>
+                <button class="user-action-btn" title="Message">💬</button>
+              </div>
+            </div>
+            <div class="user-item">
+              <div class="user-avatar user2">
+                S
+                <div class="user-status"></div>
+              </div>
+              <div class="user-info">
+                <div class="user-name">Sarah Kim</div>
+                <div class="user-activity">Adding snare hits</div>
+              </div>
+              <div class="user-actions">
+                <button class="user-action-btn" title="Mute">🔊</button>
+                <button class="user-action-btn" title="Message">💬</button>
+              </div>
+            </div>
+            <div class="user-item">
+              <div class="user-avatar user3">
+                M
+                <div class="user-status"></div>
+              </div>
+              <div class="user-info">
+                <div class="user-name">Mike Rodriguez</div>
+                <div class="user-activity">Playing guitar</div>
+              </div>
+              <div class="user-actions">
+                <button class="user-action-btn" title="Mute">🔊</button>
+                <button class="user-action-btn" title="Message">💬</button>
+              </div>
+            </div>
+            <div class="user-item">
+              <div class="user-avatar user4">
+                J
+                <div class="user-status idle"></div>
+              </div>
+              <div class="user-info">
+                <div class="user-name">Jordan Lee</div>
+                <div class="user-activity">Listening</div>
+              </div>
+              <div class="user-actions">
+                <button class="user-action-btn" title="Mute">🔊</button>
+                <button class="user-action-btn" title="Message">💬</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Panel -->
+        <div class="sidebar-panel">
+          <h3 class="panel-title">
+            💬 Session Chat
+          </h3>
+          <div class="chat-container">
+            <div class="chat-messages">
+              <div class="chat-message">
+                <div class="message-avatar user1" style="background: var(--collab-user1);">A</div>
+                <div class="message-content">
+                  <div class="message-author" style="color: var(--collab-user1);">Alex</div>
+                  <div class="message-text">Let's try a more syncopated rhythm</div>
+                  <div class="message-time">2 min ago</div>
+                </div>
+              </div>
+              <div class="chat-message">
+                <div class="message-avatar user2" style="background: var(--collab-user2);">S</div>
+                <div class="message-content">
+                  <div class="message-author" style="color: var(--collab-user2);">Sarah</div>
+                  <div class="message-text">Good idea! I'll add some ghost notes</div>
+                  <div class="message-time">1 min ago</div>
+                </div>
+              </div>
+              <div class="chat-message">
+                <div class="message-avatar user3" style="background: var(--collab-user3);">M</div>
+                <div class="message-content">
+                  <div class="message-author" style="color: var(--collab-user3);">Mike</div>
+                  <div class="message-text">Can we loop this section?</div>
+                  <div class="message-time">30s ago</div>
+                </div>
+              </div>
+            </div>
+            <div class="chat-input">
+              <input type="text" class="chat-text-input" placeholder="Type a message...">
+              <button class="chat-send-btn">Send</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="sidebar-panel">
+          <h3 class="panel-title">
+            📈 Recent Activity
+          </h3>
+          <div class="activity-feed">
+            <div class="activity-item">
+              <div class="activity-icon">🎵</div>
+              <div class="activity-text">Sarah added snare on beat 5</div>
+              <div class="activity-time">Now</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🎸</div>
+              <div class="activity-text">Mike started guitar track</div>
+              <div class="activity-time">2m</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🎹</div>
+              <div class="activity-text">Alex changed tempo to 120 BPM</div>
+              <div class="activity-time">5m</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">👥</div>
+              <div class="activity-text">Jordan joined the session</div>
+              <div class="activity-time">8m</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💾</div>
+              <div class="activity-text">Auto-saved session state</div>
+              <div class="activity-time">10m</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Collaboration Bar -->
+    <div class="collab-bottom-bar">
+      <div class="session-stats">
+        <div class="stat-item">
+          <span class="stat-value">00:05:23</span>
+          <span class="stat-label">session time</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">4</span>
+          <span class="stat-label">active users</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">127</span>
+          <span class="stat-label">pattern changes</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">8ms</span>
+          <span class="stat-label">latency</span>
+        </div>
+      </div>
+      <div class="share-controls">
+        <button class="collab-btn">
+          📋 Copy Link
+        </button>
+        <button class="collab-btn">
+          📧 Invite Users
+        </button>
+        <button class="collab-btn">
+          💾 Save Session
+        </button>
+        <button class="collab-btn primary">
+          🚀 Publish
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
