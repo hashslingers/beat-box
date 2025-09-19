@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeatBox Pro - Advanced Audio Parameter Controls</title>
+  <style>
+    /* Inherited Design System */
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --panel3: #374151;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --text-bright: #f8fafc;
+      --accent: #f59e0b;
+      --accent-dim: #d97706;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --purple: #8b5cf6;
+      --blue: #3b82f6;
+      --pink: #ec4899;
+      --cyan: #06b6d4;
+      --border-radius: 12px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+      min-height: 100vh;
+    }
+
+    .mockup-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .mockup-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .mockup-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .mockup-subtitle {
+      color: var(--text-dim);
+      font-size: 16px;
+    }
+
+    /* Audio Controls Layout */
+    .audio-workspace {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    /* Mixer Panel */
+    .mixer-panel {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--panel3);
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .panel-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .panel-btn {
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+
+    .panel-btn:hover {
+      background: var(--panel3);
+      border-color: var(--accent);
+    }
+
+    .panel-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    /* Channel Strips */
+    .mixer-channels {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .channel-strip {
+      background: var(--panel2);
+      border-radius: 8px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 400px;
+    }
+
+    .channel-header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .channel-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 4px;
+    }
+
+    .channel-color {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      margin-bottom: 8px;
+    }
+
+    .kick-color { background: #ef4444; }
+    .snare-color { background: var(--accent); }
+    .hihat-color { background: var(--blue); }
+    .master-color { background: var(--purple); }
+
+    /* EQ Section */
+    .eq-section {
+      background: var(--panel3);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .eq-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-bright);
+      text-align: center;
+    }
+
+    .eq-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .eq-band {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .eq-knob {
+      width: 40px;
+      height: 40px;
+      background: var(--panel);
+      border: 2px solid var(--panel3);
+      border-radius: 50%;
+      position: relative;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .eq-knob:hover {
+      border-color: var(--accent);
+    }
+
+    .eq-knob::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 12px;
+      background: var(--accent);
+      border-radius: 1px;
+      transform-origin: bottom center;
+    }
+
+    .eq-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .eq-value {
+      font-size: 10px;
+      color: var(--text-bright);
+      font-weight: 600;
+    }
+
+    /* Vertical Faders */
+    .fader-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .fader-track {
+      width: 6px;
+      height: 200px;
+      background: var(--panel3);
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .fader-thumb {
+      position: absolute;
+      left: -6px;
+      width: 18px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 3px;
+      cursor: grab;
+      transition: var(--transition);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .fader-thumb:hover {
+      background: var(--accent-dim);
+      transform: scale(1.1);
+    }
+
+    .fader-thumb:active {
+      cursor: grabbing;
+      transform: scale(1.2);
+    }
+
+    .fader-value {
+      font-size: 12px;
+      color: var(--text-bright);
+      font-weight: 600;
+      min-height: 16px;
+    }
+
+    .fader-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      writing-mode: vertical-lr;
+      text-orientation: mixed;
+    }
+
+    /* Channel Controls */
+    .channel-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .channel-btn {
+      width: 32px;
+      height: 24px;
+      background: var(--panel3);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .channel-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .channel-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .channel-btn.mute.active {
+      background: var(--error);
+      border-color: var(--error);
+    }
+
+    .channel-btn.solo.active {
+      background: var(--warning);
+      border-color: var(--warning);
+    }
+
+    /* Effects Rack */
+    .effects-rack {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .effects-chain {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .effect-slot {
+      background: var(--panel2);
+      border: 2px dashed var(--panel3);
+      border-radius: 8px;
+      padding: 16px;
+      transition: var(--transition);
+      cursor: pointer;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .effect-slot:hover {
+      border-color: var(--accent);
+      background: var(--panel3);
+    }
+
+    .effect-slot.filled {
+      border-style: solid;
+      border-color: var(--accent);
+      background: var(--panel3);
+      cursor: default;
+    }
+
+    .effect-placeholder {
+      color: var(--text-dim);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .effect-module {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .effect-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .effect-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .effect-type {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .effect-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .effect-knob {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .mini-knob {
+      width: 32px;
+      height: 32px;
+      background: var(--panel);
+      border: 2px solid var(--panel3);
+      border-radius: 50%;
+      position: relative;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .mini-knob:hover {
+      border-color: var(--accent);
+    }
+
+    .mini-knob::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 1px;
+    }
+
+    .knob-label {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .effect-toggle {
+      width: 20px;
+      height: 20px;
+      background: var(--panel);
+      border: 2px solid var(--success);
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      transition: var(--transition);
+    }
+
+    .effect-toggle.active::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+    }
+
+    /* Master Section */
+    .master-section {
+      grid-column: 1 / -1;
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-top: 24px;
+    }
+
+    .master-controls {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+
+    /* Spectrum Analyzer */
+    .spectrum-analyzer {
+      background: var(--panel2);
+      border-radius: 8px;
+      padding: 16px;
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .spectrum-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-bright);
+    }
+
+    .spectrum-bars {
+      display: flex;
+      align-items: flex-end;
+      height: 160px;
+      gap: 2px;
+    }
+
+    .spectrum-bar {
+      flex: 1;
+      background: linear-gradient(to top, var(--success), var(--warning), var(--error));
+      border-radius: 1px 1px 0 0;
+      transition: height 0.1s ease-out;
+      min-height: 2px;
+    }
+
+    /* Master Fader */
+    .master-fader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .master-fader-track {
+      width: 12px;
+      height: 300px;
+      background: var(--panel2);
+      border-radius: 6px;
+      position: relative;
+      border: 2px solid var(--panel3);
+    }
+
+    .master-fader-thumb {
+      position: absolute;
+      left: -8px;
+      width: 28px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 4px;
+      cursor: grab;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 2px solid var(--accent-dim);
+    }
+
+    .master-fader-thumb:active {
+      cursor: grabbing;
+      transform: scale(1.1);
+    }
+
+    .master-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+
+    .master-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    /* Level Meters */
+    .level-meters {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .meter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .meter-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-bright);
+      width: 40px;
+    }
+
+    .level-meter {
+      flex: 1;
+      height: 8px;
+      background: var(--panel3);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--success), var(--warning), var(--error));
+      border-radius: 4px;
+      transition: width 0.1s ease-out;
+    }
+
+    .meter-peak {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background: var(--text-bright);
+      transition: left 0.1s ease-out;
+    }
+
+    .meter-value {
+      font-size: 10px;
+      color: var(--text-dim);
+      width: 30px;
+      text-align: right;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .audio-workspace {
+        grid-template-columns: 1fr;
+      }
+      
+      .mixer-channels {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .master-controls {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .mixer-channels {
+        grid-template-columns: 1fr;
+      }
+      
+      .effects-chain {
+        gap: 12px;
+      }
+      
+      .effect-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      
+      .spectrum-bars {
+        height: 120px;
+      }
+    }
+
+    /* Animations */
+    @keyframes level-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .meter-fill.clipping {
+      animation: level-pulse 0.2s infinite;
+    }
+
+    /* Guitar-specific indicators */
+    .guitar-mode .channel-strip {
+      border-left: 3px solid var(--success);
+    }
+
+    .guitar-mode .effect-slot.guitar-fx {
+      border-color: var(--success);
+      background: linear-gradient(135deg, var(--panel2), var(--panel3));
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-container">
+    <div class="mockup-header">
+      <h1 class="mockup-title">BeatBox Pro: Advanced Audio Parameter Controls</h1>
+      <p class="mockup-subtitle">Professional Mixing Console and Effects Processing</p>
+    </div>
+
+    <div class="audio-workspace">
+      <!-- Mixer Panel -->
+      <div class="mixer-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Mixer Console</h2>
+          <div class="panel-controls">
+            <button class="panel-btn active">4-Track</button>
+            <button class="panel-btn">8-Track</button>
+            <button class="panel-btn">16-Track</button>
+          </div>
+        </div>
+
+        <div class="mixer-channels">
+          <!-- Kick Channel -->
+          <div class="channel-strip">
+            <div class="channel-header">
+              <div class="channel-name">Kick</div>
+              <div class="channel-color kick-color"></div>
+            </div>
+
+            <div class="eq-section">
+              <div class="eq-title">3-Band EQ</div>
+              <div class="eq-controls">
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(-45deg);"></div>
+                  <div class="eq-label">HIGH</div>
+                  <div class="eq-value">+2dB</div>
+                </div>
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(0deg);"></div>
+                  <div class="eq-label">MID</div>
+                  <div class="eq-value">0dB</div>
+                </div>
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(30deg);"></div>
+                  <div class="eq-label">LOW</div>
+                  <div class="eq-value">+4dB</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="fader-section">
+              <div class="fader-track">
+                <div class="fader-thumb" style="bottom: 65%;"></div>
+              </div>
+              <div class="fader-value">-6dB</div>
+            </div>
+
+            <div class="channel-controls">
+              <div class="control-row">
+                <button class="channel-btn mute">M</button>
+                <button class="channel-btn solo">S</button>
+              </div>
+              <div class="control-row">
+                <button class="channel-btn">REC</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Snare Channel -->
+          <div class="channel-strip">
+            <div class="channel-header">
+              <div class="channel-name">Snare</div>
+              <div class="channel-color snare-color"></div>
+            </div>
+
+            <div class="eq-section">
+              <div class="eq-title">3-Band EQ</div>
+              <div class="eq-controls">
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(15deg);"></div>
+                  <div class="eq-label">HIGH</div>
+                  <div class="eq-value">+1dB</div>
+                </div>
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(-30deg);"></div>
+                  <div class="eq-label">MID</div>
+                  <div class="eq-value">-3dB</div>
+                </div>
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(0deg);"></div>
+                  <div class="eq-label">LOW</div>
+                  <div class="eq-value">0dB</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="fader-section">
+              <div class="fader-track">
+                <div class="fader-thumb" style="bottom: 55%;"></div>
+              </div>
+              <div class="fader-value">-8dB</div>
+            </div>
+
+            <div class="channel-controls">
+              <div class="control-row">
+                <button class="channel-btn mute">M</button>
+                <button class="channel-btn solo">S</button>
+              </div>
+              <div class="control-row">
+                <button class="channel-btn active">REC</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hi-Hat Channel -->
+          <div class="channel-strip">
+            <div class="channel-header">
+              <div class="channel-name">Hi-Hat</div>
+              <div class="channel-color hihat-color"></div>
+            </div>
+
+            <div class="eq-section">
+              <div class="eq-title">3-Band EQ</div>
+              <div class="eq-controls">
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(45deg);"></div>
+                  <div class="eq-label">HIGH</div>
+                  <div class="eq-value">+6dB</div>
+                </div>
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(0deg);"></div>
+                  <div class="eq-label">MID</div>
+                  <div class="eq-value">0dB</div>
+                </div>
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(-60deg);"></div>
+                  <div class="eq-label">LOW</div>
+                  <div class="eq-value">-8dB</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="fader-section">
+              <div class="fader-track">
+                <div class="fader-thumb" style="bottom: 45%;"></div>
+              </div>
+              <div class="fader-value">-10dB</div>
+            </div>
+
+            <div class="channel-controls">
+              <div class="control-row">
+                <button class="channel-btn mute">M</button>
+                <button class="channel-btn solo active">S</button>
+              </div>
+              <div class="control-row">
+                <button class="channel-btn">REC</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Master Channel -->
+          <div class="channel-strip">
+            <div class="channel-header">
+              <div class="channel-name">Master</div>
+              <div class="channel-color master-color"></div>
+            </div>
+
+            <div class="eq-section">
+              <div class="eq-title">Master EQ</div>
+              <div class="eq-controls">
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(0deg);"></div>
+                  <div class="eq-label">HIGH</div>
+                  <div class="eq-value">0dB</div>
+                </div>
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(0deg);"></div>
+                  <div class="eq-label">MID</div>
+                  <div class="eq-value">0dB</div>
+                </div>
+                <div class="eq-band">
+                  <div class="eq-knob" style="transform: rotate(0deg);"></div>
+                  <div class="eq-label">LOW</div>
+                  <div class="eq-value">0dB</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="fader-section">
+              <div class="fader-track">
+                <div class="fader-thumb" style="bottom: 75%;"></div>
+              </div>
+              <div class="fader-value">-3dB</div>
+            </div>
+
+            <div class="channel-controls">
+              <div class="control-row">
+                <button class="channel-btn">COMP</button>
+                <button class="channel-btn active">LIM</button>
+              </div>
+              <div class="control-row">
+                <button class="channel-btn">MONO</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Effects Rack -->
+      <div class="effects-rack">
+        <div class="panel-header">
+          <h2 class="panel-title">Effects Rack</h2>
+          <div class="panel-controls">
+            <button class="panel-btn">Browse</button>
+            <button class="panel-btn">Presets</button>
+            <button class="panel-btn active">Chain</button>
+          </div>
+        </div>
+
+        <div class="effects-chain">
+          <div class="effect-slot filled">
+            <div class="effect-module">
+              <div class="effect-info">
+                <div class="effect-name">Vintage Compressor</div>
+                <div class="effect-type">Dynamics</div>
+              </div>
+              <div class="effect-controls">
+                <div class="effect-knob">
+                  <div class="mini-knob" style="transform: rotate(45deg);"></div>
+                  <div class="knob-label">Ratio</div>
+                </div>
+                <div class="effect-knob">
+                  <div class="mini-knob" style="transform: rotate(-30deg);"></div>
+                  <div class="knob-label">Attack</div>
+                </div>
+                <div class="effect-knob">
+                  <div class="mini-knob" style="transform: rotate(60deg);"></div>
+                  <div class="knob-label">Release</div>
+                </div>
+                <div class="effect-toggle active"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="effect-slot filled guitar-fx">
+            <div class="effect-module">
+              <div class="effect-info">
+                <div class="effect-name">Guitar Amp Sim</div>
+                <div class="effect-type">Amplifier</div>
+              </div>
+              <div class="effect-controls">
+                <div class="effect-knob">
+                  <div class="mini-knob" style="transform: rotate(30deg);"></div>
+                  <div class="knob-label">Gain</div>
+                </div>
+                <div class="effect-knob">
+                  <div class="mini-knob" style="transform: rotate(-15deg);"></div>
+                  <div class="knob-label">Tone</div>
+                </div>
+                <div class="effect-knob">
+                  <div class="mini-knob" style="transform: rotate(0deg);"></div>
+                  <div class="knob-label">Level</div>
+                </div>
+                <div class="effect-toggle active"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="effect-slot filled">
+            <div class="effect-module">
+              <div class="effect-info">
+                <div class="effect-name">Space Reverb</div>
+                <div class="effect-type">Spatial</div>
+              </div>
+              <div class="effect-controls">
+                <div class="effect-knob">
+                  <div class="mini-knob" style="transform: rotate(90deg);"></div>
+                  <div class="knob-label">Size</div>
+                </div>
+                <div class="effect-knob">
+                  <div class="mini-knob" style="transform: rotate(45deg);"></div>
+                  <div class="knob-label">Decay</div>
+                </div>
+                <div class="effect-knob">
+                  <div class="mini-knob" style="transform: rotate(15deg);"></div>
+                  <div class="knob-label">Mix</div>
+                </div>
+                <div class="effect-toggle active"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="effect-slot">
+            <div class="effect-placeholder">
+              + Add Effect<br>
+              <small>Drag from browser or click to add</small>
+            </div>
+          </div>
+
+          <div class="effect-slot">
+            <div class="effect-placeholder">
+              + Add Effect<br>
+              <small>Up to 8 effects per chain</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Master Section -->
+    <div class="master-section">
+      <div class="panel-header">
+        <h2 class="panel-title">Master Section</h2>
+        <div class="panel-controls">
+          <button class="panel-btn">Analyzer</button>
+          <button class="panel-btn active">Meters</button>
+          <button class="panel-btn">Export</button>
+        </div>
+      </div>
+
+      <div class="master-controls">
+        <!-- Spectrum Analyzer -->
+        <div class="spectrum-analyzer">
+          <div class="spectrum-title">Frequency Spectrum</div>
+          <div class="spectrum-bars">
+            <div class="spectrum-bar" style="height: 20%;"></div>
+            <div class="spectrum-bar" style="height: 35%;"></div>
+            <div class="spectrum-bar" style="height: 45%;"></div>
+            <div class="spectrum-bar" style="height: 60%;"></div>
+            <div class="spectrum-bar" style="height: 75%;"></div>
+            <div class="spectrum-bar" style="height: 85%;"></div>
+            <div class="spectrum-bar" style="height: 70%;"></div>
+            <div class="spectrum-bar" style="height: 55%;"></div>
+            <div class="spectrum-bar" style="height: 40%;"></div>
+            <div class="spectrum-bar" style="height: 30%;"></div>
+            <div class="spectrum-bar" style="height: 25%;"></div>
+            <div class="spectrum-bar" style="height: 15%;"></div>
+            <div class="spectrum-bar" style="height: 10%;"></div>
+            <div class="spectrum-bar" style="height: 8%;"></div>
+            <div class="spectrum-bar" style="height: 5%;"></div>
+            <div class="spectrum-bar" style="height: 3%;"></div>
+            <div class="spectrum-bar" style="height: 2%;"></div>
+            <div class="spectrum-bar" style="height: 1%;"></div>
+            <div class="spectrum-bar" style="height: 1%;"></div>
+            <div class="spectrum-bar" style="height: 1%;"></div>
+          </div>
+        </div>
+
+        <!-- Master Fader -->
+        <div class="master-fader">
+          <div class="master-label">MASTER</div>
+          <div class="master-fader-track">
+            <div class="master-fader-thumb" style="bottom: 70%;"></div>
+          </div>
+          <div class="master-value">-2.5dB</div>
+        </div>
+
+        <!-- Level Meters -->
+        <div class="level-meters">
+          <div class="meter-group">
+            <div class="meter-label">L</div>
+            <div class="level-meter">
+              <div class="meter-fill" style="width: 75%;"></div>
+              <div class="meter-peak" style="left: 82%;"></div>
+            </div>
+            <div class="meter-value">-3dB</div>
+          </div>
+          <div class="meter-group">
+            <div class="meter-label">R</div>
+            <div class="level-meter">
+              <div class="meter-fill" style="width: 78%;"></div>
+              <div class="meter-peak" style="left: 85%;"></div>
+            </div>
+            <div class="meter-value">-2dB</div>
+          </div>
+          <div class="meter-group">
+            <div class="meter-label">KICK</div>
+            <div class="level-meter">
+              <div class="meter-fill" style="width: 65%;"></div>
+              <div class="meter-peak" style="left: 70%;"></div>
+            </div>
+            <div class="meter-value">-6dB</div>
+          </div>
+          <div class="meter-group">
+            <div class="meter-label">SNARE</div>
+            <div class="level-meter">
+              <div class="meter-fill" style="width: 60%;"></div>
+              <div class="meter-peak" style="left: 68%;"></div>
+            </div>
+            <div class="meter-value">-8dB</div>
+          </div>
+          <div class="meter-group">
+            <div class="meter-label">HIHAT</div>
+            <div class="level-meter">
+              <div class="meter-fill" style="width: 45%;"></div>
+              <div class="meter-peak" style="left: 52%;"></div>
+            </div>
+            <div class="meter-value">-12dB</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simulate live meter updates
+    function updateMeters() {
+      const meters = document.querySelectorAll('.meter-fill');
+      const peaks = document.querySelectorAll('.meter-peak');
+      
+      meters.forEach((meter, index) => {
+        const baseWidth = [75, 78, 65, 60, 45][index] || 50;
+        const variation = (Math.random() - 0.5) * 20;
+        const newWidth = Math.max(0, Math.min(100, baseWidth + variation));
+        meter.style.width = newWidth + '%';
+        
+        if (peaks[index]) {
+          peaks[index].style.left = (newWidth + Math.random() * 5) + '%';
+        }
+      });
+      
+      // Update spectrum analyzer
+      const bars = document.querySelectorAll('.spectrum-bar');
+      bars.forEach(bar => {
+        const currentHeight = parseInt(bar.style.height);
+        const variation = (Math.random() - 0.5) * 30;
+        const newHeight = Math.max(1, Math.min(100, currentHeight + variation));
+        bar.style.height = newHeight + '%';
+      });
+    }
+
+    // Update meters every 100ms
+    setInterval(updateMeters, 100);
+
+    // Knob interaction simulation
+    document.querySelectorAll('.eq-knob, .mini-knob').forEach(knob => {
+      knob.addEventListener('click', function() {
+        const currentRotation = this.style.transform.match(/rotate\((-?\d+)deg\)/);
+        const rotation = currentRotation ? parseInt(currentRotation[1]) : 0;
+        const newRotation = (rotation + 30) % 360;
+        this.style.transform = `rotate(${newRotation}deg)`;
+      });
+    });
+  </script>
+</body>
+</html>

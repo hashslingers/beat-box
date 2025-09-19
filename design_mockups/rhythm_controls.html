@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeatBox Pro - Advanced Rhythm Controls</title>
+  <style>
+    /* Inherited Design System */
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --panel3: #374151;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --text-bright: #f8fafc;
+      --accent: #f59e0b;
+      --accent-dim: #d97706;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --purple: #8b5cf6;
+      --blue: #3b82f6;
+      --border-radius: 12px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+      min-height: 100vh;
+    }
+
+    .mockup-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .mockup-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .mockup-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .mockup-subtitle {
+      color: var(--text-dim);
+      font-size: 16px;
+    }
+
+    /* Rhythm Control Panels */
+    .rhythm-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .control-panel {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .panel-toggle {
+      width: 48px;
+      height: 24px;
+      background: var(--panel3);
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .panel-toggle.active {
+      background: var(--accent);
+    }
+
+    .panel-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: var(--text-bright);
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+
+    .panel-toggle.active::after {
+      transform: translateX(24px);
+    }
+
+    /* Metronome Panel */
+    .metronome-display {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .bpm-display {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .time-signature {
+      font-size: 20px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    .metronome-visual {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 24px;
+      position: relative;
+      background: var(--panel2);
+      border-radius: 50%;
+      border: 3px solid var(--panel3);
+    }
+
+    .metronome-arm {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 4px;
+      height: 50px;
+      background: var(--accent);
+      border-radius: 2px;
+      transform-origin: bottom center;
+      transform: translate(-50%, -100%) rotate(0deg);
+      transition: transform 0.1s ease-out;
+      animation: metronome 0.5s infinite ease-in-out alternate;
+    }
+
+    @keyframes metronome {
+      0% { transform: translate(-50%, -100%) rotate(-20deg); }
+      100% { transform: translate(-50%, -100%) rotate(20deg); }
+    }
+
+    .tempo-controls {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .tempo-btn {
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .tempo-btn:hover {
+      background: var(--panel3);
+      border-color: var(--accent);
+    }
+
+    .tempo-input {
+      background: var(--panel2);
+      border: 2px solid var(--panel3);
+      color: var(--text-bright);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+      width: 80px;
+    }
+
+    .tap-tempo {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 16px 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: var(--transition);
+      width: 100%;
+    }
+
+    .tap-tempo:hover {
+      background: var(--accent-dim);
+    }
+
+    .tap-tempo.active {
+      transform: scale(0.95);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+    }
+
+    /* Groove Engine Panel */
+    .groove-presets {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .groove-preset {
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .groove-preset:hover {
+      background: var(--panel3);
+      border-color: var(--accent);
+    }
+
+    .groove-preset.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .groove-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .groove-param {
+      background: var(--panel2);
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    .param-label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-bright);
+    }
+
+    .param-value {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .param-slider {
+      width: 100%;
+      height: 6px;
+      background: var(--panel3);
+      border-radius: 3px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .param-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    /* Advanced Timing Panel */
+    .timing-panel {
+      grid-column: 1 / -1;
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-top: 24px;
+    }
+
+    .timing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .timing-section {
+      background: var(--panel2);
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text-bright);
+    }
+
+    /* Quantization Controls */
+    .quantize-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .quantize-btn {
+      background: var(--panel3);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .quantize-btn:hover {
+      background: var(--accent-dim);
+      color: var(--bg);
+    }
+
+    .quantize-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    /* Polyrhythm Controls */
+    .polyrhythm-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .ratio-input {
+      background: var(--panel3);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      width: 60px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .ratio-separator {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+
+    /* Sync & Latency */
+    .sync-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .sync-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse-sync 1s infinite;
+    }
+
+    @keyframes pulse-sync {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .sync-indicator.warning {
+      background: var(--warning);
+    }
+
+    .sync-indicator.error {
+      background: var(--error);
+    }
+
+    .latency-display {
+      background: var(--panel3);
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .latency-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .latency-unit {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Guitar Integration Hints */
+    .guitar-timing {
+      background: linear-gradient(135deg, var(--panel2), var(--panel3));
+      border: 1px solid var(--accent-dim);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .guitar-hint {
+      font-size: 14px;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guitar-icon {
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .rhythm-controls {
+        grid-template-columns: 1fr;
+      }
+      
+      .timing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .tempo-controls {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      
+      .groove-presets {
+        grid-template-columns: 1fr;
+      }
+      
+      .groove-controls {
+        grid-template-columns: 1fr;
+      }
+      
+      .quantize-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-container">
+    <div class="mockup-header">
+      <h1 class="mockup-title">BeatBox Pro: Advanced Rhythm Controls</h1>
+      <p class="mockup-subtitle">Sophisticated Timing and Groove Engine for Guitar-Focused Workflows</p>
+    </div>
+
+    <div class="rhythm-controls">
+      <!-- Metronome Panel -->
+      <div class="control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Metronome</h2>
+          <div class="panel-toggle active"></div>
+        </div>
+
+        <div class="metronome-display">
+          <div class="bpm-display">120</div>
+          <div class="time-signature">4/4</div>
+          <div class="metronome-visual">
+            <div class="metronome-arm"></div>
+          </div>
+        </div>
+
+        <div class="tempo-controls">
+          <button class="tempo-btn">−</button>
+          <input type="number" class="tempo-input" value="120" min="60" max="200">
+          <button class="tempo-btn">+</button>
+        </div>
+
+        <button class="tap-tempo">TAP TEMPO</button>
+
+        <div class="guitar-timing">
+          <div class="guitar-hint">
+            <div class="guitar-icon"></div>
+            <span>Optimized for guitar practice - steady pulse for chord changes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Groove Engine Panel -->
+      <div class="control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Groove Engine</h2>
+          <div class="panel-toggle active"></div>
+        </div>
+
+        <div class="groove-presets">
+          <button class="groove-preset active">Linear</button>
+          <button class="groove-preset">Swing 8th</button>
+          <button class="groove-preset">Swing 16th</button>
+          <button class="groove-preset">Shuffle</button>
+          <button class="groove-preset">Half-Time</button>
+          <button class="groove-preset">Double-Time</button>
+        </div>
+
+        <div class="groove-controls">
+          <div class="groove-param">
+            <div class="param-label">Swing</div>
+            <div class="param-value">15%</div>
+            <input type="range" class="param-slider" min="0" max="50" value="15">
+          </div>
+          <div class="groove-param">
+            <div class="param-label">Humanize</div>
+            <div class="param-value">8%</div>
+            <input type="range" class="param-slider" min="0" max="30" value="8">
+          </div>
+          <div class="groove-param">
+            <div class="param-label">Accent</div>
+            <div class="param-value">25%</div>
+            <input type="range" class="param-slider" min="0" max="50" value="25">
+          </div>
+          <div class="groove-param">
+            <div class="param-label">Feel</div>
+            <div class="param-value">Laid Back</div>
+            <input type="range" class="param-slider" min="0" max="100" value="35">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Timing Panel -->
+    <div class="timing-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Advanced Timing & Sync</h2>
+      </div>
+
+      <div class="timing-grid">
+        <!-- Quantization Section -->
+        <div class="timing-section">
+          <h3 class="section-title">Quantization</h3>
+          <div class="quantize-grid">
+            <button class="quantize-btn">1/4</button>
+            <button class="quantize-btn active">1/8</button>
+            <button class="quantize-btn">1/16</button>
+            <button class="quantize-btn">1/32</button>
+            <button class="quantize-btn">1/4T</button>
+            <button class="quantize-btn">1/8T</button>
+            <button class="quantize-btn">1/16T</button>
+            <button class="quantize-btn">OFF</button>
+          </div>
+          <div class="groove-param">
+            <div class="param-label">Quantize Strength</div>
+            <div class="param-value">85%</div>
+            <input type="range" class="param-slider" min="0" max="100" value="85">
+          </div>
+        </div>
+
+        <!-- Polyrhythm Section -->
+        <div class="timing-section">
+          <h3 class="section-title">Polyrhythm</h3>
+          <div class="polyrhythm-controls">
+            <input type="number" class="ratio-input" value="3" min="2" max="16">
+            <span class="ratio-separator">:</span>
+            <input type="number" class="ratio-input" value="4" min="2" max="16">
+          </div>
+          <div class="groove-param">
+            <div class="param-label">Cross-Rhythm Intensity</div>
+            <div class="param-value">OFF</div>
+            <input type="range" class="param-slider" min="0" max="100" value="0">
+          </div>
+        </div>
+
+        <!-- Sync & Latency Section -->
+        <div class="timing-section">
+          <h3 class="section-title">Sync & Latency</h3>
+          <div class="sync-status">
+            <div class="sync-indicator"></div>
+            <span>Internal Clock</span>
+          </div>
+          <div class="latency-display">
+            <div class="latency-value">8</div>
+            <div class="latency-unit">ms latency</div>
+          </div>
+          <div class="groove-param">
+            <div class="param-label">Latency Compensation</div>
+            <div class="param-value">0ms</div>
+            <input type="range" class="param-slider" min="-120" max="120" value="0">
+          </div>
+        </div>
+
+        <!-- Time Signature Section -->
+        <div class="timing-section">
+          <h3 class="section-title">Time Signature</h3>
+          <div class="polyrhythm-controls">
+            <input type="number" class="ratio-input" value="4" min="1" max="16">
+            <span class="ratio-separator">/</span>
+            <select class="ratio-input" style="width: auto;">
+              <option value="4">4</option>
+              <option value="8">8</option>
+              <option value="16">16</option>
+            </select>
+          </div>
+          <div class="groove-param">
+            <div class="param-label">Compound Feel</div>
+            <div class="param-value">Simple</div>
+            <input type="range" class="param-slider" min="0" max="100" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="guitar-timing">
+        <div class="guitar-hint">
+          <div class="guitar-icon"></div>
+          <span>Guitar Practice Mode: Automatic tempo ramp-up, chord change markers, and strum pattern sync</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

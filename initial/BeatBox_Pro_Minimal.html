@@ -37,6 +37,7 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       touch-action: manipulation;
+      scroll-behavior: auto;
     }
 
     .container {
@@ -92,27 +93,114 @@
       50% { opacity: 1; }
     }
 
-    /* Main Tempo Display */
+    /* Main Tempo Display with Volume Controls */
     .tempo-section {
       padding: 60px 40px;
-      text-align: center;
       border-bottom: 1px solid var(--border);
       animation: fadeIn 0.8s var(--transition) 0.1s both;
       position: relative;
     }
+    
+    .tempo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 60px;
+    }
+    
+    .vertical-volume {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .volume-value {
+      font-size: 14px;
+      font-weight: 200;
+      color: #999;
+      min-width: 35px;
+      text-align: center;
+    }
+    
+    .volume-track {
+      width: 3px;
+      height: 140px;
+      background: #111;
+      position: relative;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .volume-track:hover {
+      background: #1a1a1a;
+    }
+    
+    .volume-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(180deg, #fff, #666);
+      border-radius: 2px;
+      transition: height 0.3s;
+      pointer-events: none;
+    }
+    
+    .volume-thumb {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      pointer-events: none;
+    }
+    
+    .volume-track:hover .volume-thumb {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .volume-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      color: #999;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+    
+    .tempo-display {
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      padding: 20px;
+      border-radius: 4px;
+      user-select: none;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .tempo-display:hover {
+      background: rgba(255,255,255,0.02);
+    }
+    
+    .tempo-display:active {
+      transform: scale(0.98);
+    }
 
     .tempo-value {
-      font-size: clamp(80px, 15vw, 160px);
+      font-size: clamp(80px, 12vw, 140px);
       font-weight: 100;
       line-height: 1;
       color: var(--text);
       position: relative;
-      cursor: pointer;
       transition: transform 0.3s var(--transition);
-    }
-
-    .tempo-value:hover {
-      transform: scale(1.02);
     }
 
     .tempo-label {
@@ -122,6 +210,21 @@
       letter-spacing: 0.3em;
       color: #999;
       text-transform: uppercase;
+    }
+    
+    .tap-hint {
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #999;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .tempo-display:hover .tap-hint {
+      opacity: 1;
     }
 
     /* Play/Stop Button */
@@ -591,6 +694,22 @@
         padding: 40px 20px;
       }
       
+      .tempo-container {
+        gap: 30px;
+      }
+      
+      .vertical-volume {
+        gap: 8px;
+      }
+      
+      .volume-track {
+        height: 100px;
+      }
+      
+      .tempo-value {
+        font-size: 70px;
+      }
+      
       .play-button {
         position: static;
         transform: none;
@@ -604,6 +723,40 @@
       .track {
         grid-template-columns: 60px 1fr;
         gap: 15px;
+      }
+      
+      /* Enhanced step touch targets for mobile */
+      .step {
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 3px;
+        border-width: 1px;
+      }
+      
+      /* Improved grid spacing for easier touch */
+      .steps {
+        gap: 8px;
+        padding: 16px;
+        border-radius: 6px;
+      }
+      
+      /* Better preset button spacing */
+      .preset-btn {
+        padding: 24px 16px;
+        font-size: 10px;
+        letter-spacing: 0.05em;
+      }
+      
+      /* Optimized volume controls for touch */
+      .volume-track {
+        width: 6px;
+        height: 80px;
+      }
+      
+      .volume-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
       }
       
       .controls {
@@ -625,34 +778,99 @@
       }
     }
 
-    /* Landscape Mobile */
+    /* Landscape Mobile - Optimized for Touch */
     @media (max-width: 768px) and (orientation: landscape) {
       .tempo-section {
-        padding: 20px;
-      }
-      
-      .tempo-value {
-        font-size: 60px;
-      }
-      
-      .sequencer {
         padding: 15px;
       }
       
+      .tempo-container {
+        gap: 20px;
+      }
+      
+      .tempo-value {
+        font-size: 50px;
+      }
+      
+      .volume-track {
+        height: 60px;
+      }
+      
+      .sequencer {
+        padding: 10px;
+      }
+      
       .track {
-        margin-bottom: 15px;
+        margin-bottom: 12px;
+      }
+      
+      .steps {
+        gap: 6px;
+        padding: 12px;
+      }
+      
+      .step {
+        min-height: 36px;
+      }
+      
+      .presets {
+        margin: 0 10px 10px;
+      }
+      
+      .preset-btn {
+        padding: 16px 12px;
+        font-size: 9px;
       }
     }
 
-    /* Touch feedback */
+    /* Enhanced Touch Feedback & Performance */
     @media (hover: none) {
+      /* Reduce animations for better mobile performance */
+      * {
+        transition-duration: 0.1s !important;
+      }
+      
+      .step {
+        /* Better touch targets */
+        padding: 2px;
+        transition: all 0.05s ease-out;
+      }
+      
       .step:active {
-        transform: scale(0.95);
+        transform: scale(0.92);
+        background: #444;
+        border-color: #777;
+      }
+      
+      .step.playing {
+        /* Optimized playing animation for mobile */
+        transform: scaleY(1.1);
+        box-shadow: 0 0 8px rgba(255,255,255,0.4);
       }
       
       .preset-btn:active,
       .action-btn:active {
+        transform: scale(0.96);
+        background: rgba(255,255,255,0.1);
+      }
+      
+      .tempo-display:active {
         transform: scale(0.98);
+      }
+      
+      .volume-track:active {
+        background: #333;
+      }
+      
+      /* Disable complex animations on mobile for performance */
+      .tempo-value {
+        animation: none !important;
+      }
+      
+      /* Simpler glow effect for mobile */
+      body.performance .step.playing {
+        box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        transform: scaleY(1.15);
       }
     }
 
@@ -699,11 +917,42 @@
     </header>
 
     <section class="tempo-section">
-      <div class="tempo-value" id="tempoValue">120</div>
-      <div class="tempo-label">BPM</div>
+      <div class="tempo-container">
+        <div class="vertical-volume">
+          <div class="volume-value" id="droneVolumeValue">60%</div>
+          <div class="volume-track" id="droneVolumeTrack">
+            <div class="volume-fill" id="droneVolumeFill" style="height: 60%"></div>
+            <div class="volume-thumb" id="droneVolumeThumb" style="bottom: 60%"></div>
+          </div>
+          <div class="volume-label">DRONE</div>
+        </div>
+        
+        <div class="tempo-display" id="tempoDisplay" tabindex="-1">
+          <div class="tempo-value" id="tempoValue">120</div>
+          <div class="tempo-label">BPM</div>
+          <div class="tap-hint">TAP TO SET TEMPO</div>
+        </div>
+        
+        <div class="vertical-volume">
+          <div class="volume-value" id="drumVolumeValue">70%</div>
+          <div class="volume-track" id="drumVolumeTrack">
+            <div class="volume-fill" id="drumVolumeFill" style="height: 70%"></div>
+            <div class="volume-thumb" id="drumVolumeThumb" style="bottom: 70%"></div>
+          </div>
+          <div class="volume-label">DRUMS</div>
+        </div>
+      </div>
+      
       <button class="play-button" id="playBtn">
         <span class="play-icon"></span>
       </button>
+    </section>
+
+    <section class="presets">
+      <button class="preset-btn" id="preset1">PATTERN 01</button>
+      <button class="preset-btn" id="preset2">PATTERN 02</button>
+      <button class="preset-btn" id="preset3">PATTERN 03</button>
+      <button class="preset-btn" id="stepToggle">4/8 STEPS</button>
     </section>
 
     <section class="sequencer">
@@ -748,13 +997,6 @@
         <div class="control-value" id="drumVolValue">70%</div>
         <div class="control-label">DRUM VOL</div>
       </div>
-    </section>
-
-    <section class="presets">
-      <button class="preset-btn" id="preset1">PATTERN 01</button>
-      <button class="preset-btn" id="preset2">PATTERN 02</button>
-      <button class="preset-btn" id="preset3">PATTERN 03</button>
-      <button class="preset-btn" id="clear">CLEAR</button>
     </section>
 
     <section class="advanced">
@@ -841,11 +1083,11 @@
     let unlocked = false;
     
     // Pattern State
-    const STEPS = 8;
+    let STEPS = 8;
     const patterns = {
-      kick: new Array(STEPS).fill(false),
-      snare: new Array(STEPS).fill(false),
-      hihat: new Array(STEPS).fill(false)
+      kick: new Array(8).fill(false),
+      snare: new Array(8).fill(false),
+      hihat: new Array(8).fill(false)
     };
     
     const muted = {
@@ -1165,11 +1407,12 @@
       }
     }
     
-    // Scheduler with Swing
+    // Mobile-Optimized Scheduler with Swing
     function scheduler() {
       const ctx = audioCtx;
-      const lookaheadTime = 0.1;
-      const scheduleAheadTime = 0.1;
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const lookaheadTime = isMobile ? 0.08 : 0.1;
+      const scheduleAheadTime = isMobile ? 0.08 : 0.1;
       
       while (nextNoteTime < ctx.currentTime + scheduleAheadTime) {
         const latencyOffset = parseInt(latencySlider.value) / 1000;
@@ -1235,7 +1478,10 @@
       status.textContent = 'PLAYING';
       
       startDrone();
-      schedulerTimer = setInterval(scheduler, 25);
+      // Optimized scheduler interval for mobile performance
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const interval = isMobile ? 20 : 25;
+      schedulerTimer = setInterval(scheduler, interval);
     }
     
     function stop() {
@@ -1279,10 +1525,115 @@
       }
     }
     
-    // Initialize UI
-    function initUI() {
-      // Create step numbers
+    /*
+      VERTICAL VOLUME SLIDER IMPLEMENTATION
+      
+      Custom vertical slider controls for precise audio level adjustment.
+      
+      Design rationale:
+      - Vertical orientation mimics professional mixing consoles
+      - Positioned as "bookends" flanking the tempo display
+      - Maintains minimal aesthetic while providing easy access
+      
+      Technical implementation:
+      - Inverted Y-coordinate calculation (bottom = 100%, top = 0%)
+      - Global event listeners for smooth dragging beyond slider bounds
+      - Separate touch event handling for mobile compatibility
+      - Real-time audio parameter updates via onChange callbacks
+      
+      UX considerations:
+      - Click anywhere on track to jump to that level
+      - Drag for smooth continuous adjustment
+      - Visual feedback via fill gradient and thumb expansion
+      - Percentage values displayed above for precise control
+      
+      Cross-platform compatibility:
+      - Mouse events for desktop
+      - Touch events for mobile/tablet
+      - Unified coordinate calculation for both input types
+    */
+    function initVolumeSlider(id, initialValue, onChange) {
+      const track = $(id + 'Track');
+      const fill = $(id + 'Fill');
+      const thumb = $(id + 'Thumb');
+      const valueDisplay = $(id + 'Value');
+      
+      let isDragging = false;
+      
+      function updateSlider(e) {
+        const rect = track.getBoundingClientRect();
+        // Invert Y coordinate: bottom of track = 100%, top = 0%
+        const percent = Math.max(0, Math.min(100, 
+          Math.round((1 - (e.clientY - rect.top) / rect.height) * 100)
+        ));
+        
+        // Update visual elements
+        fill.style.height = percent + '%';
+        thumb.style.bottom = percent + '%';
+        valueDisplay.textContent = percent + '%';
+        
+        // Trigger audio parameter update
+        if (onChange) onChange(percent);
+      }
+      
+      // Desktop mouse interaction
+      track.addEventListener('mousedown', e => {
+        isDragging = true;
+        updateSlider(e);
+      });
+      
+      // Global listeners for smooth dragging
+      document.addEventListener('mousemove', e => {
+        if (isDragging) updateSlider(e);
+      });
+      
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+      
+      // Mobile touch interaction
+      track.addEventListener('touchstart', e => {
+        isDragging = true;
+        const touch = e.touches[0];
+        updateSlider(touch);
+      });
+      
+      document.addEventListener('touchmove', e => {
+        if (isDragging) {
+          const touch = e.touches[0];
+          updateSlider(touch);
+        }
+      });
+      
+      document.addEventListener('touchend', () => {
+        isDragging = false;
+      });
+    }
+    
+    // Step Count Management
+    function setStepCount(newSteps) {
+      const oldSteps = STEPS;
+      STEPS = newSteps;
+      
+      // Resize patterns
+      ['kick', 'snare', 'hihat'].forEach(track => {
+        if (newSteps < oldSteps) {
+          patterns[track] = patterns[track].slice(0, newSteps);
+        } else {
+          while (patterns[track].length < newSteps) {
+            patterns[track].push(false);
+          }
+        }
+      });
+      
+      rebuildSequencer();
+      updatePatternUI();
+    }
+    
+    function rebuildSequencer() {
+      // Update step numbers grid
       const stepNumbers = $('stepNumbers');
+      stepNumbers.innerHTML = '';
       for (let i = 0; i < STEPS; i++) {
         const number = document.createElement('div');
         number.className = 'step-number';
@@ -1290,23 +1641,131 @@
         stepNumbers.appendChild(number);
       }
       
-      // Create step buttons
+      // Update CSS grid columns for sequencer
+      const stepContainers = document.querySelectorAll('.steps, .numbers-grid');
+      stepContainers.forEach(container => {
+        container.style.gridTemplateColumns = `repeat(${STEPS}, 1fr)`;
+      });
+      
+      // Rebuild step buttons
       ['kick', 'snare', 'hihat'].forEach(track => {
         const container = $(`${track}-steps`);
+        container.innerHTML = '';
+        
         for (let i = 0; i < STEPS; i++) {
           const step = document.createElement('button');
           step.className = 'step';
           step.dataset.track = track;
           step.dataset.step = i;
-          step.addEventListener('click', e => {
+          
+          // Enhanced mobile interaction with gestures
+          let swipeStart = null;
+          let longPressTimer = null;
+          
+          const handleStepClick = (e) => {
             const t = e.currentTarget.dataset.track;
             const s = parseInt(e.currentTarget.dataset.step);
             patterns[t][s] = !patterns[t][s];
             e.currentTarget.classList.toggle('active');
-          });
+            
+            // Haptic feedback on mobile
+            if (navigator.vibrate) navigator.vibrate(15);
+          };
+          
+          // Desktop click
+          step.addEventListener('click', handleStepClick);
+          
+          // Mobile touch with gesture support
+          step.addEventListener('touchstart', e => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            swipeStart = { x: touch.clientX, y: touch.clientY, time: performance.now() };
+            
+            // Long press for pattern copy (experimental)
+            longPressTimer = setTimeout(() => {
+              const trackPattern = patterns[track].map(x => x ? '1' : '0').join('');
+              
+              // Visual feedback for copy
+              step.style.boxShadow = '0 0 20px #f59e0b';
+              setTimeout(() => step.style.boxShadow = '', 300);
+              
+              // Strong haptic feedback
+              if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+              
+              longPressTimer = null;
+            }, 800);
+            
+          }, { passive: false });
+          
+          step.addEventListener('touchmove', e => {
+            if (!swipeStart) return;
+            
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - swipeStart.x;
+            const deltaY = touch.clientY - swipeStart.y;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            // Clear long press if moved too much
+            if (distance > 10 && longPressTimer) {
+              clearTimeout(longPressTimer);
+              longPressTimer = null;
+            }
+            
+            // Horizontal swipe to clear step (experimental)
+            if (Math.abs(deltaX) > 40 && Math.abs(deltaY) < 20) {
+              if (patterns[track][i]) {
+                patterns[track][i] = false;
+                step.classList.remove('active');
+                if (navigator.vibrate) navigator.vibrate(30);
+              }
+              swipeStart = null;
+            }
+          }, { passive: false });
+          
+          step.addEventListener('touchend', e => {
+            e.preventDefault();
+            
+            if (longPressTimer) {
+              clearTimeout(longPressTimer);
+              longPressTimer = null;
+            }
+            
+            if (swipeStart) {
+              const timeDiff = performance.now() - swipeStart.time;
+              // Normal tap if short duration and minimal movement
+              if (timeDiff < 200) {
+                handleStepClick(e);
+              }
+            }
+            
+            swipeStart = null;
+          }, { passive: false });
+          
           container.appendChild(step);
         }
       });
+    }
+    
+    // Initialize UI
+    function initUI() {
+      // Initial sequencer build
+      rebuildSequencer();
+      
+      // Initialize volume sliders
+      initVolumeSlider('droneVolume', 60, value => {
+        droneGain = value / 100;
+        droneVolValue.textContent = value + '%';
+        droneVolSliderValue.textContent = value + '%';
+        updateDroneVolume();
+      });
+      
+      initVolumeSlider('drumVolume', 70, value => {
+        drumGain = value / 100;
+        drumVolValue.textContent = value + '%';
+        drumVolSliderValue.textContent = value + '%';
+      });
+      
+      // Step buttons are now created in rebuildSequencer()
       
       // Play button
       playBtn.addEventListener('click', () => {
@@ -1407,55 +1866,154 @@
         });
       });
       
-      // Preset patterns
+      // Adaptive preset patterns
       $('preset1').addEventListener('click', () => {
-        patterns.kick =  [true,false,false,false,true,false,false,false];
-        patterns.snare = [false,false,true,false,false,false,true,false];
-        patterns.hihat = [true,true,false,true,true,true,false,true];
+        if (STEPS === 4) {
+          patterns.kick =  [true,false,true,false];
+          patterns.snare = [false,true,false,true];
+          patterns.hihat = [true,false,true,false];
+        } else {
+          patterns.kick =  [true,false,false,false,true,false,false,false];
+          patterns.snare = [false,false,true,false,false,false,true,false];
+          patterns.hihat = [true,true,false,true,true,true,false,true];
+        }
         updatePatternUI();
       });
       
       $('preset2').addEventListener('click', () => {
-        patterns.kick =  [true,false,true,false,false,false,true,false];
-        patterns.snare = [false,true,false,true,false,true,false,true];
-        patterns.hihat = [true,false,true,false,true,false,true,false];
+        if (STEPS === 4) {
+          patterns.kick =  [true,false,false,true];
+          patterns.snare = [false,false,true,false];
+          patterns.hihat = [true,true,true,true];
+        } else {
+          patterns.kick =  [true,false,true,false,false,false,true,false];
+          patterns.snare = [false,true,false,true,false,true,false,true];
+          patterns.hihat = [true,false,true,false,true,false,true,false];
+        }
         updatePatternUI();
       });
       
       $('preset3').addEventListener('click', () => {
-        patterns.kick =  [true,false,false,true,false,false,true,false];
-        patterns.snare = [false,false,false,false,true,false,false,false];
-        patterns.hihat = [true,true,true,true,true,true,true,true];
+        if (STEPS === 4) {
+          patterns.kick =  [true,true,false,false];
+          patterns.snare = [false,false,false,true];
+          patterns.hihat = [false,true,false,true];
+        } else {
+          patterns.kick =  [true,false,false,true,false,false,true,false];
+          patterns.snare = [false,false,false,false,true,false,false,false];
+          patterns.hihat = [true,true,true,true,true,true,true,true];
+        }
         updatePatternUI();
       });
       
-      $('clear').addEventListener('click', () => {
-        Object.keys(patterns).forEach(track => patterns[track].fill(false));
-        updatePatternUI();
+      // Step count toggle (replaces clear button)
+      $('stepToggle').addEventListener('click', () => {
+        const newSteps = STEPS === 8 ? 4 : 8;
+        setStepCount(newSteps);
+        $('stepToggle').textContent = `${STEPS === 4 ? '8' : '4'}/${STEPS} STEPS`;
       });
       
-      // Tap tempo
+      /*
+        TAP TEMPO IMPLEMENTATION
+        
+        Enhanced tap tempo system using median-based calculation for stability.
+        
+        Key features:
+        - Uses performance.now() for high-precision timing
+        - 4-second window for tap collection (prevents stale taps)
+        - Median calculation instead of average (more stable against erratic taps)
+        - Extended BPM range (60-200) for various musical styles
+        - Immediate response after 2 taps (faster than traditional 4-tap systems)
+        - Visual feedback with scale animation on successful detection
+        
+        Why median over average:
+        - Average is sensitive to outliers (one bad tap ruins the calculation)
+        - Median finds the "middle" interval, ignoring extreme values
+        - More stable and predictable tempo detection
+        
+        Performance timing rationale:
+        - Date.now() has ~15ms resolution on some browsers
+        - performance.now() provides microsecond precision
+        - Critical for accurate rhythm detection
+      */
       let tapTimes = [];
-      $('tapTempo').addEventListener('click', () => {
-        const now = Date.now();
-        tapTimes = tapTimes.filter(t => now - t < 3000);
+      const handleTapTempo = () => {
+        const now = performance.now();
+        const cutoff = now - 4000; // 4 second rolling window
+        
+        // Remove stale taps beyond the time window
+        tapTimes = tapTimes.filter(t => t > cutoff);
         tapTimes.push(now);
         
-        if (tapTimes.length > 2) {
+        if (tapTimes.length >= 2) {
           const intervals = [];
           for (let i = 1; i < tapTimes.length; i++) {
             intervals.push(tapTimes[i] - tapTimes[i-1]);
           }
-          const avg = intervals.reduce((a,b) => a+b) / intervals.length;
-          const newBpm = Math.round(60000 / avg);
-          if (newBpm >= 60 && newBpm <= 180) {
+          
+          // Median calculation for stability
+          intervals.sort((a, b) => a - b);
+          const median = intervals[Math.floor(intervals.length / 2)];
+          const newBpm = Math.round(60000 / median);
+          
+          if (newBpm >= 60 && newBpm <= 200) {
             bpm = newBpm;
             tempoSlider.value = bpm;
             tempoValue.textContent = bpm;
             tempoSliderValue.textContent = `${bpm} BPM`;
+            
+            // Visual feedback confirms successful tempo detection
+            tempoDisplay.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+              tempoDisplay.style.transform = 'scale(1)';
+            }, 100);
           }
         }
-      });
+      };
+      
+      // Add tap tempo to button and display
+      $('tapTempo').addEventListener('click', handleTapTempo);
+      
+      /*
+        TEMPO DISPLAY CLICK HANDLING
+        
+        Robust event handling to prevent browser interference with tap tempo.
+        
+        Complex event prevention required because:
+        - Some browsers auto-scroll on rapid clicks (accessibility feature)
+        - Touch events can trigger both touch and click handlers
+        - Default link/button behaviors can interfere with timing
+        - Page focus changes can disrupt the tempo detection
+        
+        Solutions implemented:
+        - preventDefault() stops default browser behaviors
+        - stopPropagation() prevents event bubbling to parent elements
+        - window.scrollTo() locks scroll position during interaction
+        - passive: false ensures preventDefault() is allowed to work
+        - Separate touch/click handlers for cross-platform compatibility
+        
+        This ensures clean, predictable tempo detection without UI interference.
+      */
+      const tempoDisplay = $('tempoDisplay');
+      
+      const handleTempoClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Lock scroll position to prevent page jumping
+        window.scrollTo(0, window.pageYOffset);
+        
+        handleTapTempo();
+        return false;
+      };
+      
+      // Desktop and mobile event handling
+      tempoDisplay.addEventListener('click', handleTempoClick, { passive: false });
+      tempoDisplay.addEventListener('touchend', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleTapTempo();
+      }, { passive: false });
       
       // Save/Load
       $('savePattern').addEventListener('click', () => {
@@ -1524,7 +2082,7 @@
       
       // Keyboard shortcuts
       document.addEventListener('keydown', e => {
-        if (e.code === 'Space') {
+        if (e.code === 'Space' && e.target === document.body) {
           e.preventDefault();
           if (isPlaying) stop();
           else start();
@@ -1550,6 +2108,23 @@
           tempoValue.textContent = bpm;
           tempoSlider.value = bpm;
           tempoSliderValue.textContent = `${bpm} BPM`;
+        }
+        
+        // Clear all patterns (C key)
+        if (e.code === 'KeyC' && e.target === document.body) {
+          Object.keys(patterns).forEach(track => {
+            for (let i = 0; i < patterns[track].length; i++) {
+              patterns[track][i] = false;
+            }
+          });
+          updatePatternUI();
+        }
+        
+        // Toggle step count (T key)
+        if (e.code === 'KeyT' && e.target === document.body) {
+          const newSteps = STEPS === 8 ? 4 : 8;
+          setStepCount(newSteps);
+          $('stepToggle').textContent = `${STEPS === 4 ? '8' : '4'}/${STEPS} STEPS`;
         }
       });
     }
@@ -1581,9 +2156,171 @@
       }
     }
     
+    // Mobile Performance Monitoring
+    const perfMonitor = {
+      frameDrops: 0,
+      audioGlitches: 0,
+      memoryUsage: [],
+      
+      startMonitoring() {
+        if (typeof performance === 'undefined') return;
+        
+        let lastTime = performance.now();
+        
+        const checkFrame = () => {
+          const now = performance.now();
+          const delta = now - lastTime;
+          
+          // Frame drop detection (target: 60fps = 16.67ms)
+          if (delta > 20) {
+            this.frameDrops++;
+          }
+          
+          // Memory monitoring (if available)
+          if (performance.memory) {
+            this.memoryUsage.push(performance.memory.usedJSHeapSize);
+            // Keep only last 100 samples
+            if (this.memoryUsage.length > 100) {
+              this.memoryUsage.shift();
+            }
+          }
+          
+          lastTime = now;
+          requestAnimationFrame(checkFrame);
+        };
+        
+        requestAnimationFrame(checkFrame);
+      },
+      
+      getStats() {
+        const avgMemory = this.memoryUsage.length > 0 
+          ? this.memoryUsage.reduce((a, b) => a + b, 0) / this.memoryUsage.length
+          : 0;
+          
+        return {
+          frameDrops: this.frameDrops,
+          audioGlitches: this.audioGlitches,
+          avgMemoryMB: Math.round(avgMemory / 1024 / 1024),
+          isPerformanceGood: this.frameDrops < 10 && this.audioGlitches < 3
+        };
+      }
+    };
+    
+    // Battery optimization for mobile
+    function optimizeForBattery() {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // Reduce visual updates when not playing
+        const originalUpdateStepUI = updateStepUI;
+        
+        window.updateStepUI = function(step) {
+          // Only update if playing or performance mode is on
+          if (isPlaying || perfMode.checked) {
+            originalUpdateStepUI(step);
+          }
+        };
+        
+        // Throttle non-critical animations
+        const style = document.createElement('style');
+        style.textContent = `
+          @media (max-width: 768px) {
+            .loading-text { animation-duration: 2s !important; }
+            .status::before { animation-duration: 4s !important; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+    
+    // Auto-detect and adjust performance settings
+    function autoOptimizePerformance() {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isLowEnd = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
+      
+      if (isMobile || isLowEnd) {
+        // Disable performance mode animations by default
+        const style = document.createElement('style');
+        style.textContent = `
+          @media (max-width: 768px) {
+            .tempo-value { animation: none !important; }
+            .step.playing { 
+              transform: scaleY(1.05) !important;
+              box-shadow: 0 0 5px rgba(255,255,255,0.2) !important;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+        
+        console.log('🔋 BeatBox Pro: Mobile optimizations enabled');
+      }
+    }
+    
+    // Pinch Gesture for Performance Mode (Experimental)
+    let initialPinchDistance = null;
+    
+    function getDistance(touch1, touch2) {
+      return Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) +
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+    }
+    
+    document.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) {
+        initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
+      }
+    }, { passive: true });
+    
+    document.addEventListener('touchmove', e => {
+      if (e.touches.length === 2 && initialPinchDistance) {
+        const currentDistance = getDistance(e.touches[0], e.touches[1]);
+        const scale = currentDistance / initialPinchDistance;
+        
+        // Pinch out to enable performance mode
+        if (scale > 1.3 && !perfMode.checked) {
+          perfMode.checked = true;
+          document.body.classList.add('performance');
+          if (navigator.vibrate) navigator.vibrate(100);
+          
+          // Visual feedback
+          const sequencer = document.querySelector('.sequencer');
+          sequencer.style.transform = 'scale(1.05)';
+          setTimeout(() => {
+            sequencer.style.transform = 'scale(1)';
+          }, 200);
+        }
+        // Pinch in to disable performance mode
+        else if (scale < 0.7 && perfMode.checked) {
+          perfMode.checked = false;
+          document.body.classList.remove('performance');
+          if (navigator.vibrate) navigator.vibrate(50);
+        }
+      }
+    }, { passive: true });
+    
+    document.addEventListener('touchend', () => {
+      initialPinchDistance = null;
+    }, { passive: true });
+    
     // Initialize everything
+    perfMonitor.startMonitoring();
+    optimizeForBattery();
+    autoOptimizePerformance();
     initUI();
     loadFromURL();
+    
+    // Development performance logging
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      setTimeout(() => {
+        const stats = perfMonitor.getStats();
+        console.log('📊 BeatBox Pro Performance Stats:', stats);
+        
+        if (!stats.isPerformanceGood) {
+          console.warn('⚠️ Performance issues detected. Consider enabling performance optimizations.');
+        }
+      }, 10000); // Check after 10 seconds
+    }
     
     // Remove loading screen
     setTimeout(() => {

@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeatBox Pro - Mobile-First Interaction Patterns</title>
+  <style>
+    /* Inherited Design System */
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --panel3: #374151;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --text-bright: #f8fafc;
+      --accent: #f59e0b;
+      --accent-dim: #d97706;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --purple: #8b5cf6;
+      --blue: #3b82f6;
+      --border-radius: 12px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Mobile-specific variables */
+      --touch-target: 44px;
+      --touch-margin: 8px;
+      --safe-area-top: env(safe-area-inset-top, 0px);
+      --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+      --viewport-height: 100vh;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .mobile-container {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: var(--viewport-height);
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-area-top);
+      padding-bottom: var(--safe-area-bottom);
+    }
+
+    /* Mobile Header */
+    .mobile-header {
+      background: var(--panel);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--panel3);
+      position: sticky;
+      top: var(--safe-area-top);
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .menu-btn {
+      width: var(--touch-target);
+      height: var(--touch-target);
+      background: none;
+      border: none;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .menu-btn:active {
+      background: var(--panel2);
+      transform: scale(0.95);
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .header-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    .header-btn {
+      width: var(--touch-target);
+      height: var(--touch-target);
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 16px;
+    }
+
+    .header-btn:active {
+      background: var(--panel3);
+      transform: scale(0.95);
+    }
+
+    .header-btn.primary {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    /* Mobile Navigation Tabs */
+    .mobile-tabs {
+      background: var(--panel);
+      border-bottom: 1px solid var(--panel3);
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .mobile-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-item {
+      flex: 0 0 auto;
+      padding: 16px 20px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+    }
+
+    .tab-item.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-item:active {
+      background: var(--panel2);
+    }
+
+    /* Mobile Content Area */
+    .mobile-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Mobile Pattern Grid */
+    .mobile-pattern-section {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .section-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .control-btn {
+      width: 36px;
+      height: 36px;
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 14px;
+    }
+
+    .control-btn:active {
+      background: var(--panel3);
+      transform: scale(0.95);
+    }
+
+    /* Touch-Optimized Pattern Grid */
+    .touch-pattern-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .track-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 80px;
+    }
+
+    .track-control {
+      height: 56px;
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .track-control:active {
+      background: var(--panel3);
+      transform: scale(0.98);
+    }
+
+    .track-name {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .track-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .track-action {
+      width: 16px;
+      height: 16px;
+      background: var(--panel3);
+      border-radius: 2px;
+      font-size: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+
+    .track-action.active {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .steps-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .steps-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(16, 56px);
+      grid-template-rows: repeat(4, 56px);
+      gap: 8px;
+      padding: 8px 0;
+      min-width: 100%;
+    }
+
+    .touch-step {
+      background: var(--panel2);
+      border: 2px solid var(--panel3);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+
+    .touch-step:active {
+      transform: scale(0.95);
+    }
+
+    .touch-step.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+
+    .touch-step.kick.active { background: #ef4444; border-color: #ef4444; }
+    .touch-step.snare.active { background: var(--accent); border-color: var(--accent); }
+    .touch-step.hihat.active { background: var(--blue); border-color: var(--blue); }
+    .touch-step.perc.active { background: var(--purple); border-color: var(--purple); }
+
+    .touch-step.playing {
+      animation: mobile-pulse 0.2s ease-out;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.5);
+    }
+
+    @keyframes mobile-pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* Mobile Transport Controls */
+    .mobile-transport {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .transport-main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .play-btn {
+      width: 72px;
+      height: 72px;
+      background: var(--success);
+      border: none;
+      border-radius: 50%;
+      color: var(--text-bright);
+      font-size: 24px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .play-btn:active {
+      transform: scale(0.95);
+      background: #059669;
+    }
+
+    .play-btn.playing {
+      background: var(--error);
+    }
+
+    .transport-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tempo-display {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+
+    .tempo-label {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .transport-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .transport-btn {
+      height: var(--touch-target);
+      background: var(--panel2);
+      border: 1px solid var(--panel3);
+      color: var(--text);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .transport-btn:active {
+      background: var(--panel3);
+      transform: scale(0.95);
+    }
+
+    /* Mobile Sliders */
+    .mobile-controls {
+      background: var(--panel);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .control-group {
+      margin-bottom: 24px;
+    }
+
+    .control-label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-bright);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .control-value {
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .mobile-slider {
+      width: 100%;
+      height: 8px;
+      background: var(--panel2);
+      border-radius: 4px;
+      outline: none;
+      -webkit-appearance: none;
+      margin-bottom: 8px;
+    }
+
+    .mobile-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .mobile-slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Gesture Indicators */
+    .gesture-hint {
+      background: var(--panel2);
+      border: 1px dashed var(--panel3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Bottom Action Bar */
+    .mobile-bottom-bar {
+      background: var(--panel);
+      border-top: 1px solid var(--panel3);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      position: sticky;
+      bottom: var(--safe-area-bottom);
+      z-index: 100;
+    }
+
+    .bottom-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: var(--transition);
+      border-radius: 8px;
+      min-width: 56px;
+    }
+
+    .bottom-action:active {
+      background: var(--panel2);
+      transform: scale(0.95);
+    }
+
+    .bottom-action.active {
+      color: var(--accent);
+    }
+
+    .action-icon {
+      font-size: 20px;
+    }
+
+    .action-label {
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    /* Swipe Gestures */
+    .swipe-area {
+      background: var(--panel2);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+      text-align: center;
+      border: 2px dashed var(--panel3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .swipe-content {
+      transition: transform 0.3s ease-out;
+    }
+
+    .swipe-actions {
+      position: absolute;
+      top: 0;
+      right: -100%;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 600;
+      transition: right 0.3s ease-out;
+    }
+
+    .swipe-area.swiped .swipe-content {
+      transform: translateX(-50%);
+    }
+
+    .swipe-area.swiped .swipe-actions {
+      right: 0;
+    }
+
+    /* Touch Feedback */
+    .touch-feedback {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, transparent 70%);
+      pointer-events: none;
+      animation: touch-ripple 0.6s ease-out;
+      z-index: 1000;
+    }
+
+    @keyframes touch-ripple {
+      0% {
+        transform: scale(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 0;
+      }
+    }
+
+    /* Dark mode optimizations for mobile */
+    @media (max-width: 480px) {
+      .steps-grid {
+        grid-template-columns: repeat(8, 1fr);
+        gap: 6px;
+      }
+      
+      .touch-step {
+        min-height: 48px;
+      }
+      
+      .mobile-content {
+        padding: 16px;
+      }
+    }
+
+    /* Landscape orientation adjustments */
+    @media (orientation: landscape) and (max-height: 500px) {
+      .mobile-header {
+        padding: 8px 20px;
+      }
+      
+      .mobile-content {
+        padding: 12px 20px;
+      }
+      
+      .mobile-pattern-section,
+      .mobile-transport,
+      .mobile-controls {
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+    }
+
+    /* High DPI displays */
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+      .touch-step,
+      .header-btn,
+      .control-btn {
+        border-width: 0.5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-container">
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+      <div class="header-left">
+        <button class="menu-btn">☰</button>
+        <h1 class="app-title">BeatBox Pro</h1>
+      </div>
+      <div class="header-right">
+        <button class="header-btn">🎚</button>
+        <button class="header-btn primary">▶</button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Tabs -->
+    <div class="mobile-tabs">
+      <button class="tab-item active">Patterns</button>
+      <button class="tab-item">Instruments</button>
+      <button class="tab-item">Effects</button>
+      <button class="tab-item">Mix</button>
+      <button class="tab-item">Guitar</button>
+      <button class="tab-item">Collab</button>
+    </div>
+
+    <!-- Mobile Content -->
+    <div class="mobile-content">
+      <!-- Gesture Hint -->
+      <div class="gesture-hint">
+        💡 Tap steps to toggle • Long press for velocity • Swipe tracks for options
+      </div>
+
+      <!-- Mobile Transport -->
+      <div class="mobile-transport">
+        <div class="transport-main">
+          <div class="transport-side">
+            <div class="tempo-display">120</div>
+            <div class="tempo-label">BPM</div>
+          </div>
+          <button class="play-btn">▶</button>
+          <div class="transport-side">
+            <div class="tempo-display">4/4</div>
+            <div class="tempo-label">TIME</div>
+          </div>
+        </div>
+        <div class="transport-controls">
+          <button class="transport-btn">⏮</button>
+          <button class="transport-btn">⏹</button>
+          <button class="transport-btn">⏭</button>
+          <button class="transport-btn">🔄</button>
+        </div>
+      </div>
+
+      <!-- Mobile Pattern Section -->
+      <div class="mobile-pattern-section">
+        <div class="section-header">
+          <h2 class="section-title">Beat Pattern</h2>
+          <div class="section-controls">
+            <button class="control-btn">🎲</button>
+            <button class="control-btn">📋</button>
+            <button class="control-btn">⚙</button>
+          </div>
+        </div>
+
+        <div class="touch-pattern-grid">
+          <!-- Track Controls -->
+          <div class="track-controls">
+            <div class="track-control">
+              <div class="track-name">Kick</div>
+              <div class="track-actions">
+                <div class="track-action">M</div>
+                <div class="track-action">S</div>
+              </div>
+            </div>
+            <div class="track-control">
+              <div class="track-name">Snare</div>
+              <div class="track-actions">
+                <div class="track-action">M</div>
+                <div class="track-action">S</div>
+              </div>
+            </div>
+            <div class="track-control">
+              <div class="track-name">HiHat</div>
+              <div class="track-actions">
+                <div class="track-action">M</div>
+                <div class="track-action">S</div>
+              </div>
+            </div>
+            <div class="track-control">
+              <div class="track-name">Perc</div>
+              <div class="track-actions">
+                <div class="track-action">M</div>
+                <div class="track-action">S</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Steps Grid -->
+          <div class="steps-container">
+            <div class="steps-grid">
+              <!-- Kick Row -->
+              <div class="touch-step kick active">1</div>
+              <div class="touch-step kick">2</div>
+              <div class="touch-step kick">3</div>
+              <div class="touch-step kick">4</div>
+              <div class="touch-step kick active">5</div>
+              <div class="touch-step kick">6</div>
+              <div class="touch-step kick">7</div>
+              <div class="touch-step kick">8</div>
+              <div class="touch-step kick active">9</div>
+              <div class="touch-step kick">10</div>
+              <div class="touch-step kick">11</div>
+              <div class="touch-step kick">12</div>
+              <div class="touch-step kick active playing">13</div>
+              <div class="touch-step kick">14</div>
+              <div class="touch-step kick">15</div>
+              <div class="touch-step kick">16</div>
+
+              <!-- Snare Row -->
+              <div class="touch-step snare">1</div>
+              <div class="touch-step snare">2</div>
+              <div class="touch-step snare">3</div>
+              <div class="touch-step snare">4</div>
+              <div class="touch-step snare active">5</div>
+              <div class="touch-step snare">6</div>
+              <div class="touch-step snare">7</div>
+              <div class="touch-step snare">8</div>
+              <div class="touch-step snare">9</div>
+              <div class="touch-step snare">10</div>
+              <div class="touch-step snare">11</div>
+              <div class="touch-step snare">12</div>
+              <div class="touch-step snare active">13</div>
+              <div class="touch-step snare">14</div>
+              <div class="touch-step snare">15</div>
+              <div class="touch-step snare">16</div>
+
+              <!-- HiHat Row -->
+              <div class="touch-step hihat active">1</div>
+              <div class="touch-step hihat">2</div>
+              <div class="touch-step hihat active">3</div>
+              <div class="touch-step hihat">4</div>
+              <div class="touch-step hihat active">5</div>
+              <div class="touch-step hihat">6</div>
+              <div class="touch-step hihat active">7</div>
+              <div class="touch-step hihat">8</div>
+              <div class="touch-step hihat active">9</div>
+              <div class="touch-step hihat">10</div>
+              <div class="touch-step hihat active">11</div>
+              <div class="touch-step hihat">12</div>
+              <div class="touch-step hihat active">13</div>
+              <div class="touch-step hihat">14</div>
+              <div class="touch-step hihat active">15</div>
+              <div class="touch-step hihat">16</div>
+
+              <!-- Percussion Row -->
+              <div class="touch-step perc">1</div>
+              <div class="touch-step perc">2</div>
+              <div class="touch-step perc active">3</div>
+              <div class="touch-step perc">4</div>
+              <div class="touch-step perc">5</div>
+              <div class="touch-step perc">6</div>
+              <div class="touch-step perc active">7</div>
+              <div class="touch-step perc">8</div>
+              <div class="touch-step perc">9</div>
+              <div class="touch-step perc">10</div>
+              <div class="touch-step perc active">11</div>
+              <div class="touch-step perc">12</div>
+              <div class="touch-step perc">13</div>
+              <div class="touch-step perc">14</div>
+              <div class="touch-step perc active">15</div>
+              <div class="touch-step perc">16</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Controls -->
+      <div class="mobile-controls">
+        <div class="control-group">
+          <div class="control-label">
+            <span>Master Volume</span>
+            <span class="control-value">75%</span>
+          </div>
+          <input type="range" class="mobile-slider" min="0" max="100" value="75">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Tempo</span>
+            <span class="control-value">120 BPM</span>
+          </div>
+          <input type="range" class="mobile-slider" min="60" max="180" value="120">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Swing</span>
+            <span class="control-value">15%</span>
+          </div>
+          <input type="range" class="mobile-slider" min="0" max="50" value="15">
+        </div>
+      </div>
+
+      <!-- Swipe Demo -->
+      <div class="swipe-area">
+        <div class="swipe-content">
+          <h3>Pattern A1</h3>
+          <p>Swipe left for options →</p>
+        </div>
+        <div class="swipe-actions">
+          🗑 Delete Pattern
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Bottom Bar -->
+    <div class="mobile-bottom-bar">
+      <button class="bottom-action active">
+        <div class="action-icon">🎵</div>
+        <div class="action-label">Patterns</div>
+      </button>
+      <button class="bottom-action">
+        <div class="action-icon">🎹</div>
+        <div class="action-label">Keys</div>
+      </button>
+      <button class="bottom-action">
+        <div class="action-icon">🎸</div>
+        <div class="action-label">Guitar</div>
+      </button>
+      <button class="bottom-action">
+        <div class="action-icon">🎚</div>
+        <div class="action-label">Mix</div>
+      </button>
+      <button class="bottom-action">
+        <div class="action-icon">👥</div>
+        <div class="action-label">Share</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Touch Feedback Effect -->
+  <script>
+    // Add touch feedback animation
+    document.addEventListener('touchstart', function(e) {
+      if (e.target.closest('.touch-step, .header-btn, .transport-btn, .play-btn')) {
+        const touch = e.touches[0];
+        const feedback = document.createElement('div');
+        feedback.className = 'touch-feedback';
+        feedback.style.left = (touch.clientX - 50) + 'px';
+        feedback.style.top = (touch.clientY - 50) + 'px';
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+          feedback.remove();
+        }, 600);
+      }
+    });
+
+    // Swipe gesture demo
+    let startX = 0;
+    let currentX = 0;
+    let isSwinging = false;
+    
+    document.querySelector('.swipe-area').addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      isSwinging = true;
+    });
+    
+    document.querySelector('.swipe-area').addEventListener('touchmove', function(e) {
+      if (!isSwinging) return;
+      currentX = e.touches[0].clientX;
+      const diffX = startX - currentX;
+      
+      if (diffX > 50) {
+        this.classList.add('swiped');
+      } else {
+        this.classList.remove('swiped');
+      }
+    });
+    
+    document.querySelector('.swipe-area').addEventListener('touchend', function() {
+      isSwinging = false;
+      setTimeout(() => {
+        this.classList.remove('swiped');
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
