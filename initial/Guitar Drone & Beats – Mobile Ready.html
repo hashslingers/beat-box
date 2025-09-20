@@ -178,6 +178,86 @@
       border-radius: 8px;
       padding: 10px;
     }
+    /* Enhanced volume controls for mobile */
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+    }
+    .volume-btn {
+      background: #4b5563;
+      color: var(--text);
+      border: 1px solid #6b7280;
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    .volume-btn:hover {
+      background: #6b7280;
+    }
+    .volume-btn:active {
+      background: #374151;
+      transform: scale(0.95);
+    }
+    .volume-slider-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .volume-value {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 600;
+    }
+    /* Larger thumb for touch targets */
+    input[type="range"].volume-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      width: 100%;
+      height: 44px;
+      cursor: pointer;
+    }
+    input[type="range"].volume-slider::-webkit-slider-track {
+      background: #374151;
+      height: 8px;
+      border-radius: 4px;
+      border: 1px solid #4b5563;
+    }
+    input[type="range"].volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--accent);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      margin-top: -10px;
+      border: 2px solid var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    input[type="range"].volume-slider::-moz-range-track {
+      background: #374151;
+      height: 8px;
+      border-radius: 4px;
+      border: 1px solid #4b5563;
+    }
+    input[type="range"].volume-slider::-moz-range-thumb {
+      background: var(--accent);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+      cursor: pointer;
+    }
     .muted {
       color: var(--muted);
       text-align: center;
@@ -238,10 +318,24 @@
 
       <div class="control">
         <label>Volumes</label>
-        <div style="margin-top:6px;">Drone</div>
-        <input id="volDrone" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
-        <div style="margin-top:10px;">Drums</div>
-        <input id="volDrums" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
+        <div style="margin-top:8px; font-size:14px; font-weight:500;">Drone</div>
+        <div class="volume-control">
+          <button class="volume-btn" id="droneMinus" aria-label="Decrease drone volume">−</button>
+          <div class="volume-slider-wrapper">
+            <input id="volDrone" class="volume-slider" type="range" min="0" max="1" step="0.05" value="0.6" aria-label="Drone volume">
+            <div class="volume-value" id="droneValue">60%</div>
+          </div>
+          <button class="volume-btn" id="dronePlus" aria-label="Increase drone volume">+</button>
+        </div>
+        <div style="margin-top:12px; font-size:14px; font-weight:500;">Drums</div>
+        <div class="volume-control">
+          <button class="volume-btn" id="drumsMinus" aria-label="Decrease drums volume">−</button>
+          <div class="volume-slider-wrapper">
+            <input id="volDrums" class="volume-slider" type="range" min="0" max="1" step="0.05" value="0.6" aria-label="Drums volume">
+            <div class="volume-value" id="drumsValue">60%</div>
+          </div>
+          <button class="volume-btn" id="drumsPlus" aria-label="Increase drums volume">+</button>
+        </div>
       </div>
 
       <!-- Tap tempo and performance mode inside advanced details for minimal UI -->
@@ -315,6 +409,12 @@
     const noteSelect = $('note');
     const volDrone = $('volDrone');
     const volDrums = $('volDrums');
+    const droneValue = $('droneValue');
+    const drumsValue = $('drumsValue');
+    const droneMinus = $('droneMinus');
+    const dronePlus = $('dronePlus');
+    const drumsMinus = $('drumsMinus');
+    const drumsPlus = $('drumsPlus');
     const perfMode = $('perfMode');
     const latencySlider = $('latency');
     const tapTempo = $('tapTempo');
@@ -764,8 +864,11 @@
       droneNote = e.target.value;
       if (isPlaying) retuneDrone();
     });
-    volDrone.addEventListener('input', e => {
-      droneGain = parseFloat(e.target.value);
+    // Helper function to update volume display and apply changes
+    function updateDroneVolume(val) {
+      droneGain = val;
+      volDrone.value = val;
+      droneValue.textContent = Math.round(val * 100) + '%';
       if (drone.gains.length) {
         const [gFund, gOct, gFifth, gChorus] = drone.gains;
         const t = audioCtx.currentTime;
@@ -774,10 +877,39 @@
         if (gFifth) gFifth.gain.setValueAtTime(droneGain * 0.15, t);
         if (gChorus) gChorus.gain.setValueAtTime(droneGain * 0.2, t);
       }
+    }
+    function updateDrumsVolume(val) {
+      drumGain = val;
+      volDrums.value = val;
+      drumsValue.textContent = Math.round(val * 100) + '%';
+    }
+    // Volume slider events
+    volDrone.addEventListener('input', e => {
+      updateDroneVolume(parseFloat(e.target.value));
     });
     volDrums.addEventListener('input', e => {
-      drumGain = parseFloat(e.target.value);
+      updateDrumsVolume(parseFloat(e.target.value));
     });
+    // Volume button events for precise control
+    droneMinus.addEventListener('click', () => {
+      const newVal = Math.max(0, droneGain - 0.1);
+      updateDroneVolume(newVal);
+    });
+    dronePlus.addEventListener('click', () => {
+      const newVal = Math.min(1, droneGain + 0.1);
+      updateDroneVolume(newVal);
+    });
+    drumsMinus.addEventListener('click', () => {
+      const newVal = Math.max(0, drumGain - 0.1);
+      updateDrumsVolume(newVal);
+    });
+    drumsPlus.addEventListener('click', () => {
+      const newVal = Math.min(1, drumGain + 0.1);
+      updateDrumsVolume(newVal);
+    });
+    // Initialize volume displays
+    droneValue.textContent = Math.round(droneGain * 100) + '%';
+    drumsValue.textContent = Math.round(drumGain * 100) + '%';
     perfMode.addEventListener('change', applyPerfMode);
     // Tap tempo: collects tap timestamps, calculates median spacing to set BPM
     let taps = [];
