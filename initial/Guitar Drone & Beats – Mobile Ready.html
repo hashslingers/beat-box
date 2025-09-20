@@ -178,6 +178,95 @@
       border-radius: 8px;
       padding: 10px;
     }
+    /* Mobile-optimized volume sliders */
+    .volume-control-group {
+      margin-bottom: 20px;
+    }
+    .volume-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .volume-value {
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+      min-width: 40px;
+      text-align: right;
+    }
+    .mobile-volume-slider {
+      width: 100%;
+      height: 8px;
+      background: var(--panel2);
+      border-radius: 4px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .mobile-volume-slider::-webkit-slider-track {
+      width: 100%;
+      height: 8px;
+      background: var(--panel2);
+      border-radius: 4px;
+    }
+    .mobile-volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .mobile-volume-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .mobile-volume-slider::-webkit-slider-thumb:active {
+      transform: scale(1.2);
+    }
+    .mobile-volume-slider::-moz-range-track {
+      width: 100%;
+      height: 8px;
+      background: var(--panel2);
+      border-radius: 4px;
+      border: none;
+    }
+    .mobile-volume-slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .mobile-volume-slider::-moz-range-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .mobile-volume-slider::-moz-range-thumb:active {
+      transform: scale(1.2);
+    }
+    /* Focus states for accessibility */
+    .mobile-volume-slider:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .mobile-volume-slider:focus::-webkit-slider-thumb {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3), 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .mobile-volume-slider:focus::-moz-range-thumb {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3), 0 2px 8px rgba(0,0,0,0.3);
+    }
     .muted {
       color: var(--muted);
       text-align: center;
@@ -238,10 +327,46 @@
 
       <div class="control">
         <label>Volumes</label>
-        <div style="margin-top:6px;">Drone</div>
-        <input id="volDrone" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
-        <div style="margin-top:10px;">Drums</div>
-        <input id="volDrums" class="range" type="range" min="0" max="1" step="0.05" value="0.6">
+        <div class="volume-control-group">
+          <div class="volume-label">
+            <span>Drone</span>
+            <span class="volume-value" id="droneVolumeValue">60%</span>
+          </div>
+          <input 
+            id="volDrone" 
+            class="mobile-volume-slider" 
+            type="range" 
+            min="0" 
+            max="100" 
+            step="5" 
+            value="60"
+            aria-label="Drone volume control"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="60"
+            aria-valuetext="60 percent"
+          >
+        </div>
+        <div class="volume-control-group">
+          <div class="volume-label">
+            <span>Drums</span>
+            <span class="volume-value" id="drumsVolumeValue">60%</span>
+          </div>
+          <input 
+            id="volDrums" 
+            class="mobile-volume-slider" 
+            type="range" 
+            min="0" 
+            max="100" 
+            step="5" 
+            value="60"
+            aria-label="Drums volume control"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="60"
+            aria-valuetext="60 percent"
+          >
+        </div>
       </div>
 
       <!-- Tap tempo and performance mode inside advanced details for minimal UI -->
@@ -315,6 +440,8 @@
     const noteSelect = $('note');
     const volDrone = $('volDrone');
     const volDrums = $('volDrums');
+    const droneVolumeValue = $('droneVolumeValue');
+    const drumsVolumeValue = $('drumsVolumeValue');
     const perfMode = $('perfMode');
     const latencySlider = $('latency');
     const tapTempo = $('tapTempo');
@@ -765,7 +892,15 @@
       if (isPlaying) retuneDrone();
     });
     volDrone.addEventListener('input', e => {
-      droneGain = parseFloat(e.target.value);
+      const percentage = parseInt(e.target.value);
+      droneGain = percentage / 100; // Convert percentage to decimal (0-1)
+      
+      // Update display and ARIA attributes
+      droneVolumeValue.textContent = percentage + '%';
+      e.target.setAttribute('aria-valuenow', percentage);
+      e.target.setAttribute('aria-valuetext', percentage + ' percent');
+      
+      // Apply audio changes
       if (drone.gains.length) {
         const [gFund, gOct, gFifth, gChorus] = drone.gains;
         const t = audioCtx.currentTime;
@@ -776,7 +911,13 @@
       }
     });
     volDrums.addEventListener('input', e => {
-      drumGain = parseFloat(e.target.value);
+      const percentage = parseInt(e.target.value);
+      drumGain = percentage / 100; // Convert percentage to decimal (0-1)
+      
+      // Update display and ARIA attributes
+      drumsVolumeValue.textContent = percentage + '%';
+      e.target.setAttribute('aria-valuenow', percentage);
+      e.target.setAttribute('aria-valuetext', percentage + ' percent');
     });
     perfMode.addEventListener('change', applyPerfMode);
     // Tap tempo: collects tap timestamps, calculates median spacing to set BPM
