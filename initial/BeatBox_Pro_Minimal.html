@@ -649,6 +649,155 @@
       border-color: var(--text-muted);
     }
 
+    /* Piano Keyboard */
+    .piano-section {
+      grid-column: 1 / -1; /* Span all columns */
+    }
+
+    .piano-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .piano-keyboard {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 160px;
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px;
+      overflow-x: auto; /* Allow horizontal scroll on very small screens */
+      overflow-y: visible;
+    }
+
+    .piano-key {
+      position: relative;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      user-select: none;
+    }
+
+    .piano-key.white {
+      width: 28px;
+      height: 110px;
+      background: linear-gradient(180deg, #fff 0%, #e0e0e0 100%);
+      border: 1px solid #111;
+      border-radius: 0 0 3px 3px;
+      box-shadow: inset 0 -3px 5px rgba(0,0,0,0.1);
+      margin-right: -1px;
+    }
+
+    .piano-key.white:hover {
+      background: linear-gradient(180deg, #f0f0f0 0%, #d0d0d0 100%);
+    }
+
+    .piano-key.white:active,
+    .piano-key.white.active {
+      background: linear-gradient(180deg, #c0c0c0 0%, #a0a0a0 100%);
+      transform: translateY(2px);
+      box-shadow: inset 0 3px 5px rgba(0,0,0,0.3);
+    }
+
+    .piano-key.black {
+      width: 18px;
+      height: 70px;
+      background: linear-gradient(180deg, #000 0%, #1a1a1a 100%);
+      border: 1px solid #000;
+      border-radius: 0 0 2px 2px;
+      position: absolute;
+      z-index: 2;
+      box-shadow:
+        inset 0 -2px 3px rgba(255,255,255,0.1),
+        0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .piano-key.black:hover {
+      background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
+    }
+
+    .piano-key.black:active,
+    .piano-key.black.active {
+      background: linear-gradient(180deg, #333 0%, #444 100%);
+      transform: translateY(2px);
+    }
+
+    .piano-label {
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 8px;
+      font-weight: 500;
+      color: #888;
+      pointer-events: none;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .piano-key.white .piano-label {
+      color: #666;
+    }
+
+    .piano-key.black .piano-label {
+      display: none; /* Hide black key labels for cleaner look */
+    }
+
+    .piano-key.active .piano-label {
+      color: #000;
+      font-weight: 700;
+    }
+
+    .piano-key.black.active .piano-label {
+      color: #fff;
+    }
+
+    /* Highlight middle C */
+    .piano-key.white[data-note="C3"] .piano-label {
+      color: #fff;
+      background: #000;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-weight: 700;
+      font-size: 9px;
+      bottom: 8px;
+    }
+
+    .piano-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .piano-active-notes {
+      font-size: 11px;
+      font-weight: 500;
+      color: #999;
+      letter-spacing: 0.1em;
+    }
+
+    .piano-clear {
+      font-size: 10px;
+      font-weight: 500;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .piano-clear:hover {
+      color: var(--text);
+    }
+
     /* Performance Mode */
     body.performance .step {
       border-width: 2px;
@@ -978,21 +1127,16 @@
     </section>
 
     <section class="controls">
-      <div class="control" id="swingControl">
-        <div class="control-value" id="swingValue">0%</div>
-        <div class="control-label">SWING</div>
-      </div>
-      
       <div class="control" id="droneControl">
         <div class="control-value" id="droneValue">E2</div>
         <div class="control-label">DRONE</div>
       </div>
-      
+
       <div class="control" id="droneVolControl">
         <div class="control-value" id="droneVolValue">60%</div>
         <div class="control-label">DRONE VOL</div>
       </div>
-      
+
       <div class="control" id="drumVolControl">
         <div class="control-value" id="drumVolValue">70%</div>
         <div class="control-label">DRUM VOL</div>
@@ -1008,61 +1152,32 @@
           <input type="range" class="slider" id="tempoSlider" min="60" max="180" value="120">
           <div class="slider-value" id="tempoSliderValue">120 BPM</div>
         </div>
-        
-        <div class="slider-group">
-          <label class="slider-label">SWING AMOUNT</label>
-          <input type="range" class="slider" id="swingSlider" min="0" max="75" value="0">
-          <div class="slider-value" id="swingSliderValue">0%</div>
-        </div>
-        
-        <div class="slider-group">
-          <label class="slider-label">DRONE NOTE</label>
-          <select class="select" id="droneSelect">
-            <option value="C2">C2 - 65.41 Hz</option>
-            <option value="D2">D2 - 73.42 Hz</option>
-            <option value="E2" selected>E2 - 82.41 Hz</option>
-            <option value="F2">F2 - 87.31 Hz</option>
-            <option value="F#2">F#2 - 92.50 Hz</option>
-            <option value="G2">G2 - 98.00 Hz</option>
-            <option value="A2">A2 - 110.00 Hz</option>
-            <option value="B2">B2 - 123.47 Hz</option>
-            <option value="C3">C3 - 130.81 Hz</option>
-            <option value="D3">D3 - 146.83 Hz</option>
-            <option value="E3">E3 - 164.81 Hz</option>
-          </select>
-        </div>
-        
+
         <div class="slider-group">
           <label class="slider-label">DRONE VOLUME</label>
           <input type="range" class="slider" id="droneVolSlider" min="0" max="100" value="60">
           <div class="slider-value" id="droneVolSliderValue">60%</div>
         </div>
-        
+
         <div class="slider-group">
           <label class="slider-label">DRUM VOLUME</label>
           <input type="range" class="slider" id="drumVolSlider" min="0" max="100" value="70">
           <div class="slider-value" id="drumVolSliderValue">70%</div>
         </div>
-        
-        <div class="slider-group">
-          <label class="slider-label">LATENCY COMPENSATION</label>
-          <input type="range" class="slider" id="latencySlider" min="-100" max="100" value="0">
-          <div class="slider-value" id="latencyValue">0ms</div>
-        </div>
-        
-        <div>
-          <label class="slider-label" style="display: block; margin-bottom: 12px;">PERFORMANCE MODE</label>
-          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-            <input type="checkbox" id="perfMode" style="width: 16px; height: 16px;">
-            <span style="font-size: 11px; color: var(--text-muted);">Enhanced Visuals</span>
-          </label>
-        </div>
-        
+
         <div class="actions">
           <button class="action-btn" id="tapTempo">TAP TEMPO</button>
-          <button class="action-btn" id="savePattern">SAVE</button>
-          <button class="action-btn" id="loadPattern">LOAD</button>
-          <button class="action-btn" id="sharePattern">SHARE</button>
+        </div>
+
+        <div class="slider-group piano-section">
+          <label class="slider-label">DRONE NOTES</label>
+          <div class="piano-container" id="pianoContainer">
+            <div class="piano-keyboard" id="pianoKeyboard"></div>
+            <div class="piano-info">
+              <div class="piano-active-notes" id="pianoActiveNotes">E2</div>
+              <div class="piano-clear" id="pianoClear">Clear All</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1077,7 +1192,6 @@
     let isPlaying = false;
     let currentStep = 0;
     let bpm = 120;
-    let swing = 0;
     let nextNoteTime = 0;
     let schedulerTimer = null;
     let unlocked = false;
@@ -1102,14 +1216,50 @@
     let droneNodes = [];
     let droneGain = 0.6;
     let drumGain = 0.7;
-    let droneNote = 'E2';
-    
-    // Note Frequencies
+    let droneNotes = new Set(['E2']); // Support multiple notes (chords)
+
+    // Note Frequencies - 2 full octaves (C2 to C4)
     const noteFreqs = {
-      'C2': 65.41, 'D2': 73.42, 'E2': 82.41, 'F2': 87.31, 'F#2': 92.50,
-      'G2': 98.00, 'A2': 110.00, 'B2': 123.47,
-      'C3': 130.81, 'D3': 146.83, 'E3': 164.81
+      'C2': 65.41, 'C#2': 69.30, 'D2': 73.42, 'D#2': 77.78,
+      'E2': 82.41, 'F2': 87.31, 'F#2': 92.50, 'G2': 98.00,
+      'G#2': 103.83, 'A2': 110.00, 'A#2': 116.54, 'B2': 123.47,
+      'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56,
+      'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00,
+      'G#3': 207.65, 'A3': 220.00, 'A#3': 233.08, 'B3': 246.94,
+      'C4': 261.63
     };
+
+    // Piano keyboard layout (2 full octaves: C2 to C4 = 25 keys total)
+    const pianoLayout = [
+      // Octave 1 (C2-B2)
+      { note: 'C2', type: 'white', pos: 0 },
+      { note: 'C#2', type: 'black', pos: 0.7 },
+      { note: 'D2', type: 'white', pos: 1 },
+      { note: 'D#2', type: 'black', pos: 1.7 },
+      { note: 'E2', type: 'white', pos: 2 },
+      { note: 'F2', type: 'white', pos: 3 },
+      { note: 'F#2', type: 'black', pos: 3.7 },
+      { note: 'G2', type: 'white', pos: 4 },
+      { note: 'G#2', type: 'black', pos: 4.7 },
+      { note: 'A2', type: 'white', pos: 5 },
+      { note: 'A#2', type: 'black', pos: 5.7 },
+      { note: 'B2', type: 'white', pos: 6 },
+      // Octave 2 (C3-B3) - Middle C octave
+      { note: 'C3', type: 'white', pos: 7 },
+      { note: 'C#3', type: 'black', pos: 7.7 },
+      { note: 'D3', type: 'white', pos: 8 },
+      { note: 'D#3', type: 'black', pos: 8.7 },
+      { note: 'E3', type: 'white', pos: 9 },
+      { note: 'F3', type: 'white', pos: 10 },
+      { note: 'F#3', type: 'black', pos: 10.7 },
+      { note: 'G3', type: 'white', pos: 11 },
+      { note: 'G#3', type: 'black', pos: 11.7 },
+      { note: 'A3', type: 'white', pos: 12 },
+      { note: 'A#3', type: 'black', pos: 12.7 },
+      { note: 'B3', type: 'white', pos: 13 },
+      // C4 (top note)
+      { note: 'C4', type: 'white', pos: 14 }
+    ];
     
     // DOM Elements
     const $ = id => document.getElementById(id);
@@ -1118,20 +1268,13 @@
     const tempoValue = $('tempoValue');
     const tempoSlider = $('tempoSlider');
     const tempoSliderValue = $('tempoSliderValue');
-    const swingValue = $('swingValue');
-    const swingSlider = $('swingSlider');
-    const swingSliderValue = $('swingSliderValue');
     const droneValue = $('droneValue');
-    const droneSelect = $('droneSelect');
     const droneVolValue = $('droneVolValue');
     const droneVolSlider = $('droneVolSlider');
     const droneVolSliderValue = $('droneVolSliderValue');
     const drumVolValue = $('drumVolValue');
     const drumVolSlider = $('drumVolSlider');
     const drumVolSliderValue = $('drumVolSliderValue');
-    const latencySlider = $('latencySlider');
-    const latencyValue = $('latencyValue');
-    const perfMode = $('perfMode');
     const advancedToggle = $('advancedToggle');
     const advancedContent = $('advancedContent');
     
@@ -1303,89 +1446,107 @@
       noise.start(time);
     }
     
-    // Drone Synthesis
+    // Drone Synthesis - Multi-note (Chord) Support
     function startDrone() {
       const ctx = audioCtx;
-      const freq = noteFreqs[droneNote];
-      
+
       // Clean up old drone
       stopDrone();
-      
-      // Create oscillators with slight detuning for richness
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      const osc3 = ctx.createOscillator();
-      
-      osc1.type = 'sawtooth';
-      osc2.type = 'square';
-      osc3.type = 'triangle';
-      
-      osc1.frequency.value = freq;
-      osc2.frequency.value = freq * 2.01; // Slight detune
-      osc3.frequency.value = freq * 0.5;  // Sub octave
-      
-      // Individual gains
-      const gain1 = ctx.createGain();
-      const gain2 = ctx.createGain();
-      const gain3 = ctx.createGain();
+
+      // If no notes selected, return
+      if (droneNotes.size === 0) return;
+
+      // Create oscillators for each note in the chord
+      const allNodes = [];
+
+      droneNotes.forEach(note => {
+        const freq = noteFreqs[note];
+
+        // Create oscillators with slight detuning for richness
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const osc3 = ctx.createOscillator();
+
+        osc1.type = 'sawtooth';
+        osc2.type = 'square';
+        osc3.type = 'triangle';
+
+        osc1.frequency.value = freq;
+        osc2.frequency.value = freq * 2.01; // Slight detune
+        osc3.frequency.value = freq * 0.5;  // Sub octave
+
+        // Individual gains (reduce per-note gain for chords)
+        const gainReduction = Math.max(0.5, 1 / Math.sqrt(droneNotes.size));
+        const gain1 = ctx.createGain();
+        const gain2 = ctx.createGain();
+        const gain3 = ctx.createGain();
+
+        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(droneGain * 0.5 * gainReduction, ctx.currentTime + 0.5);
+
+        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(droneGain * 0.3 * gainReduction, ctx.currentTime + 0.5);
+
+        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(droneGain * 0.6 * gainReduction, ctx.currentTime + 0.5);
+
+        // Connect to mix
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        osc3.connect(gain3);
+
+        // Start oscillators
+        osc1.start();
+        osc2.start();
+        osc3.start();
+
+        // Store references
+        allNodes.push(osc1, osc2, osc3, gain1, gain2, gain3);
+      });
+
+      // Shared mixing and effects
       const mixGain = ctx.createGain();
-      
-      gain1.gain.setValueAtTime(0.001, ctx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(droneGain * 0.3, ctx.currentTime + 0.5);
-      
-      gain2.gain.setValueAtTime(0.001, ctx.currentTime);
-      gain2.gain.exponentialRampToValueAtTime(droneGain * 0.2, ctx.currentTime + 0.5);
-      
-      gain3.gain.setValueAtTime(0.001, ctx.currentTime);
-      gain3.gain.exponentialRampToValueAtTime(droneGain * 0.4, ctx.currentTime + 0.5);
-      
       mixGain.gain.value = 1;
-      
+
       // Filter for warmth
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.value = 2000;
       filter.Q.value = 2;
-      
+
       // Subtle chorus effect
       const delay = ctx.createDelay(0.1);
       delay.delayTime.value = 0.01;
-      
+
       const lfo = ctx.createOscillator();
       lfo.frequency.value = 0.5;
       lfo.type = 'sine';
-      
+
       const lfoGain = ctx.createGain();
       lfoGain.gain.value = 0.002;
-      
+
       lfo.connect(lfoGain);
       lfoGain.connect(delay.delayTime);
-      
-      // Connect graph
-      osc1.connect(gain1);
-      osc2.connect(gain2);
-      osc3.connect(gain3);
-      
-      gain1.connect(mixGain);
-      gain2.connect(mixGain);
-      gain3.connect(mixGain);
-      
+
+      // Connect all note gains to mix
+      allNodes.forEach((node, i) => {
+        if (i % 6 === 3 || i % 6 === 4 || i % 6 === 5) { // Gain nodes
+          node.connect(mixGain);
+        }
+      });
+
       // Main path
       mixGain.connect(filter);
       filter.connect(compressor);
-      
+
       // Chorus path
       mixGain.connect(delay);
       delay.connect(filter);
-      
-      // Start oscillators
-      osc1.start();
-      osc2.start();
-      osc3.start();
+
       lfo.start();
-      
-      // Store references
-      droneNodes = [osc1, osc2, osc3, gain1, gain2, gain3, mixGain, filter, delay, lfo, lfoGain];
+
+      // Store all references
+      droneNodes = [...allNodes, mixGain, filter, delay, lfo, lfoGain];
     }
     
     function stopDrone() {
@@ -1399,46 +1560,161 @@
     }
     
     function updateDroneVolume() {
-      if (droneNodes.length > 3) {
+      // Update gain for all active note oscillators
+      if (droneNodes.length > 0 && audioCtx) {
         const ctx = audioCtx;
-        droneNodes[3].gain.exponentialRampToValueAtTime(droneGain * 0.3, ctx.currentTime + 0.1);
-        droneNodes[4].gain.exponentialRampToValueAtTime(droneGain * 0.2, ctx.currentTime + 0.1);
-        droneNodes[5].gain.exponentialRampToValueAtTime(droneGain * 0.4, ctx.currentTime + 0.1);
+        const gainReduction = Math.max(0.5, 1 / Math.sqrt(droneNotes.size));
+
+        // Update all gain nodes (every 4th, 5th, and 6th node in groups of 6)
+        droneNodes.forEach((node, i) => {
+          if (node && node.gain) {
+            try {
+              const baseGain = [0.5, 0.3, 0.6][(i % 6) - 3] || 0.5;
+              node.gain.exponentialRampToValueAtTime(
+                droneGain * baseGain * gainReduction,
+                ctx.currentTime + 0.1
+              );
+            } catch(e) {}
+          }
+        });
+      }
+    }
+
+    // Piano Keyboard Functions
+    function buildPianoKeyboard() {
+      const keyboard = $('pianoKeyboard');
+      keyboard.innerHTML = '';
+
+      // Render white keys first, then black keys on top
+      pianoLayout.forEach(key => {
+        if (key.type === 'white') {
+          const keyEl = document.createElement('div');
+          keyEl.className = 'piano-key white';
+          keyEl.dataset.note = key.note;
+
+          // Add note label (highlight middle C with star)
+          const label = document.createElement('span');
+          label.className = 'piano-label';
+          if (key.note === 'C3') {
+            label.textContent = 'C3 ★';
+            label.setAttribute('title', 'Middle C');
+          } else {
+            label.textContent = key.note;
+          }
+          keyEl.appendChild(label);
+
+          // Check if this note is active
+          if (droneNotes.has(key.note)) {
+            keyEl.classList.add('active');
+          }
+
+          // Click handler
+          keyEl.addEventListener('click', () => handlePianoKeyClick(key.note));
+
+          keyboard.appendChild(keyEl);
+        }
+      });
+
+      // Render black keys with absolute positioning
+      pianoLayout.forEach(key => {
+        if (key.type === 'black') {
+          const keyEl = document.createElement('div');
+          keyEl.className = 'piano-key black';
+          keyEl.dataset.note = key.note;
+          keyEl.style.left = `${key.pos * 28 - 9}px`; // 28px per white key, -9px to center
+
+          // Add note label (hidden by CSS but kept for accessibility)
+          const label = document.createElement('span');
+          label.className = 'piano-label';
+          label.textContent = key.note;
+          keyEl.appendChild(label);
+
+          // Check if this note is active
+          if (droneNotes.has(key.note)) {
+            keyEl.classList.add('active');
+          }
+
+          // Click handler
+          keyEl.addEventListener('click', () => handlePianoKeyClick(key.note));
+
+          keyboard.appendChild(keyEl);
+        }
+      });
+
+      updatePianoDisplay();
+    }
+
+    function handlePianoKeyClick(note) {
+      // Toggle note in the set
+      if (droneNotes.has(note)) {
+        droneNotes.delete(note);
+      } else {
+        droneNotes.add(note);
+      }
+
+      // Update UI
+      updatePianoDisplay();
+
+      // Restart drone if playing
+      if (isPlaying) {
+        stopDrone();
+        startDrone();
+      }
+    }
+
+    function updatePianoDisplay() {
+      // Update visual key states
+      document.querySelectorAll('.piano-key').forEach(keyEl => {
+        const note = keyEl.dataset.note;
+        keyEl.classList.toggle('active', droneNotes.has(note));
+      });
+
+      // Update active notes display
+      const activeNotesDisplay = $('pianoActiveNotes');
+      if (droneNotes.size === 0) {
+        activeNotesDisplay.textContent = 'No notes selected';
+        activeNotesDisplay.style.color = '#666';
+      } else {
+        const notesArray = Array.from(droneNotes).sort((a, b) => {
+          const aIndex = pianoLayout.findIndex(k => k.note === a);
+          const bIndex = pianoLayout.findIndex(k => k.note === b);
+          return aIndex - bIndex;
+        });
+        activeNotesDisplay.textContent = notesArray.join(' + ');
+        activeNotesDisplay.style.color = '#fff';
+      }
+
+      // Update main drone control display
+      if (droneNotes.size > 0) {
+        const firstNote = Array.from(droneNotes)[0];
+        droneValue.textContent = droneNotes.size === 1 ? firstNote : `${firstNote} +${droneNotes.size - 1}`;
+      } else {
+        droneValue.textContent = '—';
       }
     }
     
-    // Mobile-Optimized Scheduler with Swing
+    // Mobile-Optimized Scheduler
     function scheduler() {
       const ctx = audioCtx;
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const lookaheadTime = isMobile ? 0.08 : 0.1;
       const scheduleAheadTime = isMobile ? 0.08 : 0.1;
-      
+
       while (nextNoteTime < ctx.currentTime + scheduleAheadTime) {
-        const latencyOffset = parseInt(latencySlider.value) / 1000;
-        
-        // Apply swing to off-beats
-        let swingOffset = 0;
-        if (currentStep % 2 === 1) {
-          swingOffset = (swing / 100) * (60 / bpm / 4); // Swing as fraction of 16th note
-        }
-        
-        const adjustedTime = nextNoteTime + latencyOffset + swingOffset;
-        
         // Schedule drums
-        if (patterns.kick[currentStep]) playKick(adjustedTime);
-        if (patterns.snare[currentStep]) playSnare(adjustedTime);
-        if (patterns.hihat[currentStep]) playHiHat(adjustedTime);
-        
+        if (patterns.kick[currentStep]) playKick(nextNoteTime);
+        if (patterns.snare[currentStep]) playSnare(nextNoteTime);
+        if (patterns.hihat[currentStep]) playHiHat(nextNoteTime);
+
         // Update UI
         updateStepUI(currentStep);
-        
+
         // Haptic feedback on downbeat
         if (currentStep === 0 && navigator.vibrate) {
-          const timeUntil = adjustedTime - ctx.currentTime;
+          const timeUntil = nextNoteTime - ctx.currentTime;
           setTimeout(() => navigator.vibrate(10), Math.max(0, timeUntil * 1000));
         }
-        
+
         // Advance
         currentStep = (currentStep + 1) % STEPS;
         nextNoteTime += 60 / bpm / 2; // 8th notes
@@ -1785,34 +2061,22 @@
         advancedToggle.classList.add('open');
         tempoSlider.focus();
       });
-      
-      // Swing control
-      swingSlider.addEventListener('input', e => {
-        swing = parseInt(e.target.value);
-        swingValue.textContent = `${swing}%`;
-        swingSliderValue.textContent = `${swing}%`;
-      });
-      
-      $('swingControl').addEventListener('click', () => {
-        advancedContent.classList.add('show');
-        advancedToggle.classList.add('open');
-        swingSlider.focus();
-      });
-      
-      // Drone controls
-      droneSelect.addEventListener('change', e => {
-        droneNote = e.target.value;
-        droneValue.textContent = droneNote;
-        if (isPlaying) {
-          stopDrone();
-          startDrone();
-        }
-      });
-      
+
+      // Piano keyboard controls
+      buildPianoKeyboard();
+
       $('droneControl').addEventListener('click', () => {
         advancedContent.classList.add('show');
         advancedToggle.classList.add('open');
-        droneSelect.focus();
+      });
+
+      // Clear all piano notes
+      $('pianoClear').addEventListener('click', () => {
+        droneNotes.clear();
+        updatePianoDisplay();
+        if (isPlaying) {
+          stopDrone();
+        }
       });
       
       // Volume controls
@@ -1840,17 +2104,7 @@
         advancedToggle.classList.add('open');
         drumVolSlider.focus();
       });
-      
-      // Latency
-      latencySlider.addEventListener('input', e => {
-        latencyValue.textContent = `${e.target.value}ms`;
-      });
-      
-      // Performance mode
-      perfMode.addEventListener('change', e => {
-        document.body.classList.toggle('performance', e.target.checked);
-      });
-      
+
       // Advanced toggle
       advancedToggle.addEventListener('click', () => {
         advancedContent.classList.toggle('show');
@@ -2014,72 +2268,7 @@
         e.stopPropagation();
         handleTapTempo();
       }, { passive: false });
-      
-      // Save/Load
-      $('savePattern').addEventListener('click', () => {
-        const data = encodePattern();
-        localStorage.setItem('beatbox-pattern', data);
-        localStorage.setItem('beatbox-bpm', bpm);
-        localStorage.setItem('beatbox-swing', swing);
-        status.textContent = 'SAVED';
-        setTimeout(() => {
-          status.textContent = isPlaying ? 'PLAYING' : 'READY';
-        }, 1000);
-      });
-      
-      $('loadPattern').addEventListener('click', () => {
-        const data = localStorage.getItem('beatbox-pattern');
-        const savedBpm = localStorage.getItem('beatbox-bpm');
-        const savedSwing = localStorage.getItem('beatbox-swing');
-        
-        if (data) {
-          const loaded = decodePattern(data);
-          if (loaded) {
-            Object.assign(patterns, loaded);
-            updatePatternUI();
-          }
-        }
-        
-        if (savedBpm) {
-          bpm = parseInt(savedBpm);
-          tempoValue.textContent = bpm;
-          tempoSlider.value = bpm;
-          tempoSliderValue.textContent = `${bpm} BPM`;
-        }
-        
-        if (savedSwing) {
-          swing = parseInt(savedSwing);
-          swingValue.textContent = `${swing}%`;
-          swingSlider.value = swing;
-          swingSliderValue.textContent = `${swing}%`;
-        }
-        
-        status.textContent = 'LOADED';
-        setTimeout(() => {
-          status.textContent = isPlaying ? 'PLAYING' : 'READY';
-        }, 1000);
-      });
-      
-      // Share
-      $('sharePattern').addEventListener('click', () => {
-        const data = encodePattern();
-        const params = new URLSearchParams({
-          p: data,
-          b: bpm,
-          s: swing
-        });
-        const url = `${window.location.origin}${window.location.pathname}?${params}`;
-        
-        navigator.clipboard.writeText(url).then(() => {
-          status.textContent = 'LINK COPIED';
-          setTimeout(() => {
-            status.textContent = isPlaying ? 'PLAYING' : 'READY';
-          }, 1500);
-        }).catch(() => {
-          window.prompt('Copy this link:', url);
-        });
-      });
-      
+
       // Keyboard shortcuts
       document.addEventListener('keydown', e => {
         if (e.code === 'Space' && e.target === document.body) {
@@ -2129,32 +2318,7 @@
       });
     }
     
-    // Load from URL parameters
-    function loadFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      
-      if (params.has('p')) {
-        const pattern = decodePattern(params.get('p'));
-        if (pattern) {
-          Object.assign(patterns, pattern);
-          updatePatternUI();
-        }
-      }
-      
-      if (params.has('b')) {
-        bpm = Math.max(60, Math.min(180, parseInt(params.get('b'))));
-        tempoValue.textContent = bpm;
-        tempoSlider.value = bpm;
-        tempoSliderValue.textContent = `${bpm} BPM`;
-      }
-      
-      if (params.has('s')) {
-        swing = Math.max(0, Math.min(75, parseInt(params.get('s'))));
-        swingValue.textContent = `${swing}%`;
-        swingSlider.value = swing;
-        swingSliderValue.textContent = `${swing}%`;
-      }
-    }
+    // Removed loadFromURL - no longer needed without save/load/share features
     
     // Mobile Performance Monitoring
     const perfMonitor = {
@@ -2308,7 +2472,6 @@
     optimizeForBattery();
     autoOptimizePerformance();
     initUI();
-    loadFromURL();
     
     // Development performance logging
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
