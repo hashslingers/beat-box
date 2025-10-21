@@ -1179,6 +1179,15 @@
             </div>
           </div>
         </div>
+        <div class="slider-group">
+            <label class="slider-label">DRONE SOUND</label>
+            <select class="select" id="droneSoundSelect">
+                <option value="default">Default</option>
+                <option value="air_organ">Air Organ</option>
+                <option value="warm_pad">Warm Pad</option>
+                <option value="distorted">Distorted</option>
+            </select>
+        </div>
       </div>
     </section>
   </div>
@@ -1217,6 +1226,7 @@
     let droneGain = 0.6;
     let drumGain = 0.7;
     let droneNotes = new Set(['E2']); // Support multiple notes (chords)
+    let droneSound = 'default';
 
     // Note Frequencies - 2 full octaves (C2 to C4)
     const noteFreqs = {
@@ -1447,106 +1457,282 @@
     }
     
     // Drone Synthesis - Multi-note (Chord) Support
-    function startDrone() {
-      const ctx = audioCtx;
+    function createAirOrganDrone(ctx, notes, volume) {
+        const nodes = [];
+        const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
 
-      // Clean up old drone
-      stopDrone();
+        notes.forEach(note => {
+            const freq = noteFreqs[note];
+            if (!freq) return;
 
-      // If no notes selected, return
-      if (droneNotes.size === 0) return;
+            // Create 3 oscillators for a rich, layered sound
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const osc3 = ctx.createOscillator();
 
-      // Create oscillators for each note in the chord
-      const allNodes = [];
+            osc1.type = 'sine';
+            osc1.frequency.value = freq;
+            osc1.detune.value = -4; // Slight detune for chorus effect
 
-      droneNotes.forEach(note => {
-        const freq = noteFreqs[note];
+            osc2.type = 'sine';
+            osc2.frequency.value = freq * 2; // Octave up
+            osc2.detune.value = 4;
 
-        // Create oscillators with slight detuning for richness
-        const osc1 = ctx.createOscillator();
-        const osc2 = ctx.createOscillator();
-        const osc3 = ctx.createOscillator();
+            osc3.type = 'sine';
+            osc3.frequency.value = freq * 0.5; // Sub-octave
 
-        osc1.type = 'sawtooth';
-        osc2.type = 'square';
-        osc3.type = 'triangle';
+            const gain1 = ctx.createGain();
+            gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(volume * 0.7 * gainReduction, ctx.currentTime + 0.8);
 
-        osc1.frequency.value = freq;
-        osc2.frequency.value = freq * 2.01; // Slight detune
-        osc3.frequency.value = freq * 0.5;  // Sub octave
+            const gain2 = ctx.createGain();
+            gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain2.gain.exponentialRampToValueAtTime(volume * 0.4 * gainReduction, ctx.currentTime + 0.8);
 
-        // Individual gains (reduce per-note gain for chords)
-        const gainReduction = Math.max(0.5, 1 / Math.sqrt(droneNotes.size));
-        const gain1 = ctx.createGain();
-        const gain2 = ctx.createGain();
-        const gain3 = ctx.createGain();
+            const gain3 = ctx.createGain();
+            gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain3.gain.exponentialRampToValueAtTime(volume * 0.5 * gainReduction, ctx.currentTime + 0.8);
 
-        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain1.gain.exponentialRampToValueAtTime(droneGain * 0.5 * gainReduction, ctx.currentTime + 0.5);
+            osc1.connect(gain1);
+            osc2.connect(gain2);
+            osc3.connect(gain3);
 
-        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(droneGain * 0.3 * gainReduction, ctx.currentTime + 0.5);
+            nodes.push(osc1, osc2, osc3, gain1, gain2, gain3);
+        });
 
-        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain3.gain.exponentialRampToValueAtTime(droneGain * 0.6 * gainReduction, ctx.currentTime + 0.5);
+        // Shared effects
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 2200;
+        filter.Q.value = 3;
 
-        // Connect to mix
-        osc1.connect(gain1);
-        osc2.connect(gain2);
-        osc3.connect(gain3);
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = 5; // Vibrato
+        lfo.type = 'sine';
 
-        // Start oscillators
-        osc1.start();
-        osc2.start();
-        osc3.start();
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = 8; // Vibrato depth
 
-        // Store references
-        allNodes.push(osc1, osc2, osc3, gain1, gain2, gain3);
-      });
+        lfo.connect(lfoGain);
+        nodes.forEach(node => {
+            if (node.frequency) { // Connect LFO to oscillator frequencies
+                lfoGain.connect(node.detune);
+            }
+        });
 
-      // Shared mixing and effects
-      const mixGain = ctx.createGain();
-      mixGain.gain.value = 1;
+        const mixGain = ctx.createGain();
+        nodes.forEach((node, i) => {
+            if (i % 6 >= 3) { // Connect gain nodes to mixGain
+                node.connect(mixGain);
+            }
+        });
 
-      // Filter for warmth
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = 2000;
-      filter.Q.value = 2;
+        mixGain.connect(filter);
+        filter.connect(compressor);
 
-      // Subtle chorus effect
-      const delay = ctx.createDelay(0.1);
-      delay.delayTime.value = 0.01;
+        lfo.start();
+        nodes.forEach(node => {
+            if (node.start) node.start();
+        });
 
-      const lfo = ctx.createOscillator();
-      lfo.frequency.value = 0.5;
-      lfo.type = 'sine';
+        return [...nodes, filter, lfo, lfoGain, mixGain];
+    }
 
-      const lfoGain = ctx.createGain();
-      lfoGain.gain.value = 0.002;
+    function createWarmPadDrone(ctx, notes, volume) {
+        const nodes = [];
+        const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
 
-      lfo.connect(lfoGain);
-      lfoGain.connect(delay.delayTime);
+        notes.forEach(note => {
+            const freq = noteFreqs[note];
+            if (!freq) return;
 
-      // Connect all note gains to mix
-      allNodes.forEach((node, i) => {
-        if (i % 6 === 3 || i % 6 === 4 || i % 6 === 5) { // Gain nodes
-          node.connect(mixGain);
+            const osc1 = ctx.createOscillator();
+            osc1.type = 'sawtooth';
+            osc1.frequency.value = freq;
+            osc1.detune.value = -7;
+
+            const osc2 = ctx.createOscillator();
+            osc2.type = 'sawtooth';
+            osc2.frequency.value = freq;
+            osc2.detune.value = 7;
+
+            const gain1 = ctx.createGain();
+            gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(volume * 0.5 * gainReduction, ctx.currentTime + 1.2);
+
+            osc1.connect(gain1);
+            osc2.connect(gain1);
+            nodes.push(osc1, osc2, gain1);
+        });
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 800;
+        filter.Q.value = 5;
+        filter.frequency.setValueAtTime(100, ctx.currentTime);
+        filter.frequency.linearRampToValueAtTime(800, ctx.currentTime + 2);
+
+
+        const mixGain = ctx.createGain();
+        nodes.forEach(node => {
+            if (node.gain) {
+                node.connect(mixGain);
+            }
+        });
+
+        mixGain.connect(filter);
+        filter.connect(compressor);
+
+        nodes.forEach(node => {
+            if (node.start) node.start();
+        });
+
+        return [...nodes, filter, mixGain];
+    }
+
+    function createDistortedDrone(ctx, notes, volume) {
+        const nodes = [];
+        const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+        notes.forEach(note => {
+            const freq = noteFreqs[note];
+            if (!freq) return;
+
+            const osc = ctx.createOscillator();
+            osc.type = 'square';
+            osc.frequency.value = freq;
+
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(volume * 0.6 * gainReduction, ctx.currentTime + 0.5);
+
+            osc.connect(gain);
+            nodes.push(osc, gain);
+        });
+
+        const distortion = ctx.createWaveShaper();
+        const curve = new Float32Array(256);
+        for (let i = 0; i < 256; i++) {
+            const x = i * 2 / 255 - 1;
+            curve[i] = (Math.PI + 15) * x / (Math.PI + 15 * Math.abs(x));
         }
-      });
+        distortion.curve = curve;
+        distortion.oversample = '4x';
 
-      // Main path
-      mixGain.connect(filter);
-      filter.connect(compressor);
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1500;
 
-      // Chorus path
-      mixGain.connect(delay);
-      delay.connect(filter);
+        const mixGain = ctx.createGain();
+        nodes.forEach(node => {
+            if (node.gain) {
+                node.connect(mixGain);
+            }
+        });
 
-      lfo.start();
+        mixGain.connect(distortion);
+        distortion.connect(filter);
+        filter.connect(compressor);
 
-      // Store all references
-      droneNodes = [...allNodes, mixGain, filter, delay, lfo, lfoGain];
+        nodes.forEach(node => {
+            if (node.start) node.start();
+        });
+
+        return [...nodes, distortion, filter, mixGain];
+    }
+
+    function createDefaultDrone(ctx, notes, volume) {
+        const allNodes = [];
+        const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+        notes.forEach(note => {
+            const freq = noteFreqs[note];
+            if (!freq) return;
+
+            const osc1 = ctx.createOscillator();
+            osc1.type = 'sawtooth';
+            osc1.frequency.value = freq;
+            osc1.detune.value = -2;
+
+            const osc2 = ctx.createOscillator();
+            osc2.type = 'square';
+            osc2.frequency.value = freq * 2.01;
+
+            const osc3 = ctx.createOscillator();
+            osc3.type = 'triangle';
+            osc3.frequency.value = freq * 0.5;
+
+            const gain1 = ctx.createGain();
+            gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(volume * 0.5 * gainReduction, ctx.currentTime + 0.5);
+
+            const gain2 = ctx.createGain();
+            gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain2.gain.exponentialRampToValueAtTime(volume * 0.3 * gainReduction, ctx.currentTime + 0.5);
+
+            const gain3 = ctx.createGain();
+            gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain3.gain.exponentialRampToValueAtTime(volume * 0.6 * gainReduction, ctx.currentTime + 0.5);
+
+            osc1.connect(gain1);
+            osc2.connect(gain2);
+            osc3.connect(gain3);
+
+            osc1.start();
+            osc2.start();
+            osc3.start();
+
+            allNodes.push(osc1, osc2, osc3, gain1, gain2, gain3);
+        });
+
+        const mixGain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 2000;
+        filter.Q.value = 2;
+
+        const delay = ctx.createDelay(0.1);
+        delay.delayTime.value = 0.01;
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = 0.5;
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = 0.002;
+        lfo.connect(lfoGain);
+        lfoGain.connect(delay.delayTime);
+
+        allNodes.forEach((node, i) => {
+            if (i % 6 >= 3) {
+                node.connect(mixGain);
+            }
+        });
+
+        mixGain.connect(filter);
+        filter.connect(compressor);
+        mixGain.connect(delay);
+        delay.connect(filter);
+
+        lfo.start();
+        return [...allNodes, mixGain, filter, delay, lfo, lfoGain];
+    }
+
+    function startDrone() {
+        const ctx = audioCtx;
+        stopDrone();
+        if (droneNotes.size === 0) return;
+
+        switch (droneSound) {
+            case 'air_organ':
+                droneNodes = createAirOrganDrone(ctx, droneNotes, droneGain);
+                break;
+            case 'warm_pad':
+                droneNodes = createWarmPadDrone(ctx, droneNotes, droneGain);
+                break;
+            case 'distorted':
+                droneNodes = createDistortedDrone(ctx, droneNotes, droneGain);
+                break;
+            default:
+                droneNodes = createDefaultDrone(ctx, droneNotes, droneGain);
+        }
     }
     
     function stopDrone() {
@@ -1560,24 +1746,20 @@
     }
     
     function updateDroneVolume() {
-      // Update gain for all active note oscillators
-      if (droneNodes.length > 0 && audioCtx) {
-        const ctx = audioCtx;
-        const gainReduction = Math.max(0.5, 1 / Math.sqrt(droneNotes.size));
-
-        // Update all gain nodes (every 4th, 5th, and 6th node in groups of 6)
-        droneNodes.forEach((node, i) => {
-          if (node && node.gain) {
-            try {
-              const baseGain = [0.5, 0.3, 0.6][(i % 6) - 3] || 0.5;
-              node.gain.exponentialRampToValueAtTime(
-                droneGain * baseGain * gainReduction,
-                ctx.currentTime + 0.1
-              );
-            } catch(e) {}
-          }
-        });
-      }
+        if (droneNodes.length > 0 && audioCtx) {
+            const ctx = audioCtx;
+            droneNodes.forEach(node => {
+                if (node instanceof GainNode) {
+                    // This is a simplified approach. For more precise control,
+                    // each sound function should return its primary gain nodes
+                    // to be adjusted here. For now, we'll restart the sound.
+                }
+            });
+            // For simplicity and consistency across different sound structures,
+            // we'll just restart the drone with the new volume.
+            stopDrone();
+            startDrone();
+        }
     }
 
     // Piano Keyboard Functions
@@ -2077,6 +2259,15 @@
         if (isPlaying) {
           stopDrone();
         }
+      });
+
+      // Drone sound selection
+      $('droneSoundSelect').addEventListener('change', e => {
+          droneSound = e.target.value;
+          if (isPlaying) {
+              stopDrone();
+              startDrone();
+          }
       });
       
       // Volume controls
