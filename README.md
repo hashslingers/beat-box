@@ -1,26 +1,29 @@
-# BeatBox Pro
+# BEAT-BOX
 
-A web-based drum sequencer and guitar drone synthesizer evolving into a comprehensive music production platform.
+A minimalist web-based beat maker with an interactive piano keyboard for drone synthesis. Built as a single-file application focusing on simplicity and mobile-first design.
 
 ## Quick Start
 
-**Run the current MVP:**
+**Try it live:**
+🎵 [https://hashslingers.github.io/beat-box/initial/BeatBox_Pro_Minimal.html](https://hashslingers.github.io/beat-box/initial/BeatBox_Pro_Minimal.html)
+
+**Run locally:**
 ```bash
-open "initial/Guitar Drone & Beats – Mobile Ready.html"
+open "initial/BeatBox_Pro_Minimal.html"
 ```
 
 Or simply double-click the HTML file to open it in your browser.
 
-## Current Features (MVP v1.0)
+## Features
 
-- 8-step drum sequencer with 3 tracks (kick, snare, hi-hat)
-- Guitar drone synthesizer with 11 preset notes
-- Real-time audio synthesis using Web Audio API
-- Tempo control (60-180 BPM)
-- Pattern presets and local storage
-- URL-based pattern sharing
-- Mobile-responsive design with performance mode
-- Bluetooth latency compensation
+- 4/8-step drum sequencer (kick, snare, hi-hat)
+- Interactive 2-octave piano keyboard for chord/drone synthesis
+- Tap tempo detection
+- Real-time audio synthesis using Web Audio API (no samples)
+- Pattern presets with local storage
+- Mobile-first responsive design
+- Vertical volume sliders
+- Minimal black/white aesthetic
 
 ## Technology Stack
 
@@ -32,61 +35,38 @@ Or simply double-click the HTML file to open it in your browser.
 
 ```
 beat-box/
-├── Product_Requirements_Document.md  # Comprehensive product vision & roadmap
 ├── initial/
-│   └── Guitar Drone & Beats – Mobile Ready.html  # Current MVP
-└── README.md  # This file
+│   └── BeatBox_Pro_Minimal.html  # Single-file application
+├── CLAUDE.md                     # Claude Code instructions
+└── README.md                     # This file
 ```
 
-## Development Roadmap
+## Architecture
 
-See `Product_Requirements_Document.md` for the complete vision transforming this into BeatBox Pro - a collaborative, cloud-based music production platform with:
-
-- Multi-user real-time collaboration
-- Unlimited tracks and advanced sequencing
-- Plugin ecosystem and marketplace
-- AI-powered composition tools
-- Professional audio processing
-- Microservices architecture
-
-**Target**: 10M monthly users, $50M ARR by Year 3
+BEAT-BOX is intentionally simple and self-contained:
+- **Single-file architecture**: No build process or external dependencies
+- **Vanilla JavaScript**: No frameworks required
+- **Web Audio API**: All sounds synthesized in real-time (no audio samples)
+- **Mobile-first**: Optimized for touch interfaces with 44x44px minimum touch targets
+- **GitHub Pages**: Auto-deploys from `main` branch
 
 ## Browser Compatibility
 
 Works in all modern browsers supporting Web Audio API:
-- Chrome/Chromium
-- Firefox  
-- Safari
+- Chrome/Chromium (recommended)
+- Firefox
+- Safari (iOS requires user interaction before audio playback)
 - Edge
 
-## GitHub Integration with Claude
+**Note**: Safari/iOS requires user interaction (tap/click) before AudioContext can be started due to autoplay policies.
 
-This repository has Claude AI integration enabled through GitHub Actions. You can get AI assistance directly in GitHub issues and pull requests.
+## Contributing
 
-### How to Use Claude Integration
-
-**In GitHub Issues:**
-- Create a new issue or comment on existing ones
-- Type `@claude` followed by your request
-- Example: `@claude can you review the audio latency in the drum sequencer?`
-
-**In Pull Requests:**
-- Comment with `@claude` and your question
-- Example: `@claude please review this code for performance issues`
-- Claude automatically reviews new pull requests
-
-### What Claude Can Help With
-- Review code changes
-- Suggest improvements
-- Answer questions about the codebase
-- Help with debugging
-- Provide implementation guidance
-
-### Example Usage
-1. Go to https://github.com/hashslingers/beat-box/issues
-2. Click "New issue"
-3. Write: `@claude help me optimize the Web Audio API performance`
-4. Claude will respond with analysis and suggestions
+Contributions welcome! This project values simplicity and self-contained architecture. When contributing:
+- Keep everything in the single HTML file
+- Test on multiple browsers and mobile devices
+- Ensure touch targets are at least 44x44px
+- Maintain the minimalist aesthetic
 
 ## License
 
