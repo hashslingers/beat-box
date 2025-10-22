@@ -1524,7 +1524,6 @@
 
       // Master gain for this sound
       const mixGain = ctx.createGain();
-      mixGain.gain.value = 1.0; // Initialize gain
 
       // Connect all individual gain nodes to the mix gain
       gainNodes.forEach(gainNode => {
@@ -1578,7 +1577,8 @@
         gainNodes.push(gain);
       });
 
-      // A sweeping lowpass filter for a classic pad sound
+      // A sweeping lowpass filter for a classic pad sound.
+      // No LFO is used; the filter sweep provides the primary movement.
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.Q.value = 5;
@@ -1586,7 +1586,6 @@
       filter.frequency.linearRampToValueAtTime(800, ctx.currentTime + 2); // Slow sweep up
 
       const mixGain = ctx.createGain();
-      mixGain.gain.value = 1.0;
 
       gainNodes.forEach(gainNode => {
         gainNode.connect(mixGain);
@@ -1650,7 +1649,6 @@
       filter.frequency.value = 1500;
 
       const mixGain = ctx.createGain();
-      mixGain.gain.value = 1.0;
 
       gainNodes.forEach(gainNode => {
         gainNode.connect(mixGain);
@@ -1720,7 +1718,6 @@
       });
 
       const mixGain = ctx.createGain();
-      mixGain.gain.value = 1.0;
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.value = 2000;
@@ -1779,8 +1776,12 @@
           try {
             if (node.stop) node.stop();
             node.disconnect();
-          } catch(e) {}
+          } catch(e) {
+            if (console) console.warn('Error stopping drone node:', e);
+          }
         });
+        activeDrone.gainNodes = [];
+        activeDrone.gainRamps = [];
       }
       activeDrone = null;
     }
@@ -1792,7 +1793,9 @@
 
         let rampIndex = 0;
         activeDrone.gainNodes.forEach(gainNode => {
-          // Use the stored ramp values to maintain the sound's character
+          // Use the stored ramp values to maintain the sound's character.
+          // The modulo operator cycles through the ramp values for sounds with
+          // multiple oscillators per note (like the default drone).
           const rampValue = activeDrone.gainRamps[rampIndex % activeDrone.gainRamps.length];
           const targetGain = droneGain * rampValue * gainReduction;
 
