@@ -1,26 +1,49 @@
-# BeatBox Pro
+# BEAT-BOX
 
-A web-based drum sequencer and guitar drone synthesizer evolving into a comprehensive music production platform.
+A minimalist web-based beat maker with interactive piano keyboard and authentic pump organ drone synthesis.
 
 ## Quick Start
 
-**Run the current MVP:**
+**Live Demo:**
+🌐 https://hashslingers.github.io/beat-box/
+
+**Run Locally:**
 ```bash
-open "initial/Guitar Drone & Beats – Mobile Ready.html"
+open "initial/BeatBox_Pro_Minimal.html"
 ```
 
 Or simply double-click the HTML file to open it in your browser.
 
-## Current Features (MVP v1.0)
+## Current Features
 
-- 8-step drum sequencer with 3 tracks (kick, snare, hi-hat)
-- Guitar drone synthesizer with 11 preset notes
-- Real-time audio synthesis using Web Audio API
+### Drum Sequencer
+- 4/8-step drum sequencer with 3 synthesized tracks (kick, snare, hi-hat)
+- Tap tempo detection with median calculation
+- Pattern presets (3 built-in patterns)
+- Real-time sequencer with <20ms latency
+- Mobile-optimized scheduler (20-25ms lookahead)
+
+### Drone Synthesis
+- **7 Pump Organ Variations:**
+  - **Pump Organ - Wheezy** (Default) - Vintage with exaggerated air wobble
+  - Pump Organ - Classic - Traditional with slow attack
+  - Pump Organ - Church - Rich harmonics, powerful & stable
+  - Pump Organ - Celeste - Shimmering detuned ranks
+  - Pump Organ - Vox Humana - Voice-like with formant filtering
+  - Harmonium - Nasal Indian harmonium with quick attack
+  - Theater Organ - Dramatic vibrato, bright tone
+- Interactive 2-octave piano keyboard (C2-C4, 25 keys)
+- Multi-note chord support with automatic gain reduction
+- Smooth volume control without audio glitches
+- Authentic LFO/vibrato for realistic organ feel
+
+### Audio Features
+- Real-time audio synthesis using Web Audio API (no samples)
 - Tempo control (60-180 BPM)
-- Pattern presets and local storage
-- URL-based pattern sharing
-- Mobile-responsive design with performance mode
-- Bluetooth latency compensation
+- Vertical volume sliders for drums and drone
+- Performance monitoring built-in
+- Haptic feedback on mobile
+- Battery optimization for mobile devices
 
 ## Technology Stack
 
@@ -32,24 +55,26 @@ Or simply double-click the HTML file to open it in your browser.
 
 ```
 beat-box/
-├── Product_Requirements_Document.md  # Comprehensive product vision & roadmap
 ├── initial/
-│   └── Guitar Drone & Beats – Mobile Ready.html  # Current MVP
-└── README.md  # This file
+│   └── BeatBox_Pro_Minimal.html      # Main application
+├── CLAUDE.md                          # Claude Code instructions
+├── Product_Requirements_Document.md   # Product vision & roadmap
+├── README.md                          # This file
+└── index.html                         # Redirects to main app
 ```
+
+## Design Philosophy
+
+BEAT-BOX is intentionally simple and self-contained:
+- **Minimal UI** with maximum functionality
+- **Mobile-first** design with touch optimization
+- **Real-time audio synthesis** (no samples or external dependencies)
+- **Single-file architecture** for easy deployment and sharing
+- **Black/white aesthetic** with JetBrains Mono font
 
 ## Development Roadmap
 
-See `Product_Requirements_Document.md` for the complete vision transforming this into BeatBox Pro - a collaborative, cloud-based music production platform with:
-
-- Multi-user real-time collaboration
-- Unlimited tracks and advanced sequencing
-- Plugin ecosystem and marketplace
-- AI-powered composition tools
-- Professional audio processing
-- Microservices architecture
-
-**Target**: 10M monthly users, $50M ARR by Year 3
+See `Product_Requirements_Document.md` for the complete vision of evolving into a collaborative, cloud-based music production platform.
 
 ## Browser Compatibility
 
