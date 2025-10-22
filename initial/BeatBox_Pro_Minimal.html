@@ -1182,10 +1182,17 @@
         <div class="slider-group">
             <label class="slider-label">DRONE SOUND</label>
             <select class="select" id="droneSoundSelect">
-                <option value="default">Default</option>
-                <option value="air_organ">Air Organ</option>
+                <option value="pump_organ_wheezy" selected>Pump Organ - Wheezy</option>
+                <option value="pump_organ_classic">Pump Organ - Classic</option>
+                <option value="pump_organ_church">Pump Organ - Church</option>
+                <option value="pump_organ_celeste">Pump Organ - Celeste</option>
+                <option value="pump_organ_vox">Pump Organ - Vox Humana</option>
+                <option value="pump_organ_harmonium">Harmonium</option>
+                <option value="pump_organ_theater">Theater Organ</option>
+                <option value="air_organ">Air Organ (old)</option>
                 <option value="warm_pad">Warm Pad</option>
                 <option value="distorted">Distorted</option>
+                <option value="default">Default</option>
             </select>
         </div>
       </div>
@@ -1226,7 +1233,7 @@
     let droneGain = 0.6;
     let drumGain = 0.7;
     let droneNotes = new Set(['E2']); // Support multiple notes (chords)
-    let droneSound = 'default';
+    let droneSound = 'pump_organ_wheezy';
 
     // Note Frequencies - 2 full octaves (C2 to C4)
     const noteFreqs = {
@@ -1750,12 +1757,683 @@
       };
     }
 
+    // PUMP ORGAN VARIATIONS - Multiple creative interpretations
+
+    function createPumpOrganClassic(ctx, notes, volume) {
+      // Classic pump organ: Slow attack, gentle air pressure wobble, harmonic series
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Slow air pressure wobble (like manual pumping)
+      const pressureLFO = ctx.createOscillator();
+      pressureLFO.frequency.value = 0.5; // Slow wobble
+      pressureLFO.type = 'sine';
+
+      const pressureGain = ctx.createGain();
+      pressureGain.gain.value = 3; // Subtle pitch variation from air pressure
+      pressureLFO.connect(pressureGain);
+
+      notes.forEach(note => {
+        const freq = noteFreqs[note];
+        if (!freq) return;
+
+        // Harmonic series like organ pipes (1st, 2nd, 3rd harmonics)
+        const fundamental = ctx.createOscillator();
+        fundamental.type = 'sine';
+        fundamental.frequency.value = freq;
+
+        const harmonic2 = ctx.createOscillator();
+        harmonic2.type = 'sine';
+        harmonic2.frequency.value = freq * 2; // Octave
+
+        const harmonic3 = ctx.createOscillator();
+        harmonic3.type = 'sine';
+        harmonic3.frequency.value = freq * 3; // 12th (octave + fifth)
+
+        // Connect air pressure LFO to each oscillator
+        pressureGain.connect(fundamental.detune);
+        pressureGain.connect(harmonic2.detune);
+        pressureGain.connect(harmonic3.detune);
+
+        // Slow attack simulating air filling the bellows
+        const gain1 = ctx.createGain();
+        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(volume * 0.7 * gainReduction, ctx.currentTime + 1.5);
+
+        const gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(volume * 0.45 * gainReduction, ctx.currentTime + 1.5);
+
+        const gain3 = ctx.createGain();
+        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(volume * 0.35 * gainReduction, ctx.currentTime + 1.5);
+
+        fundamental.connect(gain1);
+        harmonic2.connect(gain2);
+        harmonic3.connect(gain3);
+
+        nodes.push(fundamental, harmonic2, harmonic3, gain1, gain2, gain3);
+        gainNodes.push(gain1, gain2, gain3);
+      });
+
+      // Warm lowpass filter
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 1800;
+      filter.Q.value = 2;
+
+      const mixGain = ctx.createGain();
+
+      // Post-filter gain to compensate for filter loss and match default volume
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 1.4; // Boost to match default
+
+      gainNodes.forEach(gn => gn.connect(mixGain));
+      mixGain.connect(filter);
+      filter.connect(outputGain);
+      outputGain.connect(compressor);
+
+      pressureLFO.start();
+      nodes.forEach(node => { if (node.start) node.start(); });
+
+      return {
+        nodes: [...nodes, filter, mixGain, outputGain, pressureLFO, pressureGain],
+        gainNodes: gainNodes,
+        gainRamps: [0.7, 0.45, 0.35]
+      };
+    }
+
+    function createPumpOrganWheezy(ctx, notes, volume) {
+      // Wheezy old pump organ: Very slow attack, exaggerated air wobble, vintage character
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Exaggerated wheezy air pressure variation
+      const wheezeLFO = ctx.createOscillator();
+      wheezeLFO.frequency.value = 0.3; // Even slower, irregular breathing
+      wheezeLFO.type = 'triangle'; // More abrupt pressure changes
+
+      const wheezeGain = ctx.createGain();
+      wheezeGain.gain.value = 8; // Exaggerated pitch wobble
+      wheezeLFO.connect(wheezeGain);
+
+      notes.forEach(note => {
+        const freq = noteFreqs[note];
+        if (!freq) return;
+
+        // Slightly detuned harmonics for vintage character
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.value = freq;
+        osc1.detune.value = -3;
+
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = freq * 2;
+        osc2.detune.value = 5;
+
+        const osc3 = ctx.createOscillator();
+        osc3.type = 'sine';
+        osc3.frequency.value = freq * 4; // Higher harmonic for brightness
+        osc3.detune.value = -2;
+
+        wheezeGain.connect(osc1.detune);
+        wheezeGain.connect(osc2.detune);
+        wheezeGain.connect(osc3.detune);
+
+        // Very slow attack - really struggles to fill with air
+        const gain1 = ctx.createGain();
+        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(volume * 0.8 * gainReduction, ctx.currentTime + 2.5);
+
+        const gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(volume * 0.5 * gainReduction, ctx.currentTime + 2.5);
+
+        const gain3 = ctx.createGain();
+        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(volume * 0.25 * gainReduction, ctx.currentTime + 2.5);
+
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        osc3.connect(gain3);
+
+        nodes.push(osc1, osc2, osc3, gain1, gain2, gain3);
+        gainNodes.push(gain1, gain2, gain3);
+      });
+
+      // Darker filter for vintage sound
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 1400;
+      filter.Q.value = 3;
+
+      const mixGain = ctx.createGain();
+
+      // Post-filter gain to compensate for aggressive filtering
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 1.6; // Extra boost for dark filter
+
+      gainNodes.forEach(gn => gn.connect(mixGain));
+      mixGain.connect(filter);
+      filter.connect(outputGain);
+      outputGain.connect(compressor);
+
+      wheezeLFO.start();
+      nodes.forEach(node => { if (node.start) node.start(); });
+
+      return {
+        nodes: [...nodes, filter, mixGain, outputGain, wheezeLFO, wheezeGain],
+        gainNodes: gainNodes,
+        gainRamps: [0.8, 0.5, 0.25]
+      };
+    }
+
+    function createPumpOrganChurch(ctx, notes, volume) {
+      // Church reed organ: Rich harmonics, multiple ranks, stable and powerful
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Minimal LFO for natural slight variation
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.8;
+      lfo.type = 'sine';
+
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 2; // Very subtle
+      lfo.connect(lfoGain);
+
+      notes.forEach(note => {
+        const freq = noteFreqs[note];
+        if (!freq) return;
+
+        // Full harmonic series like pipe organ
+        const harm1 = ctx.createOscillator(); // Fundamental
+        harm1.type = 'sine';
+        harm1.frequency.value = freq;
+
+        const harm2 = ctx.createOscillator(); // 2nd harmonic (octave)
+        harm2.type = 'sine';
+        harm2.frequency.value = freq * 2;
+
+        const harm3 = ctx.createOscillator(); // 3rd harmonic (12th)
+        harm3.type = 'sine';
+        harm3.frequency.value = freq * 3;
+
+        const harm4 = ctx.createOscillator(); // 4th harmonic (15th)
+        harm4.type = 'sine';
+        harm4.frequency.value = freq * 4;
+
+        // LFO for subtle warmth
+        lfoGain.connect(harm1.detune);
+        lfoGain.connect(harm2.detune);
+        lfoGain.connect(harm3.detune);
+        lfoGain.connect(harm4.detune);
+
+        // Medium-slow attack
+        const gain1 = ctx.createGain();
+        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(volume * 0.55 * gainReduction, ctx.currentTime + 1.0);
+
+        const gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(volume * 0.4 * gainReduction, ctx.currentTime + 1.0);
+
+        const gain3 = ctx.createGain();
+        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(volume * 0.3 * gainReduction, ctx.currentTime + 1.0);
+
+        const gain4 = ctx.createGain();
+        gain4.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain4.gain.exponentialRampToValueAtTime(volume * 0.2 * gainReduction, ctx.currentTime + 1.0);
+
+        harm1.connect(gain1);
+        harm2.connect(gain2);
+        harm3.connect(gain3);
+        harm4.connect(gain4);
+
+        nodes.push(harm1, harm2, harm3, harm4, gain1, gain2, gain3, gain4);
+        gainNodes.push(gain1, gain2, gain3, gain4);
+      });
+
+      // Moderate filter
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2500;
+      filter.Q.value = 2;
+
+      const mixGain = ctx.createGain();
+
+      // Post-filter gain to match default volume
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 1.3;
+
+      gainNodes.forEach(gn => gn.connect(mixGain));
+      mixGain.connect(filter);
+      filter.connect(outputGain);
+      outputGain.connect(compressor);
+
+      lfo.start();
+      nodes.forEach(node => { if (node.start) node.start(); });
+
+      return {
+        nodes: [...nodes, filter, mixGain, outputGain, lfo, lfoGain],
+        gainNodes: gainNodes,
+        gainRamps: [0.55, 0.4, 0.3, 0.2]
+      };
+    }
+
+    function createPumpOrganCeleste(ctx, notes, volume) {
+      // Celeste stop: Detuned ranks create shimmering, chorus-like effect
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Slow LFO for gentle movement
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.6;
+      lfo.type = 'sine';
+
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 4;
+      lfo.connect(lfoGain);
+
+      notes.forEach(note => {
+        const freq = noteFreqs[note];
+        if (!freq) return;
+
+        // Two detuned "ranks" per note for celeste effect
+        const osc1a = ctx.createOscillator();
+        osc1a.type = 'sine';
+        osc1a.frequency.value = freq;
+        osc1a.detune.value = -8; // Detuned down
+
+        const osc1b = ctx.createOscillator();
+        osc1b.type = 'sine';
+        osc1b.frequency.value = freq;
+        osc1b.detune.value = 8; // Detuned up
+
+        const osc2a = ctx.createOscillator();
+        osc2a.type = 'sine';
+        osc2a.frequency.value = freq * 2;
+        osc2a.detune.value = -6;
+
+        const osc2b = ctx.createOscillator();
+        osc2b.type = 'sine';
+        osc2b.frequency.value = freq * 2;
+        osc2b.detune.value = 6;
+
+        // Connect LFO
+        lfoGain.connect(osc1a.detune);
+        lfoGain.connect(osc1b.detune);
+        lfoGain.connect(osc2a.detune);
+        lfoGain.connect(osc2b.detune);
+
+        // Gentle attack
+        const gain1 = ctx.createGain();
+        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(volume * 0.4 * gainReduction, ctx.currentTime + 1.2);
+
+        const gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(volume * 0.4 * gainReduction, ctx.currentTime + 1.2);
+
+        const gain3 = ctx.createGain();
+        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(volume * 0.3 * gainReduction, ctx.currentTime + 1.2);
+
+        const gain4 = ctx.createGain();
+        gain4.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain4.gain.exponentialRampToValueAtTime(volume * 0.3 * gainReduction, ctx.currentTime + 1.2);
+
+        osc1a.connect(gain1);
+        osc1b.connect(gain2);
+        osc2a.connect(gain3);
+        osc2b.connect(gain4);
+
+        nodes.push(osc1a, osc1b, osc2a, osc2b, gain1, gain2, gain3, gain4);
+        gainNodes.push(gain1, gain2, gain3, gain4);
+      });
+
+      // Brighter filter for shimmer
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2800;
+      filter.Q.value = 1.5;
+
+      const mixGain = ctx.createGain();
+
+      // Post-filter gain to match default volume
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 1.2;
+
+      gainNodes.forEach(gn => gn.connect(mixGain));
+      mixGain.connect(filter);
+      filter.connect(outputGain);
+      outputGain.connect(compressor);
+
+      lfo.start();
+      nodes.forEach(node => { if (node.start) node.start(); });
+
+      return {
+        nodes: [...nodes, filter, mixGain, outputGain, lfo, lfoGain],
+        gainNodes: gainNodes,
+        gainRamps: [0.4, 0.4, 0.3, 0.3]
+      };
+    }
+
+    function createPumpOrganVox(ctx, notes, volume) {
+      // Vox Humana stop: Voice-like quality with formant filtering
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Tremolo for vocal vibrato
+      const tremolo = ctx.createOscillator();
+      tremolo.frequency.value = 4.5; // Vocal vibrato rate
+      tremolo.type = 'sine';
+
+      const tremoloGain = ctx.createGain();
+      tremoloGain.gain.value = 6;
+      tremolo.connect(tremoloGain);
+
+      notes.forEach(note => {
+        const freq = noteFreqs[note];
+        if (!freq) return;
+
+        // Harmonics that emphasize vocal formants
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.value = freq;
+
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = freq * 2;
+
+        const osc3 = ctx.createOscillator();
+        osc3.type = 'sine';
+        osc3.frequency.value = freq * 3;
+
+        const osc4 = ctx.createOscillator(); // Add nasality
+        osc4.type = 'sine';
+        osc4.frequency.value = freq * 5;
+
+        tremoloGain.connect(osc1.detune);
+        tremoloGain.connect(osc2.detune);
+        tremoloGain.connect(osc3.detune);
+        tremoloGain.connect(osc4.detune);
+
+        // Medium attack
+        const gain1 = ctx.createGain();
+        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(volume * 0.55 * gainReduction, ctx.currentTime + 1.0);
+
+        const gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(volume * 0.45 * gainReduction, ctx.currentTime + 1.0);
+
+        const gain3 = ctx.createGain();
+        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(volume * 0.35 * gainReduction, ctx.currentTime + 1.0);
+
+        const gain4 = ctx.createGain();
+        gain4.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain4.gain.exponentialRampToValueAtTime(volume * 0.2 * gainReduction, ctx.currentTime + 1.0);
+
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        osc3.connect(gain3);
+        osc4.connect(gain4);
+
+        nodes.push(osc1, osc2, osc3, osc4, gain1, gain2, gain3, gain4);
+        gainNodes.push(gain1, gain2, gain3, gain4);
+      });
+
+      // Bandpass filter to simulate vocal formant
+      const formantFilter = ctx.createBiquadFilter();
+      formantFilter.type = 'bandpass';
+      formantFilter.frequency.value = 1200; // Vowel-like formant
+      formantFilter.Q.value = 4; // Narrow for nasal quality
+
+      const mixGain = ctx.createGain();
+
+      // Post-filter gain to compensate for bandpass loss
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 2.5; // Bandpass filters cut a lot of volume
+
+      gainNodes.forEach(gn => gn.connect(mixGain));
+      mixGain.connect(formantFilter);
+      formantFilter.connect(outputGain);
+      outputGain.connect(compressor);
+
+      tremolo.start();
+      nodes.forEach(node => { if (node.start) node.start(); });
+
+      return {
+        nodes: [...nodes, formantFilter, mixGain, outputGain, tremolo, tremoloGain],
+        gainNodes: gainNodes,
+        gainRamps: [0.55, 0.45, 0.35, 0.2]
+      };
+    }
+
+    function createPumpOrganHarmonium(ctx, notes, volume) {
+      // Indian harmonium: Continuous drone, nasal quality, rich harmonics
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Very subtle LFO for natural variation
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.4;
+      lfo.type = 'sine';
+
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 2;
+      lfo.connect(lfoGain);
+
+      notes.forEach(note => {
+        const freq = noteFreqs[note];
+        if (!freq) return;
+
+        // Rich harmonic content for nasal quality
+        const harm1 = ctx.createOscillator();
+        harm1.type = 'sine';
+        harm1.frequency.value = freq;
+
+        const harm2 = ctx.createOscillator();
+        harm2.type = 'sine';
+        harm2.frequency.value = freq * 2;
+
+        const harm3 = ctx.createOscillator();
+        harm3.type = 'sine';
+        harm3.frequency.value = freq * 3;
+
+        const harm5 = ctx.createOscillator(); // 5th harmonic for nasality
+        harm5.type = 'sine';
+        harm5.frequency.value = freq * 5;
+
+        lfoGain.connect(harm1.detune);
+        lfoGain.connect(harm2.detune);
+        lfoGain.connect(harm3.detune);
+        lfoGain.connect(harm5.detune);
+
+        // Quick attack - harmonium responds immediately
+        const gain1 = ctx.createGain();
+        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(volume * 0.65 * gainReduction, ctx.currentTime + 0.5);
+
+        const gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(volume * 0.45 * gainReduction, ctx.currentTime + 0.5);
+
+        const gain3 = ctx.createGain();
+        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(volume * 0.35 * gainReduction, ctx.currentTime + 0.5);
+
+        const gain4 = ctx.createGain();
+        gain4.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain4.gain.exponentialRampToValueAtTime(volume * 0.25 * gainReduction, ctx.currentTime + 0.5);
+
+        harm1.connect(gain1);
+        harm2.connect(gain2);
+        harm3.connect(gain3);
+        harm5.connect(gain4);
+
+        nodes.push(harm1, harm2, harm3, harm5, gain1, gain2, gain3, gain4);
+        gainNodes.push(gain1, gain2, gain3, gain4);
+      });
+
+      // Bandpass for nasal character
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1600;
+      filter.Q.value = 3;
+
+      const mixGain = ctx.createGain();
+
+      // Post-filter gain to compensate for bandpass loss
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 2.2; // Bandpass filters cut a lot of volume
+
+      gainNodes.forEach(gn => gn.connect(mixGain));
+      mixGain.connect(filter);
+      filter.connect(outputGain);
+      outputGain.connect(compressor);
+
+      lfo.start();
+      nodes.forEach(node => { if (node.start) node.start(); });
+
+      return {
+        nodes: [...nodes, filter, mixGain, outputGain, lfo, lfoGain],
+        gainNodes: gainNodes,
+        gainRamps: [0.65, 0.45, 0.35, 0.25]
+      };
+    }
+
+    function createPumpOrganTheater(ctx, notes, volume) {
+      // Theater organ: Dramatic vibrato, bright tone, percussive attack
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Dramatic vibrato
+      const vibrato = ctx.createOscillator();
+      vibrato.frequency.value = 6; // Faster, more dramatic
+      vibrato.type = 'sine';
+
+      const vibratoGain = ctx.createGain();
+      vibratoGain.gain.value = 12; // Deep vibrato
+      vibrato.connect(vibratoGain);
+
+      notes.forEach(note => {
+        const freq = noteFreqs[note];
+        if (!freq) return;
+
+        // Bright harmonic series
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.value = freq;
+
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = freq * 2;
+
+        const osc3 = ctx.createOscillator();
+        osc3.type = 'sine';
+        osc3.frequency.value = freq * 4; // Higher harmonics for brightness
+
+        const osc4 = ctx.createOscillator();
+        osc4.type = 'sine';
+        osc4.frequency.value = freq * 6;
+
+        vibratoGain.connect(osc1.detune);
+        vibratoGain.connect(osc2.detune);
+        vibratoGain.connect(osc3.detune);
+        vibratoGain.connect(osc4.detune);
+
+        // Quick percussive attack
+        const gain1 = ctx.createGain();
+        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(volume * 0.65 * gainReduction, ctx.currentTime + 0.3);
+
+        const gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(volume * 0.45 * gainReduction, ctx.currentTime + 0.3);
+
+        const gain3 = ctx.createGain();
+        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(volume * 0.35 * gainReduction, ctx.currentTime + 0.3);
+
+        const gain4 = ctx.createGain();
+        gain4.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain4.gain.exponentialRampToValueAtTime(volume * 0.2 * gainReduction, ctx.currentTime + 0.3);
+
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        osc3.connect(gain3);
+        osc4.connect(gain4);
+
+        nodes.push(osc1, osc2, osc3, osc4, gain1, gain2, gain3, gain4);
+        gainNodes.push(gain1, gain2, gain3, gain4);
+      });
+
+      // Bright filter
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 3500;
+      filter.Q.value = 1;
+
+      const mixGain = ctx.createGain();
+
+      // Post-filter gain to match default volume
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 1.1; // Minimal boost for bright sound
+
+      gainNodes.forEach(gn => gn.connect(mixGain));
+      mixGain.connect(filter);
+      filter.connect(outputGain);
+      outputGain.connect(compressor);
+
+      vibrato.start();
+      nodes.forEach(node => { if (node.start) node.start(); });
+
+      return {
+        nodes: [...nodes, filter, mixGain, outputGain, vibrato, vibratoGain],
+        gainNodes: gainNodes,
+        gainRamps: [0.65, 0.45, 0.35, 0.2]
+      };
+    }
+
     function startDrone() {
       const ctx = audioCtx;
       stopDrone();
       if (droneNotes.size === 0) return;
 
       switch (droneSound) {
+        case 'pump_organ_classic':
+          activeDrone = createPumpOrganClassic(ctx, droneNotes, droneGain);
+          break;
+        case 'pump_organ_wheezy':
+          activeDrone = createPumpOrganWheezy(ctx, droneNotes, droneGain);
+          break;
+        case 'pump_organ_church':
+          activeDrone = createPumpOrganChurch(ctx, droneNotes, droneGain);
+          break;
+        case 'pump_organ_celeste':
+          activeDrone = createPumpOrganCeleste(ctx, droneNotes, droneGain);
+          break;
+        case 'pump_organ_vox':
+          activeDrone = createPumpOrganVox(ctx, droneNotes, droneGain);
+          break;
+        case 'pump_organ_harmonium':
+          activeDrone = createPumpOrganHarmonium(ctx, droneNotes, droneGain);
+          break;
+        case 'pump_organ_theater':
+          activeDrone = createPumpOrganTheater(ctx, droneNotes, droneGain);
+          break;
         case 'air_organ':
           activeDrone = createAirOrganDrone(ctx, droneNotes, droneGain);
           break;
