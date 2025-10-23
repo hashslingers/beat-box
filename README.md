@@ -45,6 +45,14 @@ Or simply double-click the HTML file to open it in your browser.
 - Haptic feedback on mobile
 - Battery optimization for mobile devices
 
+### Visual Feedback (NEW)
+- **Circular Beat Visualizer** - Rotating playhead showing current step with beat 1 emphasis
+- **Enhanced Step Numbers** - Active step highlighting with special beat 1 indicator
+- **Ambient Pulse** - Subtle background pulse synchronized with beats
+- **Drum Color Flashes** - Visual feedback for kick (red), snare (orange), hi-hat (blue)
+- **Toggleable Visualizations** - User controls to show/hide each visualization
+- **Performance Optimized** - Smooth 60fps animations on mobile devices
+
 ## Technology Stack
 
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
