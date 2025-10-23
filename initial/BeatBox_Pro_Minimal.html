@@ -1052,6 +1052,256 @@
       color: var(--text-muted);
       animation: pulse 1s ease-in-out infinite;
     }
+
+    /* Visualization Section */
+    .visualization-section {
+      padding: 40px;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.8s var(--transition) 0.15s both;
+    }
+
+    .viz-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 60px;
+      flex-wrap: wrap;
+    }
+
+    /* Circular Beat Visualizer */
+    .beat-circle-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+    }
+
+    .beat-circle {
+      width: 200px;
+      height: 200px;
+      filter: drop-shadow(0 0 1px rgba(255,255,255,0.1));
+      transition: filter 0.1s ease-out;
+    }
+
+    .beat-circle-container.flash .beat-circle {
+      filter: drop-shadow(0 0 20px rgba(255,68,68,0.6));
+    }
+
+    .beat-segment {
+      fill: #1a1a1a;
+      stroke: #333;
+      stroke-width: 1.5;
+      transition: fill 0.08s ease-out;
+      cursor: default;
+    }
+
+    .beat-segment.active {
+      fill: #ffffff;
+    }
+
+    .beat-segment.beat-one {
+      stroke: #ff4444;
+      stroke-width: 2.5;
+    }
+
+    .beat-playhead {
+      stroke: #ffffff;
+      stroke-width: 2;
+      stroke-linecap: round;
+      transform-origin: 100px 100px;
+      transition: transform 0.05s linear;
+      opacity: 0.8;
+    }
+
+    .beat-center-text {
+      fill: #666;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      font-weight: 200;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      transition: fill 0.1s;
+    }
+
+    .beat-center-text.active {
+      fill: #ffffff;
+      font-weight: 400;
+    }
+
+    .beat-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      color: #999;
+      text-transform: uppercase;
+    }
+
+    /* Enhanced Step Numbers */
+    .step-number.active {
+      color: #ffffff;
+      font-weight: 700;
+      transform: scale(1.2);
+    }
+
+    .step-number.beat-one {
+      color: #ff4444;
+      font-weight: 700;
+    }
+
+    .step-number.beat-one::before {
+      content: '●';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: -12px;
+      color: #ff4444;
+      font-size: 8px;
+      animation: pulse 0.8s ease-in-out infinite;
+    }
+
+    .step-number.active.beat-one {
+      color: #ff6666;
+      text-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+    }
+
+    /* Pulsing Background Animations */
+    @keyframes beatPulse {
+      0% { background-color: #000000; }
+      3% { background-color: #0a0a0a; }
+      100% { background-color: #000000; }
+    }
+
+    @keyframes beatOnePulse {
+      0% { background-color: #000000; }
+      4% { background-color: #150a0a; }
+      100% { background-color: #000000; }
+    }
+
+    body.beat-pulse {
+      animation: beatPulse 0.12s ease-out;
+    }
+
+    body.beat-one-pulse {
+      animation: beatOnePulse 0.18s ease-out;
+    }
+
+    /* Drum Color Flashes */
+    @keyframes kickFlash {
+      0%, 100% { box-shadow: none; }
+      40% { box-shadow: 0 0 40px rgba(255, 68, 68, 0.4) inset; }
+    }
+
+    @keyframes snareFlash {
+      0%, 100% { box-shadow: none; }
+      40% { box-shadow: 0 0 40px rgba(255, 170, 0, 0.4) inset; }
+    }
+
+    @keyframes hihatFlash {
+      0%, 100% { box-shadow: none; }
+      40% { box-shadow: 0 0 40px rgba(0, 170, 255, 0.4) inset; }
+    }
+
+    .sequencer.kick-hit {
+      animation: kickFlash 0.15s ease-out;
+    }
+
+    .sequencer.snare-hit {
+      animation: snareFlash 0.15s ease-out;
+    }
+
+    .sequencer.hihat-hit {
+      animation: hihatFlash 0.15s ease-out;
+    }
+
+    /* Visualization Controls */
+    .viz-controls-section {
+      border-top: 1px solid var(--border);
+      animation: fadeIn 0.8s var(--transition) 0.5s both;
+    }
+
+    .viz-controls {
+      display: flex;
+      gap: 24px;
+      padding: 24px 40px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .viz-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #666;
+      cursor: pointer;
+      transition: color 0.2s;
+      user-select: none;
+    }
+
+    .viz-toggle:hover {
+      color: #999;
+    }
+
+    .viz-toggle input[type="checkbox"] {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border: 1px solid #333;
+      background: #000;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .viz-toggle input[type="checkbox"]:checked {
+      background: #fff;
+      border-color: #fff;
+    }
+
+    .viz-toggle input[type="checkbox"]:checked::after {
+      content: '✓';
+      display: block;
+      text-align: center;
+      color: #000;
+      font-size: 10px;
+      line-height: 14px;
+    }
+
+    /* Mobile Optimizations for Visualizations */
+    @media (max-width: 768px) {
+      .visualization-section {
+        padding: 30px 20px;
+      }
+
+      .viz-container {
+        gap: 40px;
+      }
+
+      .beat-circle {
+        width: 160px;
+        height: 160px;
+      }
+
+      .beat-playhead {
+        transform-origin: 80px 80px;
+      }
+
+      .beat-center-text {
+        font-size: 20px;
+      }
+
+      .viz-controls {
+        gap: 16px;
+        padding: 20px;
+      }
+
+      /* Reduce animation complexity on mobile */
+      .beat-segment {
+        transition: fill 0.05s ease-out;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1095,6 +1345,17 @@
       <button class="play-button" id="playBtn">
         <span class="play-icon"></span>
       </button>
+    </section>
+
+    <section class="visualization-section">
+      <div class="viz-container">
+        <div class="beat-circle-container" id="beatCircleContainer">
+          <svg class="beat-circle" viewBox="0 0 200 200" id="beatCircle">
+            <!-- Segments and playhead will be generated by JavaScript -->
+          </svg>
+          <div class="beat-label">BEAT CIRCLE</div>
+        </div>
+      </div>
     </section>
 
     <section class="presets">
@@ -1194,6 +1455,20 @@
                 <option value="distorted">Distorted</option>
                 <option value="default">Default</option>
             </select>
+        </div>
+
+        <div class="slider-group">
+          <label class="slider-label">VISUALIZATIONS</label>
+          <div class="viz-controls">
+            <label class="viz-toggle">
+              <input type="checkbox" id="vizBeatCircle" checked>
+              <span>BEAT CIRCLE</span>
+            </label>
+            <label class="viz-toggle">
+              <input type="checkbox" id="vizPulse" checked>
+              <span>AMBIENT PULSE</span>
+            </label>
+          </div>
         </div>
       </div>
     </section>
@@ -2598,7 +2873,199 @@
         droneValue.textContent = '—';
       }
     }
-    
+
+    // Visualization State
+    const vizState = {
+      beatCircle: true,
+      pulse: true
+    };
+
+    // Initialize Beat Circle Visualization
+    function initBeatCircle() {
+      const svg = $('beatCircle');
+      const centerX = 100;
+      const centerY = 100;
+      const radius = 85;
+      const segments = 8;
+
+      // Create segments
+      for (let i = 0; i < segments; i++) {
+        const startAngle = (i / segments) * 360 - 90; // Start from top
+        const endAngle = ((i + 1) / segments) * 360 - 90;
+        const path = createSegmentPath(centerX, centerY, radius, startAngle, endAngle);
+
+        const segmentEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        segmentEl.setAttribute('d', path);
+        segmentEl.setAttribute('class', 'beat-segment' + (i === 0 ? ' beat-one' : ''));
+        segmentEl.dataset.step = i;
+        svg.appendChild(segmentEl);
+      }
+
+      // Create center text
+      const centerText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      centerText.setAttribute('x', centerX);
+      centerText.setAttribute('y', centerY);
+      centerText.setAttribute('class', 'beat-center-text');
+      centerText.setAttribute('id', 'beatCenterText');
+      centerText.textContent = '1';
+      svg.appendChild(centerText);
+
+      // Create playhead (rotating line from center)
+      const playhead = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      playhead.setAttribute('x1', centerX);
+      playhead.setAttribute('y1', centerY);
+      playhead.setAttribute('x2', centerX);
+      playhead.setAttribute('y2', centerY - radius + 10);
+      playhead.setAttribute('class', 'beat-playhead');
+      playhead.setAttribute('id', 'beatPlayhead');
+      svg.appendChild(playhead);
+    }
+
+    // Create SVG arc path
+    function createSegmentPath(cx, cy, r, startAngle, endAngle) {
+      const innerRadius = r * 0.4;
+      const start = polarToCartesian(cx, cy, r, endAngle);
+      const end = polarToCartesian(cx, cy, r, startAngle);
+      const innerStart = polarToCartesian(cx, cy, innerRadius, endAngle);
+      const innerEnd = polarToCartesian(cx, cy, innerRadius, startAngle);
+      const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+
+      return [
+        'M', start.x, start.y,
+        'A', r, r, 0, largeArcFlag, 0, end.x, end.y,
+        'L', innerEnd.x, innerEnd.y,
+        'A', innerRadius, innerRadius, 0, largeArcFlag, 1, innerStart.x, innerStart.y,
+        'Z'
+      ].join(' ');
+    }
+
+    function polarToCartesian(cx, cy, r, angleDegrees) {
+      const angleRadians = (angleDegrees * Math.PI) / 180;
+      return {
+        x: cx + r * Math.cos(angleRadians),
+        y: cy + r * Math.sin(angleRadians)
+      };
+    }
+
+    // Update Beat Circle Visualization
+    function updateBeatCircle(step) {
+      if (!vizState.beatCircle) return;
+
+      // Update segments
+      const segments = document.querySelectorAll('.beat-segment');
+      segments.forEach((seg, i) => {
+        seg.classList.toggle('active', i === step);
+      });
+
+      // Update center text
+      const centerText = $('beatCenterText');
+      if (centerText) {
+        centerText.textContent = step + 1;
+        centerText.classList.toggle('active', true);
+        setTimeout(() => centerText.classList.toggle('active', false), 100);
+      }
+
+      // Update playhead rotation
+      const playhead = $('beatPlayhead');
+      if (playhead) {
+        const rotation = (step / STEPS) * 360;
+        playhead.style.transform = `rotate(${rotation}deg)`;
+      }
+
+      // Flash on beat 1
+      if (step === 0) {
+        const container = $('beatCircleContainer');
+        if (container) {
+          container.classList.add('flash');
+          setTimeout(() => container.classList.remove('flash'), 120);
+        }
+      }
+    }
+
+    // Trigger Visual Pulse
+    function triggerVisualPulse(step) {
+      if (!vizState.pulse) return;
+
+      // Background pulse
+      if (step === 0) {
+        document.body.classList.add('beat-one-pulse');
+        setTimeout(() => document.body.classList.remove('beat-one-pulse'), 180);
+      } else {
+        document.body.classList.add('beat-pulse');
+        setTimeout(() => document.body.classList.remove('beat-pulse'), 120);
+      }
+
+      // Drum color flashes
+      const sequencer = document.querySelector('.sequencer');
+      if (sequencer) {
+        if (patterns.kick && patterns.kick[step]) {
+          sequencer.classList.add('kick-hit');
+          setTimeout(() => sequencer.classList.remove('kick-hit'), 150);
+        }
+        if (patterns.snare && patterns.snare[step]) {
+          sequencer.classList.add('snare-hit');
+          setTimeout(() => sequencer.classList.remove('snare-hit'), 150);
+        }
+        if (patterns.hihat && patterns.hihat[step]) {
+          sequencer.classList.add('hihat-hit');
+          setTimeout(() => sequencer.classList.remove('hihat-hit'), 150);
+        }
+      }
+    }
+
+    // Update Step Numbers with Enhanced Highlighting
+    function updateStepNumbers(step) {
+      const stepNumbers = document.querySelectorAll('.step-number');
+      stepNumbers.forEach((num, i) => {
+        num.classList.toggle('active', i === step);
+      });
+    }
+
+    // Initialize Visualization Controls
+    function initVisualizationControls() {
+      // Beat Circle toggle
+      const beatCircleToggle = $('vizBeatCircle');
+      if (beatCircleToggle) {
+        beatCircleToggle.addEventListener('change', e => {
+          vizState.beatCircle = e.target.checked;
+          const container = $('beatCircleContainer');
+          if (container) {
+            container.style.display = e.target.checked ? 'flex' : 'none';
+          }
+          // Save preference
+          localStorage.setItem('beatbox-viz-beat-circle', e.target.checked);
+        });
+
+        // Load saved preference
+        const saved = localStorage.getItem('beatbox-viz-beat-circle');
+        if (saved !== null) {
+          vizState.beatCircle = saved === 'true';
+          beatCircleToggle.checked = vizState.beatCircle;
+          const container = $('beatCircleContainer');
+          if (container) {
+            container.style.display = vizState.beatCircle ? 'flex' : 'none';
+          }
+        }
+      }
+
+      // Ambient Pulse toggle
+      const pulseToggle = $('vizPulse');
+      if (pulseToggle) {
+        pulseToggle.addEventListener('change', e => {
+          vizState.pulse = e.target.checked;
+          // Save preference
+          localStorage.setItem('beatbox-viz-pulse', e.target.checked);
+        });
+
+        // Load saved preference
+        const saved = localStorage.getItem('beatbox-viz-pulse');
+        if (saved !== null) {
+          vizState.pulse = saved === 'true';
+          pulseToggle.checked = vizState.pulse;
+        }
+      }
+    }
+
     // Mobile-Optimized Scheduler
     function scheduler() {
       const ctx = audioCtx;
@@ -2614,6 +3081,11 @@
 
         // Update UI
         updateStepUI(currentStep);
+
+        // Update visualizations
+        updateBeatCircle(currentStep);
+        updateStepNumbers(currentStep);
+        triggerVisualPulse(currentStep);
 
         // Haptic feedback on downbeat
         if (currentStep === 0 && navigator.vibrate) {
@@ -2818,7 +3290,7 @@
       stepNumbers.innerHTML = '';
       for (let i = 0; i < STEPS; i++) {
         const number = document.createElement('div');
-        number.className = 'step-number';
+        number.className = 'step-number' + (i === 0 ? ' beat-one' : '');
         number.textContent = i + 1;
         stepNumbers.appendChild(number);
       }
@@ -3231,6 +3703,10 @@
           $('stepToggle').textContent = `${STEPS === 4 ? '8' : '4'}/${STEPS} STEPS`;
         }
       });
+
+      // Initialize visualizations
+      initBeatCircle();
+      initVisualizationControls();
     }
     
     // Removed loadFromURL - no longer needed without save/load/share features
