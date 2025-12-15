@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fretboard - TE Style Mockup</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --te-orange: #FF6B00;
+            --te-orange-light: #FF8533;
+            --te-cream: #F5F3EF;
+            --te-white: #FEFEFE;
+            --te-gray-light: #E8E6E2;
+            --te-gray: #B8B5B0;
+            --te-gray-dark: #6B6966;
+            --te-black: #1A1918;
+            --te-lcd-bg: #C5CDB8;
+            --te-lcd-text: #2D3328;
+            --te-radius: 8px;
+            --te-radius-lg: 12px;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--te-cream);
+            min-height: 100vh;
+            padding: 24px;
+            color: var(--te-black);
+        }
+
+        .device {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--te-white);
+            border-radius: var(--te-radius-lg);
+            box-shadow:
+                0 1px 2px rgba(0,0,0,0.04),
+                0 4px 8px rgba(0,0,0,0.04),
+                0 12px 24px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        /* Header Bar */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--te-gray-light);
+        }
+
+        .logo {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--te-gray-dark);
+        }
+
+        .logo span {
+            color: var(--te-orange);
+        }
+
+        .mode-badge {
+            background: var(--te-orange);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Control Panel */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--te-gray-light);
+            border-bottom: 1px solid var(--te-gray);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--te-gray-dark);
+        }
+
+        .lcd-display {
+            background: var(--te-lcd-bg);
+            color: var(--te-lcd-text);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #A8B09C;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn {
+            flex: 1;
+            background: var(--te-white);
+            border: 1px solid var(--te-gray);
+            border-radius: 4px;
+            padding: 8px 6px;
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        .btn:hover {
+            background: var(--te-gray-light);
+        }
+
+        .btn.active {
+            background: var(--te-orange);
+            color: white;
+            border-color: var(--te-orange);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 16px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--te-gray-light);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--te-gray-dark);
+        }
+
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .legend-dot.root { background: var(--te-orange); }
+        .legend-dot.second { background: #4A90A4; }
+        .legend-dot.third { background: #7B68EE; }
+        .legend-dot.fourth { background: #20B2AA; }
+        .legend-dot.fifth { background: #E85D75; }
+        .legend-dot.sixth { background: #9ACD32; }
+        .legend-dot.seventh { background: #DDA0DD; }
+
+        /* Fretboard Container */
+        .fretboard-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .fretboard {
+            display: flex;
+            flex-direction: column;
+            min-width: 800px;
+            background: linear-gradient(180deg, #3D3530 0%, #2A2522 100%);
+            border-radius: var(--te-radius);
+            padding: 16px 12px;
+            position: relative;
+        }
+
+        /* Fret Numbers */
+        .fret-numbers {
+            display: grid;
+            grid-template-columns: 40px repeat(15, 1fr);
+            gap: 2px;
+            margin-bottom: 8px;
+        }
+
+        .fret-num {
+            text-align: center;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--te-gray);
+        }
+
+        .fret-num.marker {
+            color: var(--te-orange);
+        }
+
+        /* String Row */
+        .string-row {
+            display: grid;
+            grid-template-columns: 40px repeat(15, 1fr);
+            gap: 2px;
+            align-items: center;
+            height: 36px;
+            position: relative;
+        }
+
+        .string-row::after {
+            content: '';
+            position: absolute;
+            left: 44px;
+            right: 4px;
+            top: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, #B8A89A 0%, #8B7D70 100%);
+            border-radius: 1px;
+            z-index: 0;
+        }
+
+        .string-row:nth-child(2)::after { height: 2.5px; }
+        .string-row:nth-child(3)::after { height: 3px; }
+        .string-row:nth-child(4)::after { height: 3.5px; }
+        .string-row:nth-child(5)::after { height: 4px; }
+        .string-row:nth-child(6)::after { height: 4.5px; }
+
+        .string-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--te-cream);
+            text-align: center;
+        }
+
+        .fret {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .fret::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 4px;
+            bottom: 4px;
+            width: 2px;
+            background: linear-gradient(180deg, #C0B0A0 0%, #A09080 50%, #C0B0A0 100%);
+            border-radius: 1px;
+        }
+
+        .fret:first-of-type::before {
+            width: 4px;
+            background: #E8DDD0;
+        }
+
+        .note {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .note.in-scale {
+            background: var(--te-gray);
+            color: var(--te-black);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .note.root {
+            background: var(--te-orange);
+            color: white;
+            box-shadow: 0 2px 6px rgba(255,107,0,0.5);
+        }
+
+        .note.degree-2 { background: #4A90A4; color: white; }
+        .note.degree-3 { background: #7B68EE; color: white; }
+        .note.degree-4 { background: #20B2AA; color: white; }
+        .note.degree-5 { background: #E85D75; color: white; }
+        .note.degree-6 { background: #9ACD32; color: var(--te-black); }
+        .note.degree-7 { background: #DDA0DD; color: var(--te-black); }
+
+        .note:hover {
+            transform: scale(1.15);
+        }
+
+        .note.out-of-scale {
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* Fret Markers (inlays) */
+        .fret-markers {
+            display: grid;
+            grid-template-columns: 40px repeat(15, 1fr);
+            gap: 2px;
+            margin-top: 8px;
+        }
+
+        .marker-cell {
+            display: flex;
+            justify-content: center;
+        }
+
+        .inlay {
+            width: 8px;
+            height: 8px;
+            background: var(--te-cream);
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        .inlay.double {
+            width: 16px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .inlay.double::before,
+        .inlay.double::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--te-cream);
+            border-radius: 50%;
+        }
+
+        /* Mode Info Panel */
+        .mode-info {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            padding: 16px 20px;
+            background: var(--te-gray-light);
+        }
+
+        .mode-card {
+            background: var(--te-white);
+            border: 1px solid var(--te-gray);
+            border-radius: 6px;
+            padding: 10px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .mode-card:hover {
+            border-color: var(--te-orange);
+        }
+
+        .mode-card.active {
+            background: var(--te-orange);
+            border-color: var(--te-orange);
+            color: white;
+        }
+
+        .mode-card .degree {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .mode-card .name {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            opacity: 0.8;
+        }
+
+        .mode-card.active .name {
+            opacity: 1;
+        }
+
+        /* Scale Pattern Display */
+        .pattern-display {
+            padding: 16px 20px;
+            border-top: 1px solid var(--te-gray-light);
+        }
+
+        .pattern-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .pattern-label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--te-gray-dark);
+            width: 60px;
+        }
+
+        .intervals {
+            display: flex;
+            gap: 4px;
+        }
+
+        .interval {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            background: var(--te-gray-light);
+            color: var(--te-gray-dark);
+        }
+
+        .interval.whole { background: var(--te-black); color: white; }
+        .interval.half { background: var(--te-orange); color: white; }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-top: 1px solid var(--te-gray-light);
+            font-size: 9px;
+            color: var(--te-gray-dark);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .mode-info {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .legend {
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="device">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">BEAT<span>•</span>BOX <span>/</span> FRETBOARD</div>
+            <div class="mode-badge">IONIAN</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-label">Root Note</div>
+                <div class="lcd-display">C</div>
+            </div>
+            <div class="control-group">
+                <div class="control-label">Scale Type</div>
+                <div class="lcd-display">MAJOR</div>
+            </div>
+            <div class="control-group">
+                <div class="control-label">Display</div>
+                <div class="button-row">
+                    <button class="btn active">NOTE</button>
+                    <button class="btn">DEG</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot root">R</div>
+                <span>Root</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot second">2</div>
+                <span>2nd</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot third">3</div>
+                <span>3rd</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot fourth">4</div>
+                <span>4th</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot fifth">5</div>
+                <span>5th</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot sixth">6</div>
+                <span>6th</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot seventh">7</div>
+                <span>7th</span>
+            </div>
+        </div>
+
+        <!-- Fretboard -->
+        <div class="fretboard-container">
+            <div class="fretboard">
+                <!-- Fret Numbers -->
+                <div class="fret-numbers">
+                    <div class="fret-num"></div>
+                    <div class="fret-num">0</div>
+                    <div class="fret-num">1</div>
+                    <div class="fret-num">2</div>
+                    <div class="fret-num marker">3</div>
+                    <div class="fret-num">4</div>
+                    <div class="fret-num marker">5</div>
+                    <div class="fret-num">6</div>
+                    <div class="fret-num marker">7</div>
+                    <div class="fret-num">8</div>
+                    <div class="fret-num marker">9</div>
+                    <div class="fret-num">10</div>
+                    <div class="fret-num">11</div>
+                    <div class="fret-num marker">12</div>
+                    <div class="fret-num">13</div>
+                    <div class="fret-num">14</div>
+                </div>
+
+                <!-- String 1 (High E) -->
+                <div class="string-row">
+                    <div class="string-label">e</div>
+                    <div class="fret"><div class="note degree-3">E</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-4">F#</div></div>
+                    <div class="fret"><div class="note degree-5">G</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-6">A</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-7">B</div></div>
+                    <div class="fret"><div class="note root">C</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-2">D</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-3">E</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-4">F#</div></div>
+                </div>
+
+                <!-- String 2 (B) -->
+                <div class="string-row">
+                    <div class="string-label">B</div>
+                    <div class="fret"><div class="note degree-7">B</div></div>
+                    <div class="fret"><div class="note root">C</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-2">D</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-3">E</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-4">F#</div></div>
+                    <div class="fret"><div class="note degree-5">G</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-6">A</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-7">B</div></div>
+                    <div class="fret"><div class="note root">C</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                </div>
+
+                <!-- String 3 (G) -->
+                <div class="string-row">
+                    <div class="string-label">G</div>
+                    <div class="fret"><div class="note degree-5">G</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-6">A</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-7">B</div></div>
+                    <div class="fret"><div class="note root">C</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-2">D</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-3">E</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-4">F#</div></div>
+                    <div class="fret"><div class="note degree-5">G</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-6">A</div></div>
+                </div>
+
+                <!-- String 4 (D) -->
+                <div class="string-row">
+                    <div class="string-label">D</div>
+                    <div class="fret"><div class="note degree-2">D</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-3">E</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-4">F#</div></div>
+                    <div class="fret"><div class="note degree-5">G</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-6">A</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-7">B</div></div>
+                    <div class="fret"><div class="note root">C</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-2">D</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-3">E</div></div>
+                </div>
+
+                <!-- String 5 (A) -->
+                <div class="string-row">
+                    <div class="string-label">A</div>
+                    <div class="fret"><div class="note degree-6">A</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-7">B</div></div>
+                    <div class="fret"><div class="note root">C</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-2">D</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-3">E</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-4">F#</div></div>
+                    <div class="fret"><div class="note degree-5">G</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-6">A</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-7">B</div></div>
+                </div>
+
+                <!-- String 6 (Low E) -->
+                <div class="string-row">
+                    <div class="string-label">E</div>
+                    <div class="fret"><div class="note degree-3">E</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-4">F#</div></div>
+                    <div class="fret"><div class="note degree-5">G</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-6">A</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-7">B</div></div>
+                    <div class="fret"><div class="note root">C</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-2">D</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-3">E</div></div>
+                    <div class="fret"><div class="note out-of-scale"></div></div>
+                    <div class="fret"><div class="note degree-4">F#</div></div>
+                </div>
+
+                <!-- Fret Markers (inlays) -->
+                <div class="fret-markers">
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"><div class="inlay"></div></div>
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"><div class="inlay"></div></div>
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"><div class="inlay"></div></div>
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"><div class="inlay"></div></div>
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"><div class="inlay double"></div></div>
+                    <div class="marker-cell"></div>
+                    <div class="marker-cell"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode Selector -->
+        <div class="mode-info">
+            <div class="mode-card active">
+                <div class="degree">I</div>
+                <div class="name">Ionian</div>
+            </div>
+            <div class="mode-card">
+                <div class="degree">II</div>
+                <div class="name">Dorian</div>
+            </div>
+            <div class="mode-card">
+                <div class="degree">III</div>
+                <div class="name">Phrygian</div>
+            </div>
+            <div class="mode-card">
+                <div class="degree">IV</div>
+                <div class="name">Lydian</div>
+            </div>
+            <div class="mode-card">
+                <div class="degree">V</div>
+                <div class="name">Mixolydian</div>
+            </div>
+            <div class="mode-card">
+                <div class="degree">VI</div>
+                <div class="name">Aeolian</div>
+            </div>
+            <div class="mode-card">
+                <div class="degree">VII</div>
+                <div class="name">Locrian</div>
+            </div>
+        </div>
+
+        <!-- Scale Pattern -->
+        <div class="pattern-display">
+            <div class="pattern-row">
+                <div class="pattern-label">Pattern</div>
+                <div class="intervals">
+                    <div class="interval whole">W</div>
+                    <div class="interval whole">W</div>
+                    <div class="interval half">H</div>
+                    <div class="interval whole">W</div>
+                    <div class="interval whole">W</div>
+                    <div class="interval whole">W</div>
+                    <div class="interval half">H</div>
+                </div>
+            </div>
+            <div class="pattern-row">
+                <div class="pattern-label">Notes</div>
+                <div class="intervals">
+                    <div class="interval" style="background: var(--te-orange); color: white;">C</div>
+                    <div class="interval">D</div>
+                    <div class="interval">E</div>
+                    <div class="interval">F</div>
+                    <div class="interval">G</div>
+                    <div class="interval">A</div>
+                    <div class="interval">B</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <span>C MAJOR / IONIAN MODE</span>
+            <span>STANDARD TUNING</span>
+        </div>
+    </div>
+
+    <script>
+        // Simple interactivity demo
+        document.querySelectorAll('.mode-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+
+                // Update badge
+                const modeName = card.querySelector('.name').textContent.toUpperCase();
+                document.querySelector('.mode-badge').textContent = modeName;
+            });
+        });
+
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.parentElement.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.note:not(.out-of-scale)').forEach(note => {
+            note.addEventListener('click', () => {
+                note.style.transform = 'scale(1.3)';
+                setTimeout(() => note.style.transform = '', 150);
+            });
+        });
+    </script>
+</body>
+</html>

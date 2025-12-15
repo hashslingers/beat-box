@@ -10,15 +10,30 @@
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600&display=swap');
     
     :root {
-      --bg: #000000;
-      --surface: #050505;
-      --border: #111111;
-      --text: #ffffff;
-      --text-muted: #666666;
-      --text-dim: #333333;
-      --accent: #ffffff;
+      /* TE Cream Theme */
+      --bg: #F5F3EF;
+      --surface: #FEFEFE;
+      --border: #E8E6E2;
+      --text: #1A1918;
+      --text-muted: #6B6966;
+      --text-dim: #B8B5B0;
+      --accent: #FF6B00;
       --grid-gap: 1px;
       --transition: cubic-bezier(0.23, 1, 0.32, 1);
+
+      /* LCD Display */
+      --lcd-bg: #C5CDB8;
+      --lcd-text: #2D3328;
+
+      /* Fretboard Colors */
+      --color-root: #FF6B00;
+      --color-3: #00D4AA;
+      --color-5: #0099AA;
+      --color-7: #1A5070;
+      --color-passing: #C0BCB8;
+
+      /* Fretboard */
+      --fretboard-bg: linear-gradient(180deg, #3D3530 0%, #2A2522 100%);
     }
 
     * {
@@ -93,6 +108,47 @@
       50% { opacity: 1; }
     }
 
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 40px;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.6s var(--transition) 0.05s both;
+    }
+
+    .nav-tab {
+      padding: 16px 24px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s var(--transition);
+      margin-bottom: -1px;
+    }
+
+    .nav-tab:hover {
+      color: var(--text);
+    }
+
+    .nav-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    /* View Containers */
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
     /* Main Tempo Display with Volume Controls */
     .tempo-section {
       padding: 60px 40px;
@@ -118,7 +174,7 @@
     .volume-value {
       font-size: 14px;
       font-weight: 200;
-      color: #999;
+      color: var(--text-muted);
       min-width: 35px;
       text-align: center;
     }
@@ -126,50 +182,50 @@
     .volume-track {
       width: 3px;
       height: 140px;
-      background: #111;
+      background: var(--border);
       position: relative;
       border-radius: 2px;
       cursor: pointer;
       transition: background 0.2s;
     }
-    
+
     .volume-track:hover {
-      background: #1a1a1a;
+      background: var(--text-dim);
     }
-    
+
     .volume-fill {
       position: absolute;
       bottom: 0;
       width: 100%;
-      background: linear-gradient(180deg, #fff, #666);
+      background: linear-gradient(180deg, var(--text), var(--text-muted));
       border-radius: 2px;
       transition: height 0.3s;
       pointer-events: none;
     }
-    
+
     .volume-thumb {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
       width: 12px;
       height: 12px;
-      background: #fff;
+      background: var(--text);
       border-radius: 2px;
       cursor: pointer;
       transition: all 0.2s;
       pointer-events: none;
     }
-    
+
     .volume-track:hover .volume-thumb {
       width: 16px;
       height: 16px;
     }
-    
+
     .volume-label {
       font-size: 10px;
       font-weight: 500;
       letter-spacing: 0.2em;
-      color: #999;
+      color: var(--text-muted);
       text-transform: uppercase;
       writing-mode: vertical-rl;
       text-orientation: mixed;
@@ -187,7 +243,7 @@
     }
     
     .tempo-display:hover {
-      background: rgba(255,255,255,0.02);
+      background: rgba(0,0,0,0.02);
     }
     
     .tempo-display:active {
@@ -208,7 +264,7 @@
       font-size: 11px;
       font-weight: 500;
       letter-spacing: 0.3em;
-      color: #999;
+      color: var(--text-muted);
       text-transform: uppercase;
     }
     
@@ -216,7 +272,7 @@
       margin-top: 8px;
       font-size: 11px;
       font-weight: 600;
-      color: #999;
+      color: var(--text-muted);
       letter-spacing: 0.15em;
       text-transform: uppercase;
       opacity: 0;
@@ -246,7 +302,7 @@
 
     .play-button:hover {
       border-color: var(--text-muted);
-      background: rgba(255,255,255,0.02);
+      background: rgba(0,0,0,0.02);
     }
 
     .play-button.playing {
@@ -300,7 +356,7 @@
       text-align: center;
       font-size: 10px;
       font-weight: 500;
-      color: #666;
+      color: var(--text-muted);
       letter-spacing: 0.1em;
       padding: 4px 0;
     }
@@ -313,7 +369,7 @@
       margin-bottom: 24px;
       position: relative;
     }
-    
+
     .track::before {
       content: '';
       position: absolute;
@@ -321,7 +377,7 @@
       top: 0;
       bottom: 0;
       width: 3px;
-      background: linear-gradient(180deg, transparent, #444, transparent);
+      background: linear-gradient(180deg, transparent, var(--border), transparent);
     }
     
     .track[data-track="kick"]::before {
@@ -340,7 +396,7 @@
       font-size: 11px;
       font-weight: 500;
       letter-spacing: 0.1em;
-      color: #999;
+      color: var(--text-muted);
       text-align: right;
       text-transform: uppercase;
       cursor: pointer;
@@ -361,22 +417,22 @@
       grid-template-columns: repeat(8, 1fr);
       gap: 6px;
       padding: 12px;
-      background: #0f0f0f;
-      border: 1px solid #1a1a1a;
+      background: var(--lcd-bg);
+      border: 1px solid var(--border);
       border-radius: 4px;
     }
 
     .step {
       aspect-ratio: 2/1;
-      background: #1a1a1a;
-      border: 2px solid #333;
+      background: rgba(45, 51, 40, 0.2);
+      border: 2px solid rgba(45, 51, 40, 0.3);
       position: relative;
       cursor: pointer;
       transition: all 0.2s ease-out;
       overflow: hidden;
-      box-shadow: 
-        inset 0 2px 4px rgba(0,0,0,0.8),
-        0 1px 3px rgba(0,0,0,0.4);
+      box-shadow:
+        inset 0 2px 4px rgba(0,0,0,0.1),
+        0 1px 3px rgba(0,0,0,0.05);
       border-radius: 2px;
     }
 
@@ -384,18 +440,18 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: var(--text);
+      background: var(--lcd-text);
       transform: scale(0);
       transition: transform 0.3s var(--transition);
     }
 
     .step:hover {
-      border-color: #666;
-      background: #2a2a2a;
+      border-color: var(--lcd-text);
+      background: rgba(45, 51, 40, 0.3);
       transform: translateY(-2px);
-      box-shadow: 
-        inset 0 2px 4px rgba(0,0,0,0.8),
-        0 4px 12px rgba(0,0,0,0.6);
+      box-shadow:
+        inset 0 2px 4px rgba(0,0,0,0.1),
+        0 4px 12px rgba(0,0,0,0.1);
     }
 
     .step.active::before {
@@ -404,12 +460,12 @@
 
     .step.playing {
       transform: scaleY(1.15);
-      border-color: var(--text);
+      border-color: var(--lcd-text);
       z-index: 1;
-      box-shadow: 
-        inset 0 1px 2px rgba(0,0,0,0.5),
-        0 0 15px rgba(255,255,255,0.3),
-        0 0 5px rgba(255,255,255,0.5);
+      box-shadow:
+        inset 0 1px 2px rgba(0,0,0,0.2),
+        0 0 15px rgba(45, 51, 40, 0.4),
+        0 0 5px rgba(45, 51, 40, 0.6);
     }
 
     .step.playing.active::before {
@@ -442,7 +498,7 @@
     }
 
     .control:hover {
-      background: rgba(255,255,255,0.02);
+      background: rgba(0,0,0,0.02);
     }
 
     .control-value {
@@ -461,7 +517,7 @@
       font-size: 10px;
       font-weight: 500;
       letter-spacing: 0.2em;
-      color: #999;
+      color: var(--text-muted);
       text-transform: uppercase;
     }
 
@@ -479,7 +535,7 @@
     .preset-btn {
       background: var(--bg);
       border: none;
-      color: #999;
+      color: var(--text-muted);
       padding: 20px;
       font-family: inherit;
       font-size: 11px;
@@ -508,7 +564,7 @@
       font-weight: 500;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: #999;
+      color: var(--text-muted);
       cursor: pointer;
       display: inline-block;
       transition: color 0.3s;
@@ -545,7 +601,7 @@
       font-size: 11px;
       font-weight: 500;
       letter-spacing: 0.1em;
-      color: #999;
+      color: var(--text-muted);
       text-transform: uppercase;
     }
 
@@ -610,7 +666,7 @@
       padding: 12px 20px;
       background: transparent;
       border: 1px solid var(--border);
-      color: #999;
+      color: var(--text-muted);
       font-family: inherit;
       font-size: 11px;
       font-weight: 500;
@@ -623,7 +679,7 @@
     .action-btn:hover {
       color: var(--text);
       border-color: var(--text-muted);
-      background: rgba(255,255,255,0.02);
+      background: rgba(0,0,0,0.02);
     }
 
     /* Select */
@@ -686,7 +742,7 @@
       width: 28px;
       height: 110px;
       background: linear-gradient(180deg, #fff 0%, #e0e0e0 100%);
-      border: 1px solid #111;
+      border: 1px solid var(--text);
       border-radius: 0 0 3px 3px;
       box-shadow: inset 0 -3px 5px rgba(0,0,0,0.1);
       margin-right: -1px;
@@ -733,14 +789,14 @@
       transform: translateX(-50%);
       font-size: 8px;
       font-weight: 500;
-      color: #888;
+      color: var(--text-dim);
       pointer-events: none;
       text-align: center;
       white-space: nowrap;
     }
 
     .piano-key.white .piano-label {
-      color: #666;
+      color: var(--text-muted);
     }
 
     .piano-key.black .piano-label {
@@ -748,7 +804,7 @@
     }
 
     .piano-key.active .piano-label {
-      color: #000;
+      color: var(--text);
       font-weight: 700;
     }
 
@@ -758,8 +814,8 @@
 
     /* Highlight middle C */
     .piano-key.white[data-note="C3"] .piano-label {
-      color: #fff;
-      background: #000;
+      color: var(--surface);
+      background: var(--text);
       padding: 2px 4px;
       border-radius: 2px;
       font-weight: 700;
@@ -780,14 +836,14 @@
     .piano-active-notes {
       font-size: 11px;
       font-weight: 500;
-      color: #999;
+      color: var(--text-muted);
       letter-spacing: 0.1em;
     }
 
     .piano-clear {
       font-size: 10px;
       font-weight: 500;
-      color: #666;
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.1em;
       cursor: pointer;
@@ -802,13 +858,13 @@
     body.performance .step {
       border-width: 2px;
     }
-    
+
     body.performance .steps {
       gap: 3px;
     }
-    
+
     body.performance .step.playing {
-      box-shadow: 0 0 20px rgba(255,255,255,0.3);
+      box-shadow: 0 0 20px rgba(45, 51, 40, 0.4);
       transform: scaleY(1.2);
     }
 
@@ -818,7 +874,7 @@
 
     @keyframes glow {
       0%, 100% { text-shadow: none; }
-      50% { text-shadow: 0 0 30px rgba(255,255,255,0.3); }
+      50% { text-shadow: 0 0 30px rgba(0,0,0,0.1); }
     }
 
     /* Animations */
@@ -987,41 +1043,595 @@
       
       .step:active {
         transform: scale(0.92);
-        background: #444;
-        border-color: #777;
+        background: rgba(45, 51, 40, 0.5);
+        border-color: var(--lcd-text);
       }
-      
+
       .step.playing {
         /* Optimized playing animation for mobile */
         transform: scaleY(1.1);
-        box-shadow: 0 0 8px rgba(255,255,255,0.4);
+        box-shadow: 0 0 8px rgba(45, 51, 40, 0.5);
       }
-      
+
       .preset-btn:active,
       .action-btn:active {
         transform: scale(0.96);
-        background: rgba(255,255,255,0.1);
+        background: rgba(0,0,0,0.05);
       }
-      
+
       .tempo-display:active {
         transform: scale(0.98);
       }
-      
+
       .volume-track:active {
-        background: #333;
+        background: var(--text-muted);
       }
-      
+
       /* Disable complex animations on mobile for performance */
       .tempo-value {
         animation: none !important;
       }
-      
+
       /* Simpler glow effect for mobile */
       body.performance .step.playing {
-        box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        box-shadow: 0 0 10px rgba(45, 51, 40, 0.4);
         transform: scaleY(1.15);
       }
     }
+
+    /* ========== FRETBOARD VIEW STYLES ========== */
+
+    /* Fretboard Device Container */
+    .fretboard-device {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow:
+        0 1px 2px rgba(0,0,0,0.04),
+        0 4px 8px rgba(0,0,0,0.04),
+        0 12px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    /* Fretboard Header */
+    .fretboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .fretboard-logo {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .fretboard-logo span {
+      color: var(--accent);
+    }
+
+    .mode-badge {
+      background: var(--accent);
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Fretboard Controls */
+    .fretboard-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--border);
+      border-bottom: 1px solid var(--text-dim);
+    }
+
+    .fb-control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .fb-control-label {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .fb-lcd-display {
+      background: var(--lcd-bg);
+      color: var(--lcd-text);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      border: 1px solid #A8B09C;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .fb-button-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .fb-btn {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--text-dim);
+      border-radius: 4px;
+      padding: 8px 6px;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .fb-btn:hover {
+      background: var(--border);
+    }
+
+    .fb-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* Legend */
+    .fb-legend {
+      display: flex;
+      gap: 16px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .fb-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .fb-legend-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .fb-legend-dot.root {
+      background: var(--color-root);
+      width: 24px;
+      height: 24px;
+      font-size: 12px;
+    }
+    .fb-legend-dot.chord-3 { background: var(--color-3); color: var(--text); }
+    .fb-legend-dot.chord-5 { background: var(--color-5); }
+    .fb-legend-dot.chord-7 { background: var(--color-7); }
+    .fb-legend-dot.passing { background: var(--color-passing); color: var(--text-muted); }
+
+    /* Fretboard Container */
+    .fretboard-container {
+      padding: 20px;
+      overflow-x: auto;
+    }
+
+    .fretboard {
+      display: flex;
+      flex-direction: column;
+      min-width: 800px;
+      background: var(--fretboard-bg);
+      border-radius: 8px;
+      padding: 16px 12px;
+      position: relative;
+    }
+
+    /* Fret Numbers */
+    .fret-numbers {
+      display: grid;
+      grid-template-columns: 40px repeat(15, 1fr);
+      gap: 2px;
+      margin-bottom: 8px;
+    }
+
+    .fret-num {
+      text-align: center;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+
+    .fret-num.marker {
+      color: var(--accent);
+    }
+
+    /* String Row */
+    .string-row {
+      display: grid;
+      grid-template-columns: 40px repeat(15, 1fr);
+      gap: 2px;
+      align-items: center;
+      height: 44px;
+      position: relative;
+    }
+
+    .string-row::after {
+      content: '';
+      position: absolute;
+      left: 44px;
+      right: 4px;
+      top: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, #B8A89A 0%, #8B7D70 100%);
+      border-radius: 1px;
+      z-index: 0;
+    }
+
+    .string-row:nth-child(2)::after { height: 2.5px; }
+    .string-row:nth-child(3)::after { height: 3px; }
+    .string-row:nth-child(4)::after { height: 3.5px; }
+    .string-row:nth-child(5)::after { height: 4px; }
+    .string-row:nth-child(6)::after { height: 4.5px; }
+
+    .string-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--bg);
+      text-align: center;
+    }
+
+    .fret {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .fret::before {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: linear-gradient(180deg, #C0B0A0 0%, #A09080 50%, #C0B0A0 100%);
+      border-radius: 1px;
+    }
+
+    .fret:first-of-type::before {
+      width: 4px;
+      background: #E8DDD0;
+    }
+
+    .note {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .note:hover {
+      transform: scale(1.15);
+    }
+
+    /* Note Color Classes - A+B Scheme */
+    .note.root {
+      width: 38px;
+      height: 38px;
+      font-size: 15px;
+      background: var(--color-root);
+      color: white;
+      box-shadow: 0 3px 10px rgba(255,107,0,0.6);
+    }
+
+    .note.degree-3 {
+      background: var(--color-3);
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(0,212,170,0.4);
+    }
+
+    .note.degree-5 {
+      background: var(--color-5);
+      color: white;
+      box-shadow: 0 2px 6px rgba(0,153,170,0.4);
+    }
+
+    .note.degree-7 {
+      background: var(--color-7);
+      color: white;
+      box-shadow: 0 2px 6px rgba(26,80,112,0.4);
+    }
+
+    /* Passing tones: 2, 4, 6 */
+    .note.degree-2,
+    .note.degree-4,
+    .note.degree-6 {
+      background: var(--color-passing);
+      color: var(--text-muted);
+    }
+
+    /* Fret Markers (inlays) */
+    .fret-markers {
+      display: grid;
+      grid-template-columns: 40px repeat(15, 1fr);
+      gap: 2px;
+      margin-top: 8px;
+    }
+
+    .marker-cell {
+      display: flex;
+      justify-content: center;
+    }
+
+    .inlay {
+      width: 8px;
+      height: 8px;
+      background: var(--bg);
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+
+    .inlay.double {
+      width: 16px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .inlay.double::before,
+    .inlay.double::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--bg);
+      border-radius: 50%;
+    }
+
+    /* Mode Info Panel */
+    .mode-info {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      padding: 16px 20px;
+      background: var(--border);
+    }
+
+    .mode-card {
+      background: var(--surface);
+      border: 1px solid var(--text-dim);
+      border-radius: 6px;
+      padding: 10px 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mode-card:hover {
+      border-color: var(--accent);
+    }
+
+    .mode-card.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .mode-card .note-name {
+      font-size: 18px;
+      font-weight: 700;
+      display: block;
+    }
+
+    .mode-card .name {
+      font-size: 7px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    .mode-card.active .name {
+      opacity: 1;
+    }
+
+    /* Scale Pattern Display */
+    .fb-pattern-display {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .fb-pattern-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .fb-pattern-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .fb-pattern-label {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      width: 60px;
+    }
+
+    .intervals {
+      display: flex;
+      gap: 4px;
+    }
+
+    .interval {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--border);
+      color: var(--text-muted);
+    }
+
+    .interval.whole { background: var(--text); color: var(--surface); }
+    .interval.half { background: var(--accent); color: white; }
+
+    /* Pattern note colors */
+    .interval.root-note { background: var(--color-root); color: white; }
+    .interval.chord-3 { background: var(--color-3); color: var(--text); }
+    .interval.chord-5 { background: var(--color-5); color: white; }
+    .interval.chord-7 { background: var(--color-7); color: white; }
+    .interval.passing { background: var(--color-passing); color: white; }
+
+    /* Fretboard Footer */
+    .fretboard-footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+
+    /* Rotate hint for portrait mobile */
+    .rotate-hint {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .rotate-icon {
+      font-size: 48px;
+      animation: rotate-hint 2s ease-in-out infinite;
+    }
+
+    @keyframes rotate-hint {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(90deg); }
+    }
+
+    .rotate-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* FRETBOARD Mobile Landscape */
+    @media (max-width: 900px) and (orientation: landscape) {
+      .fretboard-device {
+        border-radius: 8px;
+      }
+
+      .fretboard-header {
+        padding: 8px 12px;
+      }
+
+      .fretboard-controls {
+        padding: 10px 12px;
+        gap: 8px;
+      }
+
+      .fb-legend {
+        padding: 8px 12px;
+        gap: 10px;
+      }
+
+      .fretboard-container {
+        padding: 12px;
+      }
+
+      .fretboard {
+        min-width: 700px;
+        padding: 12px 10px;
+      }
+
+      .mode-info {
+        padding: 10px 12px;
+        gap: 3px;
+      }
+
+      .mode-card {
+        padding: 6px 4px;
+      }
+
+      .mode-card .note-name {
+        font-size: 14px;
+      }
+
+      .mode-card .name {
+        font-size: 6px;
+      }
+
+      .fb-pattern-display {
+        padding: 10px 12px;
+      }
+
+      .fretboard-footer {
+        padding: 8px 12px;
+      }
+    }
+
+    /* FRETBOARD Mobile Portrait - show rotate hint */
+    @media (max-width: 768px) and (orientation: portrait) {
+      .fretboard-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .fretboard-container {
+        display: none;
+      }
+
+      .rotate-hint {
+        display: flex;
+      }
+
+      .mode-info {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .fb-pattern-display {
+        overflow-x: auto;
+      }
+    }
+
+    /* ========== END FRETBOARD STYLES ========== */
 
     /* Loading State */
     .loading {
@@ -1315,6 +1925,13 @@
       <div class="status" id="status">READY</div>
     </header>
 
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-view="beatbox">BEAT BOX</button>
+      <button class="nav-tab" data-view="fretboard">FRETBOARD</button>
+    </nav>
+
+    <!-- Beat Box View -->
+    <div id="beatbox-view" class="view active">
     <section class="tempo-section">
       <div class="tempo-container">
         <div class="vertical-volume">
@@ -1472,6 +2089,154 @@
         </div>
       </div>
     </section>
+    </div><!-- End Beat Box View -->
+
+    <!-- Fretboard View -->
+    <div id="fretboard-view" class="view">
+      <div class="fretboard-device">
+        <!-- Fretboard Header -->
+        <div class="fretboard-header">
+          <div class="fretboard-logo">BEAT<span>•</span>BOX <span>/</span> FRETBOARD</div>
+          <div class="mode-badge" id="fb-mode-badge">C IONIAN</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="fretboard-controls">
+          <div class="fb-control-group">
+            <div class="fb-control-label">Root Note</div>
+            <div class="fb-lcd-display" id="fb-lcd-root">C</div>
+          </div>
+          <div class="fb-control-group">
+            <div class="fb-control-label">Scale Type</div>
+            <div class="fb-lcd-display">MAJOR</div>
+          </div>
+          <div class="fb-control-group">
+            <div class="fb-control-label">Display</div>
+            <div class="fb-button-row">
+              <button class="fb-btn active" data-display="note">NOTE</button>
+              <button class="fb-btn" data-display="deg">DEG</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="fb-legend">
+          <div class="fb-legend-item">
+            <div class="fb-legend-dot root">R</div>
+            <span>Root</span>
+          </div>
+          <div class="fb-legend-item">
+            <div class="fb-legend-dot chord-3">3</div>
+            <span>3rd</span>
+          </div>
+          <div class="fb-legend-item">
+            <div class="fb-legend-dot chord-5">5</div>
+            <span>5th</span>
+          </div>
+          <div class="fb-legend-item">
+            <div class="fb-legend-dot chord-7">7</div>
+            <span>7th</span>
+          </div>
+          <div class="fb-legend-item">
+            <div class="fb-legend-dot passing">–</div>
+            <span>2, 4, 6</span>
+          </div>
+        </div>
+
+        <!-- Rotate hint (mobile portrait only) -->
+        <div class="rotate-hint">
+          <div class="rotate-icon">📱</div>
+          <div class="rotate-text">Rotate your phone for fretboard view</div>
+        </div>
+
+        <!-- Fretboard -->
+        <div class="fretboard-container">
+          <div class="fretboard" id="fretboard">
+            <!-- Fret Numbers -->
+            <div class="fret-numbers">
+              <div class="fret-num"></div>
+              <div class="fret-num">0</div>
+              <div class="fret-num">1</div>
+              <div class="fret-num">2</div>
+              <div class="fret-num marker">3</div>
+              <div class="fret-num">4</div>
+              <div class="fret-num marker">5</div>
+              <div class="fret-num">6</div>
+              <div class="fret-num marker">7</div>
+              <div class="fret-num">8</div>
+              <div class="fret-num marker">9</div>
+              <div class="fret-num">10</div>
+              <div class="fret-num">11</div>
+              <div class="fret-num marker">12</div>
+              <div class="fret-num">13</div>
+              <div class="fret-num">14</div>
+            </div>
+            <!-- Strings generated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Mode Selector -->
+        <div class="mode-info">
+          <div class="mode-card active" data-mode="ionian" data-root="C" data-degree="1">
+            <span class="note-name">C</span>
+            <span class="name">Ionian</span>
+          </div>
+          <div class="mode-card" data-mode="dorian" data-root="D" data-degree="2">
+            <span class="note-name">D</span>
+            <span class="name">Dorian</span>
+          </div>
+          <div class="mode-card" data-mode="phrygian" data-root="E" data-degree="3">
+            <span class="note-name">E</span>
+            <span class="name">Phrygian</span>
+          </div>
+          <div class="mode-card" data-mode="lydian" data-root="F" data-degree="4">
+            <span class="note-name">F</span>
+            <span class="name">Lydian</span>
+          </div>
+          <div class="mode-card" data-mode="mixolydian" data-root="G" data-degree="5">
+            <span class="note-name">G</span>
+            <span class="name">Mixolydian</span>
+          </div>
+          <div class="mode-card" data-mode="aeolian" data-root="A" data-degree="6">
+            <span class="note-name">A</span>
+            <span class="name">Aeolian</span>
+          </div>
+          <div class="mode-card" data-mode="locrian" data-root="B" data-degree="7">
+            <span class="note-name">B</span>
+            <span class="name">Locrian</span>
+          </div>
+        </div>
+
+        <!-- Scale Pattern -->
+        <div class="fb-pattern-display">
+          <div class="fb-pattern-row">
+            <div class="fb-pattern-label">Pattern</div>
+            <div class="intervals" id="fb-pattern-intervals">
+              <div class="interval whole">W</div>
+              <div class="interval whole">W</div>
+              <div class="interval half">H</div>
+              <div class="interval whole">W</div>
+              <div class="interval whole">W</div>
+              <div class="interval whole">W</div>
+              <div class="interval half">H</div>
+            </div>
+          </div>
+          <div class="fb-pattern-row">
+            <div class="fb-pattern-label">Notes</div>
+            <div class="intervals" id="fb-pattern-notes">
+              <!-- Generated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="fretboard-footer">
+          <span id="fb-current-mode">C MAJOR / IONIAN MODE</span>
+          <span>STANDARD TUNING</span>
+        </div>
+      </div>
+    </div><!-- End Fretboard View -->
+
   </div>
 
   <script>
@@ -2854,7 +3619,7 @@
       const activeNotesDisplay = $('pianoActiveNotes');
       if (droneNotes.size === 0) {
         activeNotesDisplay.textContent = 'No notes selected';
-        activeNotesDisplay.style.color = '#666';
+        activeNotesDisplay.style.color = 'var(--text-muted)';
       } else {
         const notesArray = Array.from(droneNotes).sort((a, b) => {
           const aIndex = pianoLayout.findIndex(k => k.note === a);
@@ -2862,7 +3627,7 @@
           return aIndex - bIndex;
         });
         activeNotesDisplay.textContent = notesArray.join(' + ');
-        activeNotesDisplay.style.color = '#fff';
+        activeNotesDisplay.style.color = 'var(--text)';
       }
 
       // Update main drone control display
@@ -3402,6 +4167,21 @@
     
     // Initialize UI
     function initUI() {
+      // Navigation tabs
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const viewId = tab.dataset.view;
+
+          // Update tabs
+          document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          // Update views
+          document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+          document.getElementById(viewId + '-view').classList.add('active');
+        });
+      });
+
       // Initial sequencer build
       rebuildSequencer();
       
@@ -3799,9 +4579,9 @@
         style.textContent = `
           @media (max-width: 768px) {
             .tempo-value { animation: none !important; }
-            .step.playing { 
+            .step.playing {
               transform: scaleY(1.05) !important;
-              box-shadow: 0 0 5px rgba(255,255,255,0.2) !important;
+              box-shadow: 0 0 5px rgba(45, 51, 40, 0.3) !important;
             }
           }
         `;
@@ -3857,12 +4637,244 @@
     document.addEventListener('touchend', () => {
       initialPinchDistance = null;
     }, { passive: true });
-    
+
+    // ========== FRETBOARD LOGIC ==========
+
+    // Music theory data
+    const FB_ALL_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const FB_C_MAJOR_SCALE = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+    // Standard tuning: strings from high to low (e, B, G, D, A, E)
+    const FB_STRING_TUNINGS = [
+      { name: 'e', startNote: 'E', startOctave: 4 },
+      { name: 'B', startNote: 'B', startOctave: 3 },
+      { name: 'G', startNote: 'G', startOctave: 3 },
+      { name: 'D', startNote: 'D', startOctave: 3 },
+      { name: 'A', startNote: 'A', startOctave: 2 },
+      { name: 'E', startNote: 'E', startOctave: 2 }
+    ];
+
+    // Mode interval patterns (W = whole, H = half)
+    const FB_MODE_PATTERNS = {
+      ionian:     ['W', 'W', 'H', 'W', 'W', 'W', 'H'],
+      dorian:     ['W', 'H', 'W', 'W', 'W', 'H', 'W'],
+      phrygian:   ['H', 'W', 'W', 'W', 'H', 'W', 'W'],
+      lydian:     ['W', 'W', 'W', 'H', 'W', 'W', 'H'],
+      mixolydian: ['W', 'W', 'H', 'W', 'W', 'H', 'W'],
+      aeolian:    ['W', 'H', 'W', 'W', 'H', 'W', 'W'],
+      locrian:    ['H', 'W', 'W', 'H', 'W', 'W', 'W']
+    };
+
+    // Fretboard state
+    let fbCurrentMode = 'ionian';
+    let fbCurrentModeRoot = 'C';
+    let fbDisplayMode = 'note'; // 'note' or 'deg'
+
+    // Get note at fret position
+    function fbGetNoteAtFret(startNote, fret) {
+      const startIndex = FB_ALL_NOTES.indexOf(startNote);
+      const noteIndex = (startIndex + fret) % 12;
+      return FB_ALL_NOTES[noteIndex];
+    }
+
+    // Check if note is in C major scale
+    function fbIsInScale(note) {
+      if (note.includes('#')) {
+        return false;
+      }
+      return FB_C_MAJOR_SCALE.includes(note);
+    }
+
+    // Get scale degree relative to current mode root
+    function fbGetScaleDegree(note) {
+      const rootIndex = FB_C_MAJOR_SCALE.indexOf(fbCurrentModeRoot);
+      const noteIndex = FB_C_MAJOR_SCALE.indexOf(note);
+      if (noteIndex === -1) return null;
+
+      let degree = noteIndex - rootIndex;
+      if (degree < 0) degree += 7;
+      return degree + 1;
+    }
+
+    // Get degree class name - A+B scheme
+    function fbGetDegreeClass(degree) {
+      if (degree === 1) return 'root';
+      if (degree === 3) return 'degree-3';
+      if (degree === 5) return 'degree-5';
+      if (degree === 7) return 'degree-7';
+      // Passing tones: 2, 4, 6
+      return `degree-${degree}`;
+    }
+
+    // Get display text for note
+    function fbGetNoteDisplay(note, degree) {
+      if (fbDisplayMode === 'deg') {
+        return degree === 1 ? 'R' : degree.toString();
+      }
+      return note;
+    }
+
+    // Generate fretboard HTML
+    function fbGenerateFretboard() {
+      const fretboard = document.getElementById('fretboard');
+      if (!fretboard) return;
+
+      const existingStrings = fretboard.querySelectorAll('.string-row, .fret-markers');
+      existingStrings.forEach(el => el.remove());
+
+      FB_STRING_TUNINGS.forEach(string => {
+        const row = document.createElement('div');
+        row.className = 'string-row';
+
+        const label = document.createElement('div');
+        label.className = 'string-label';
+        label.textContent = string.name;
+        row.appendChild(label);
+
+        for (let fret = 0; fret <= 14; fret++) {
+          const fretDiv = document.createElement('div');
+          fretDiv.className = 'fret';
+
+          const note = fbGetNoteAtFret(string.startNote, fret);
+
+          if (fbIsInScale(note)) {
+            const degree = fbGetScaleDegree(note);
+            const noteDiv = document.createElement('div');
+            noteDiv.className = `note ${fbGetDegreeClass(degree)}`;
+            noteDiv.dataset.note = note;
+            noteDiv.dataset.degree = degree;
+            noteDiv.textContent = fbGetNoteDisplay(note, degree);
+
+            noteDiv.addEventListener('click', () => {
+              noteDiv.style.transform = 'scale(1.3)';
+              setTimeout(() => noteDiv.style.transform = '', 150);
+            });
+
+            fretDiv.appendChild(noteDiv);
+          }
+
+          row.appendChild(fretDiv);
+        }
+
+        fretboard.appendChild(row);
+      });
+
+      // Add fret markers
+      const markers = document.createElement('div');
+      markers.className = 'fret-markers';
+
+      const markerPositions = [0, 0, 0, 0, 3, 0, 5, 0, 7, 0, 9, 0, 0, 12, 0, 0];
+
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'marker-cell';
+      markers.appendChild(emptyCell);
+
+      markerPositions.forEach((pos) => {
+        const cell = document.createElement('div');
+        cell.className = 'marker-cell';
+
+        if (pos === 12) {
+          const inlay = document.createElement('div');
+          inlay.className = 'inlay double';
+          cell.appendChild(inlay);
+        } else if (pos > 0) {
+          const inlay = document.createElement('div');
+          inlay.className = 'inlay';
+          cell.appendChild(inlay);
+        }
+
+        markers.appendChild(cell);
+      });
+
+      fretboard.appendChild(markers);
+    }
+
+    // Get pattern note class for A+B scheme
+    function fbGetPatternNoteClass(index) {
+      if (index === 0) return 'root-note';
+      if (index === 2) return 'chord-3';
+      if (index === 4) return 'chord-5';
+      if (index === 6) return 'chord-7';
+      return 'passing';
+    }
+
+    // Update pattern display
+    function fbUpdatePatternDisplay() {
+      const patternDiv = document.getElementById('fb-pattern-intervals');
+      const notesDiv = document.getElementById('fb-pattern-notes');
+      if (!patternDiv || !notesDiv) return;
+
+      const pattern = FB_MODE_PATTERNS[fbCurrentMode];
+      patternDiv.innerHTML = pattern.map(int =>
+        `<div class="interval ${int === 'W' ? 'whole' : 'half'}">${int}</div>`
+      ).join('');
+
+      const rootIndex = FB_C_MAJOR_SCALE.indexOf(fbCurrentModeRoot);
+      const reorderedNotes = [];
+      for (let i = 0; i < 7; i++) {
+        reorderedNotes.push(FB_C_MAJOR_SCALE[(rootIndex + i) % 7]);
+      }
+
+      notesDiv.innerHTML = reorderedNotes.map((note, i) =>
+        `<div class="interval ${fbGetPatternNoteClass(i)}">${note}</div>`
+      ).join('');
+    }
+
+    // Update all fretboard UI elements
+    function fbUpdateUI() {
+      const modeBadge = document.getElementById('fb-mode-badge');
+      const lcdRoot = document.getElementById('fb-lcd-root');
+      const currentModeEl = document.getElementById('fb-current-mode');
+
+      const modeName = fbCurrentMode.charAt(0).toUpperCase() + fbCurrentMode.slice(1);
+
+      if (modeBadge) modeBadge.textContent = `${fbCurrentModeRoot} ${modeName.toUpperCase()}`;
+      if (lcdRoot) lcdRoot.textContent = fbCurrentModeRoot;
+      if (currentModeEl) currentModeEl.textContent = `C MAJOR / ${fbCurrentModeRoot} ${modeName.toUpperCase()}`;
+
+      fbGenerateFretboard();
+      fbUpdatePatternDisplay();
+    }
+
+    // Initialize fretboard event handlers
+    function initFretboard() {
+      // Mode button interaction
+      document.querySelectorAll('.mode-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+
+          fbCurrentMode = card.dataset.mode;
+          fbCurrentModeRoot = card.dataset.root;
+
+          fbUpdateUI();
+        });
+      });
+
+      // Display toggle (NOTE / DEG)
+      document.querySelectorAll('.fb-button-row .fb-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.parentElement.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          fbDisplayMode = btn.dataset.display;
+          fbGenerateFretboard();
+        });
+      });
+
+      // Initial render
+      fbGenerateFretboard();
+      fbUpdatePatternDisplay();
+    }
+
+    // ========== END FRETBOARD LOGIC ==========
+
     // Initialize everything
     perfMonitor.startMonitoring();
     optimizeForBattery();
     autoOptimizePerformance();
     initUI();
+    initFretboard();
     
     // Development performance logging
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {

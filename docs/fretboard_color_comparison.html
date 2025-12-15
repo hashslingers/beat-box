@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fretboard Color Schemes Comparison</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --te-orange: #FF6B00;
+            --te-cream: #F5F3EF;
+            --te-white: #FEFEFE;
+            --te-gray-light: #E8E6E2;
+            --te-gray: #B8B5B0;
+            --te-gray-dark: #6B6966;
+            --te-black: #1A1918;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--te-cream);
+            padding: 24px;
+            color: var(--te-black);
+        }
+
+        h1 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            color: var(--te-gray-dark);
+        }
+
+        .schemes {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .scheme {
+            background: var(--te-white);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .scheme-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            gap: 16px;
+        }
+
+        .scheme-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .scheme-desc {
+            font-size: 10px;
+            color: var(--te-gray-dark);
+            line-height: 1.4;
+        }
+
+        .legend {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            color: var(--te-gray-dark);
+        }
+
+        .legend-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        /* Mini fretboard */
+        .mini-fretboard {
+            background: linear-gradient(180deg, #3D3530 0%, #2A2522 100%);
+            border-radius: 8px;
+            padding: 12px;
+            overflow-x: auto;
+        }
+
+        .scale-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 0;
+        }
+
+        .note {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        .note-label {
+            font-size: 9px;
+            color: var(--te-gray);
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .note-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* String preview */
+        .string-preview {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 6px 0;
+            position: relative;
+        }
+
+        .string-preview::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, #B8A89A 0%, #8B7D70 100%);
+            z-index: 0;
+        }
+
+        .string-preview .note {
+            width: 32px;
+            height: 32px;
+            font-size: 11px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .fret-spacer {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+        }
+
+        /* ============================================
+           COLOR SCHEMES
+           ============================================ */
+
+        /* OPTION A: Root + Chord Tones (3 colors) */
+        .scheme-a .root { background: #FF6B00; color: white; }
+        .scheme-a .chord-tone { background: #4A90A4; color: white; }
+        .scheme-a .passing-tone { background: #9A9590; color: white; }
+
+        /* OPTION B: Gradient from Root (orange shades) */
+        .scheme-b .deg-1 { background: #FF6B00; color: white; }
+        .scheme-b .deg-2 { background: #E86A10; color: white; }
+        .scheme-b .deg-3 { background: #D06820; color: white; }
+        .scheme-b .deg-4 { background: #B86630; color: white; }
+        .scheme-b .deg-5 { background: #A06440; color: white; }
+        .scheme-b .deg-6 { background: #886250; color: white; }
+        .scheme-b .deg-7 { background: #706060; color: white; }
+
+        /* OPTION C: Warm/Cool Split */
+        .scheme-c .stable { background: #FF6B00; color: white; } /* 1, 3, 5 */
+        .scheme-c .stable-3 { background: #FF8533; color: white; }
+        .scheme-c .stable-5 { background: #E85D40; color: white; }
+        .scheme-c .tension { background: #4A90A4; color: white; } /* 2, 4, 6, 7 */
+        .scheme-c .tension-4 { background: #5A9AB0; color: white; }
+        .scheme-c .tension-6 { background: #3A8090; color: white; }
+        .scheme-c .tension-7 { background: #2A7080; color: white; }
+
+        /* OPTION D: Root + 5th Only */
+        .scheme-d .root { background: #FF6B00; color: white; }
+        .scheme-d .fifth { background: #E85D75; color: white; }
+        .scheme-d .other { background: #A0A0A0; color: white; }
+
+        /* BLEND A+B: Chord tones gradient, passing neutral */
+        .scheme-ab .root { background: #FF6B00; color: white; }
+        .scheme-ab .chord-3 { background: #4A90A4; color: white; }
+        .scheme-ab .chord-5 { background: #3A7A8A; color: white; }
+        .scheme-ab .chord-7 { background: #2A6A7A; color: white; }
+        .scheme-ab .passing { background: #9A9590; color: white; }
+
+        /* BLEND A+C: Chord=warm, passing=cool */
+        .scheme-ac .root { background: #FF6B00; color: white; }
+        .scheme-ac .chord { background: #E85D40; color: white; }
+        .scheme-ac .passing { background: #4A90A4; color: white; }
+
+        /* BLEND B+C: Full gradient with warm/cool families */
+        .scheme-bc .deg-1 { background: #FF6B00; color: white; }
+        .scheme-bc .deg-3 { background: #FF8040; color: white; }
+        .scheme-bc .deg-5 { background: #E86050; color: white; }
+        .scheme-bc .deg-2 { background: #6AAFC0; color: white; }
+        .scheme-bc .deg-4 { background: #5A9FB0; color: white; }
+        .scheme-bc .deg-6 { background: #4A8FA0; color: white; }
+        .scheme-bc .deg-7 { background: #3A7F90; color: white; }
+
+        /* Section divider */
+        .divider {
+            border-top: 2px dashed var(--te-gray);
+            margin: 16px 0;
+            padding-top: 16px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--te-orange);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fretboard Color Scheme Comparison</h1>
+
+    <div class="schemes">
+
+        <!-- OPTION A -->
+        <div class="scheme scheme-a">
+            <div class="scheme-header">
+                <div>
+                    <div class="scheme-title">Option A: Root + Chord Tones (3 colors)</div>
+                    <div class="scheme-desc">Root stands out. Chord tones (3, 5, 7) grouped. Passing tones (2, 4, 6) neutral.</div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot root">R</div>Root</div>
+                    <div class="legend-item"><div class="legend-dot chord-tone">3</div>Chord</div>
+                    <div class="legend-item"><div class="legend-dot passing-tone">2</div>Pass</div>
+                </div>
+            </div>
+            <div class="mini-fretboard">
+                <div class="scale-row">
+                    <div class="note-container"><div class="note root">C</div><div class="note-label">R</div></div>
+                    <div class="note-container"><div class="note passing-tone">D</div><div class="note-label">2</div></div>
+                    <div class="note-container"><div class="note chord-tone">E</div><div class="note-label">3</div></div>
+                    <div class="note-container"><div class="note passing-tone">F</div><div class="note-label">4</div></div>
+                    <div class="note-container"><div class="note chord-tone">G</div><div class="note-label">5</div></div>
+                    <div class="note-container"><div class="note passing-tone">A</div><div class="note-label">6</div></div>
+                    <div class="note-container"><div class="note chord-tone">B</div><div class="note-label">7</div></div>
+                    <div class="note-container"><div class="note root">C</div><div class="note-label">R</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPTION B -->
+        <div class="scheme scheme-b">
+            <div class="scheme-header">
+                <div>
+                    <div class="scheme-title">Option B: Gradient from Root (single hue)</div>
+                    <div class="scheme-desc">All same hue (orange/brown). Root brightest, fades as you move away. Shows "distance from home."</div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot deg-1">R</div>Bright</div>
+                    <div class="legend-item"><div class="legend-dot deg-4">4</div>Mid</div>
+                    <div class="legend-item"><div class="legend-dot deg-7">7</div>Dark</div>
+                </div>
+            </div>
+            <div class="mini-fretboard">
+                <div class="scale-row">
+                    <div class="note-container"><div class="note deg-1">C</div><div class="note-label">R</div></div>
+                    <div class="note-container"><div class="note deg-2">D</div><div class="note-label">2</div></div>
+                    <div class="note-container"><div class="note deg-3">E</div><div class="note-label">3</div></div>
+                    <div class="note-container"><div class="note deg-4">F</div><div class="note-label">4</div></div>
+                    <div class="note-container"><div class="note deg-5">G</div><div class="note-label">5</div></div>
+                    <div class="note-container"><div class="note deg-6">A</div><div class="note-label">6</div></div>
+                    <div class="note-container"><div class="note deg-7">B</div><div class="note-label">7</div></div>
+                    <div class="note-container"><div class="note deg-1">C</div><div class="note-label">R</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPTION C -->
+        <div class="scheme scheme-c">
+            <div class="scheme-header">
+                <div>
+                    <div class="scheme-title">Option C: Warm/Cool Split (harmonic function)</div>
+                    <div class="scheme-desc">Stable tones (1, 3, 5) = warm/orange. Tension tones (2, 4, 6, 7) = cool/teal.</div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot stable">1</div>Stable</div>
+                    <div class="legend-item"><div class="legend-dot tension">2</div>Tension</div>
+                </div>
+            </div>
+            <div class="mini-fretboard">
+                <div class="scale-row">
+                    <div class="note-container"><div class="note stable">C</div><div class="note-label">R</div></div>
+                    <div class="note-container"><div class="note tension">D</div><div class="note-label">2</div></div>
+                    <div class="note-container"><div class="note stable-3">E</div><div class="note-label">3</div></div>
+                    <div class="note-container"><div class="note tension-4">F</div><div class="note-label">4</div></div>
+                    <div class="note-container"><div class="note stable-5">G</div><div class="note-label">5</div></div>
+                    <div class="note-container"><div class="note tension-6">A</div><div class="note-label">6</div></div>
+                    <div class="note-container"><div class="note tension-7">B</div><div class="note-label">7</div></div>
+                    <div class="note-container"><div class="note stable">C</div><div class="note-label">R</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPTION D -->
+        <div class="scheme scheme-d">
+            <div class="scheme-header">
+                <div>
+                    <div class="scheme-title">Option D: Root + 5th Only (minimal)</div>
+                    <div class="scheme-desc">Only root and 5th highlighted. Everything else neutral. Focuses on the "power chord" interval.</div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot root">R</div>Root</div>
+                    <div class="legend-item"><div class="legend-dot fifth">5</div>Fifth</div>
+                    <div class="legend-item"><div class="legend-dot other">-</div>Other</div>
+                </div>
+            </div>
+            <div class="mini-fretboard">
+                <div class="scale-row">
+                    <div class="note-container"><div class="note root">C</div><div class="note-label">R</div></div>
+                    <div class="note-container"><div class="note other">D</div><div class="note-label">2</div></div>
+                    <div class="note-container"><div class="note other">E</div><div class="note-label">3</div></div>
+                    <div class="note-container"><div class="note other">F</div><div class="note-label">4</div></div>
+                    <div class="note-container"><div class="note fifth">G</div><div class="note-label">5</div></div>
+                    <div class="note-container"><div class="note other">A</div><div class="note-label">6</div></div>
+                    <div class="note-container"><div class="note other">B</div><div class="note-label">7</div></div>
+                    <div class="note-container"><div class="note root">C</div><div class="note-label">R</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider">
+            <div class="section-label">Blended Approaches</div>
+        </div>
+
+        <!-- BLEND A+B -->
+        <div class="scheme scheme-ab">
+            <div class="scheme-header">
+                <div>
+                    <div class="scheme-title">Blend A+B: Chord Tones Gradient</div>
+                    <div class="scheme-desc">Root bright. Chord tones (3, 5, 7) gradient in cool teal. Passing tones neutral.</div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot root">R</div>Root</div>
+                    <div class="legend-item"><div class="legend-dot chord-3">3</div></div>
+                    <div class="legend-item"><div class="legend-dot chord-5">5</div></div>
+                    <div class="legend-item"><div class="legend-dot chord-7">7</div>Chord</div>
+                    <div class="legend-item"><div class="legend-dot passing">-</div>Pass</div>
+                </div>
+            </div>
+            <div class="mini-fretboard">
+                <div class="scale-row">
+                    <div class="note-container"><div class="note root">C</div><div class="note-label">R</div></div>
+                    <div class="note-container"><div class="note passing">D</div><div class="note-label">2</div></div>
+                    <div class="note-container"><div class="note chord-3">E</div><div class="note-label">3</div></div>
+                    <div class="note-container"><div class="note passing">F</div><div class="note-label">4</div></div>
+                    <div class="note-container"><div class="note chord-5">G</div><div class="note-label">5</div></div>
+                    <div class="note-container"><div class="note passing">A</div><div class="note-label">6</div></div>
+                    <div class="note-container"><div class="note chord-7">B</div><div class="note-label">7</div></div>
+                    <div class="note-container"><div class="note root">C</div><div class="note-label">R</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLEND A+C -->
+        <div class="scheme scheme-ac">
+            <div class="scheme-header">
+                <div>
+                    <div class="scheme-title">Blend A+C: Chord Warm, Passing Cool</div>
+                    <div class="scheme-desc">Root orange. Chord tones (3, 5, 7) warm coral. Passing tones (2, 4, 6) cool teal.</div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot root">R</div>Root</div>
+                    <div class="legend-item"><div class="legend-dot chord">3</div>Chord</div>
+                    <div class="legend-item"><div class="legend-dot passing">2</div>Pass</div>
+                </div>
+            </div>
+            <div class="mini-fretboard">
+                <div class="scale-row">
+                    <div class="note-container"><div class="note root">C</div><div class="note-label">R</div></div>
+                    <div class="note-container"><div class="note passing">D</div><div class="note-label">2</div></div>
+                    <div class="note-container"><div class="note chord">E</div><div class="note-label">3</div></div>
+                    <div class="note-container"><div class="note passing">F</div><div class="note-label">4</div></div>
+                    <div class="note-container"><div class="note chord">G</div><div class="note-label">5</div></div>
+                    <div class="note-container"><div class="note passing">A</div><div class="note-label">6</div></div>
+                    <div class="note-container"><div class="note chord">B</div><div class="note-label">7</div></div>
+                    <div class="note-container"><div class="note root">C</div><div class="note-label">R</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLEND B+C -->
+        <div class="scheme scheme-bc">
+            <div class="scheme-header">
+                <div>
+                    <div class="scheme-title">Blend B+C: Warm/Cool with Gradients</div>
+                    <div class="scheme-desc">Stable (1, 3, 5) = warm gradient. Tension (2, 4, 6, 7) = cool gradient. Best of both worlds.</div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot deg-1">R</div></div>
+                    <div class="legend-item"><div class="legend-dot deg-3">3</div></div>
+                    <div class="legend-item"><div class="legend-dot deg-5">5</div>Warm</div>
+                    <div class="legend-item"><div class="legend-dot deg-2">2</div></div>
+                    <div class="legend-item"><div class="legend-dot deg-4">4</div></div>
+                    <div class="legend-item"><div class="legend-dot deg-6">6</div></div>
+                    <div class="legend-item"><div class="legend-dot deg-7">7</div>Cool</div>
+                </div>
+            </div>
+            <div class="mini-fretboard">
+                <div class="scale-row">
+                    <div class="note-container"><div class="note deg-1">C</div><div class="note-label">R</div></div>
+                    <div class="note-container"><div class="note deg-2">D</div><div class="note-label">2</div></div>
+                    <div class="note-container"><div class="note deg-3">E</div><div class="note-label">3</div></div>
+                    <div class="note-container"><div class="note deg-4">F</div><div class="note-label">4</div></div>
+                    <div class="note-container"><div class="note deg-5">G</div><div class="note-label">5</div></div>
+                    <div class="note-container"><div class="note deg-6">A</div><div class="note-label">6</div></div>
+                    <div class="note-container"><div class="note deg-7">B</div><div class="note-label">7</div></div>
+                    <div class="note-container"><div class="note deg-1">C</div><div class="note-label">R</div></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

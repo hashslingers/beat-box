@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fretboard v3 - TE Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --te-orange: #FF6B00;
+            --te-orange-light: #FF8533;
+            --te-cream: #F5F3EF;
+            --te-white: #FEFEFE;
+            --te-gray-light: #E8E6E2;
+            --te-gray: #B8B5B0;
+            --te-gray-dark: #6B6966;
+            --te-black: #1A1918;
+            --te-lcd-bg: #C5CDB8;
+            --te-lcd-text: #2D3328;
+            --te-radius: 8px;
+            --te-radius-lg: 12px;
+
+            /* A+B Color Scheme: Root + Chord Gradient + Passing Neutral */
+            --color-root: #FF6B00;
+            --color-3: #00D4AA;      /* Bright teal - 3rd */
+            --color-5: #0099AA;      /* Medium teal - 5th */
+            --color-7: #1A5070;      /* Deep navy - 7th */
+            --color-passing: #C0BCB8; /* Light gray - 2, 4, 6 */
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--te-cream);
+            min-height: 100vh;
+            padding: 24px;
+            color: var(--te-black);
+        }
+
+        .device {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--te-white);
+            border-radius: var(--te-radius-lg);
+            box-shadow:
+                0 1px 2px rgba(0,0,0,0.04),
+                0 4px 8px rgba(0,0,0,0.04),
+                0 12px 24px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        /* Header Bar */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--te-gray-light);
+        }
+
+        .logo {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--te-gray-dark);
+        }
+
+        .logo span {
+            color: var(--te-orange);
+        }
+
+        .mode-badge {
+            background: var(--te-orange);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Control Panel */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--te-gray-light);
+            border-bottom: 1px solid var(--te-gray);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--te-gray-dark);
+        }
+
+        .lcd-display {
+            background: var(--te-lcd-bg);
+            color: var(--te-lcd-text);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #A8B09C;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn {
+            flex: 1;
+            background: var(--te-white);
+            border: 1px solid var(--te-gray);
+            border-radius: 4px;
+            padding: 8px 6px;
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        .btn:hover {
+            background: var(--te-gray-light);
+        }
+
+        .btn.active {
+            background: var(--te-orange);
+            color: white;
+            border-color: var(--te-orange);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 16px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--te-gray-light);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--te-gray-dark);
+        }
+
+        .legend-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .legend-dot.root {
+            background: var(--color-root);
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+        }
+        .legend-dot.chord-3 { background: var(--color-3); color: var(--te-black); }
+        .legend-dot.chord-5 { background: var(--color-5); }
+        .legend-dot.chord-7 { background: var(--color-7); }
+        .legend-dot.passing { background: var(--color-passing); color: var(--te-gray-dark); }
+
+        /* Fretboard Container */
+        .fretboard-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .fretboard {
+            display: flex;
+            flex-direction: column;
+            min-width: 800px;
+            background: linear-gradient(180deg, #3D3530 0%, #2A2522 100%);
+            border-radius: var(--te-radius);
+            padding: 16px 12px;
+            position: relative;
+        }
+
+        /* Fret Numbers */
+        .fret-numbers {
+            display: grid;
+            grid-template-columns: 40px repeat(15, 1fr);
+            gap: 2px;
+            margin-bottom: 8px;
+        }
+
+        .fret-num {
+            text-align: center;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--te-gray);
+        }
+
+        .fret-num.marker {
+            color: var(--te-orange);
+        }
+
+        /* String Row */
+        .string-row {
+            display: grid;
+            grid-template-columns: 40px repeat(15, 1fr);
+            gap: 2px;
+            align-items: center;
+            height: 44px;
+            position: relative;
+        }
+
+        .string-row::after {
+            content: '';
+            position: absolute;
+            left: 44px;
+            right: 4px;
+            top: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, #B8A89A 0%, #8B7D70 100%);
+            border-radius: 1px;
+            z-index: 0;
+        }
+
+        .string-row:nth-child(2)::after { height: 2.5px; }
+        .string-row:nth-child(3)::after { height: 3px; }
+        .string-row:nth-child(4)::after { height: 3.5px; }
+        .string-row:nth-child(5)::after { height: 4px; }
+        .string-row:nth-child(6)::after { height: 4.5px; }
+
+        .string-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--te-cream);
+            text-align: center;
+        }
+
+        .fret {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .fret::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 4px;
+            bottom: 4px;
+            width: 2px;
+            background: linear-gradient(180deg, #C0B0A0 0%, #A09080 50%, #C0B0A0 100%);
+            border-radius: 1px;
+        }
+
+        .fret:first-of-type::before {
+            width: 4px;
+            background: #E8DDD0;
+        }
+
+        .note {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .note:hover {
+            transform: scale(1.15);
+        }
+
+        /* A+B Color Scheme */
+        .note.root {
+            width: 38px;
+            height: 38px;
+            font-size: 15px;
+            background: var(--color-root);
+            color: white;
+            box-shadow: 0 3px 10px rgba(255,107,0,0.6);
+        }
+
+        .note.degree-3 {
+            background: var(--color-3);
+            color: var(--te-black);
+            box-shadow: 0 2px 6px rgba(0,212,170,0.4);
+        }
+
+        .note.degree-5 {
+            background: var(--color-5);
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,153,170,0.4);
+        }
+
+        .note.degree-7 {
+            background: var(--color-7);
+            color: white;
+            box-shadow: 0 2px 6px rgba(26,80,112,0.4);
+        }
+
+        /* Passing tones: 2, 4, 6 */
+        .note.degree-2,
+        .note.degree-4,
+        .note.degree-6 {
+            background: var(--color-passing);
+            color: var(--te-gray-dark);
+        }
+
+        /* Fret Markers (inlays) */
+        .fret-markers {
+            display: grid;
+            grid-template-columns: 40px repeat(15, 1fr);
+            gap: 2px;
+            margin-top: 8px;
+        }
+
+        .marker-cell {
+            display: flex;
+            justify-content: center;
+        }
+
+        .inlay {
+            width: 8px;
+            height: 8px;
+            background: var(--te-cream);
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        .inlay.double {
+            width: 16px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .inlay.double::before,
+        .inlay.double::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--te-cream);
+            border-radius: 50%;
+        }
+
+        /* Mode Info Panel */
+        .mode-info {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            padding: 16px 20px;
+            background: var(--te-gray-light);
+        }
+
+        .mode-card {
+            background: var(--te-white);
+            border: 1px solid var(--te-gray);
+            border-radius: 6px;
+            padding: 10px 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .mode-card:hover {
+            border-color: var(--te-orange);
+        }
+
+        .mode-card.active {
+            background: var(--te-orange);
+            border-color: var(--te-orange);
+            color: white;
+        }
+
+        .mode-card .note-name {
+            font-size: 18px;
+            font-weight: 700;
+            display: block;
+        }
+
+        .mode-card .name {
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .mode-card.active .name {
+            opacity: 1;
+        }
+
+        /* Scale Pattern Display */
+        .pattern-display {
+            padding: 16px 20px;
+            border-top: 1px solid var(--te-gray-light);
+        }
+
+        .pattern-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .pattern-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .pattern-label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--te-gray-dark);
+            width: 60px;
+        }
+
+        .intervals {
+            display: flex;
+            gap: 4px;
+        }
+
+        .interval {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            background: var(--te-gray-light);
+            color: var(--te-gray-dark);
+        }
+
+        .interval.whole { background: var(--te-black); color: white; }
+        .interval.half { background: var(--te-orange); color: white; }
+
+        /* Pattern note colors */
+        .interval.root-note { background: var(--color-root); color: white; }
+        .interval.chord-3 { background: var(--color-3); color: var(--te-black); }
+        .interval.chord-5 { background: var(--color-5); color: white; }
+        .interval.chord-7 { background: var(--color-7); color: white; }
+        .interval.passing { background: var(--color-passing); color: white; }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-top: 1px solid var(--te-gray-light);
+            font-size: 9px;
+            color: var(--te-gray-dark);
+        }
+
+        /* Rotate hint for portrait mobile */
+        .rotate-hint {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .rotate-icon {
+            font-size: 48px;
+            animation: rotate-hint 2s ease-in-out infinite;
+        }
+
+        @keyframes rotate-hint {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(90deg); }
+        }
+
+        .rotate-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--te-gray-dark);
+        }
+
+        /* MOBILE LANDSCAPE (rotated phone) */
+        @media (max-width: 900px) and (orientation: landscape) {
+            body {
+                padding: 8px;
+            }
+
+            .device {
+                border-radius: var(--te-radius);
+            }
+
+            .header {
+                padding: 8px 12px;
+            }
+
+            .controls {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+
+            .legend {
+                padding: 8px 12px;
+                gap: 10px;
+            }
+
+            .fretboard-container {
+                padding: 12px;
+            }
+
+            .fretboard {
+                min-width: 700px;
+                padding: 12px 10px;
+            }
+
+            .mode-info {
+                padding: 10px 12px;
+                gap: 3px;
+            }
+
+            .mode-card {
+                padding: 6px 4px;
+            }
+
+            .mode-card .note-name {
+                font-size: 14px;
+            }
+
+            .mode-card .name {
+                font-size: 6px;
+            }
+
+            .pattern-display {
+                padding: 10px 12px;
+            }
+
+            .footer {
+                padding: 8px 12px;
+            }
+        }
+
+        /* MOBILE PORTRAIT - show rotate hint */
+        @media (max-width: 768px) and (orientation: portrait) {
+            body {
+                padding: 12px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .fretboard-container {
+                display: none;
+            }
+
+            .rotate-hint {
+                display: flex;
+            }
+
+            .mode-info {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .pattern-display {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="device">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">BEAT<span>•</span>BOX <span>/</span> FRETBOARD</div>
+            <div class="mode-badge">C IONIAN</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-label">Root Note</div>
+                <div class="lcd-display" id="lcd-root">C</div>
+            </div>
+            <div class="control-group">
+                <div class="control-label">Scale Type</div>
+                <div class="lcd-display">MAJOR</div>
+            </div>
+            <div class="control-group">
+                <div class="control-label">Display</div>
+                <div class="button-row">
+                    <button class="btn active" data-display="note">NOTE</button>
+                    <button class="btn" data-display="deg">DEG</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend - Updated for A+B scheme -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot root">R</div>
+                <span>Root</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot chord-3">3</div>
+                <span>3rd</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot chord-5">5</div>
+                <span>5th</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot chord-7">7</div>
+                <span>7th</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot passing">–</div>
+                <span>2, 4, 6</span>
+            </div>
+        </div>
+
+        <!-- Rotate hint (mobile portrait only) -->
+        <div class="rotate-hint">
+            <div class="rotate-icon">📱</div>
+            <div class="rotate-text">Rotate your phone for fretboard view</div>
+        </div>
+
+        <!-- Fretboard -->
+        <div class="fretboard-container">
+            <div class="fretboard" id="fretboard">
+                <!-- Fret Numbers -->
+                <div class="fret-numbers">
+                    <div class="fret-num"></div>
+                    <div class="fret-num">0</div>
+                    <div class="fret-num">1</div>
+                    <div class="fret-num">2</div>
+                    <div class="fret-num marker">3</div>
+                    <div class="fret-num">4</div>
+                    <div class="fret-num marker">5</div>
+                    <div class="fret-num">6</div>
+                    <div class="fret-num marker">7</div>
+                    <div class="fret-num">8</div>
+                    <div class="fret-num marker">9</div>
+                    <div class="fret-num">10</div>
+                    <div class="fret-num">11</div>
+                    <div class="fret-num marker">12</div>
+                    <div class="fret-num">13</div>
+                    <div class="fret-num">14</div>
+                </div>
+
+                <!-- Strings will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Mode Selector with relative keys -->
+        <div class="mode-info">
+            <div class="mode-card active" data-mode="ionian" data-root="C" data-degree="1">
+                <span class="note-name">C</span>
+                <span class="name">Ionian</span>
+            </div>
+            <div class="mode-card" data-mode="dorian" data-root="D" data-degree="2">
+                <span class="note-name">D</span>
+                <span class="name">Dorian</span>
+            </div>
+            <div class="mode-card" data-mode="phrygian" data-root="E" data-degree="3">
+                <span class="note-name">E</span>
+                <span class="name">Phrygian</span>
+            </div>
+            <div class="mode-card" data-mode="lydian" data-root="F" data-degree="4">
+                <span class="note-name">F</span>
+                <span class="name">Lydian</span>
+            </div>
+            <div class="mode-card" data-mode="mixolydian" data-root="G" data-degree="5">
+                <span class="note-name">G</span>
+                <span class="name">Mixolydian</span>
+            </div>
+            <div class="mode-card" data-mode="aeolian" data-root="A" data-degree="6">
+                <span class="note-name">A</span>
+                <span class="name">Aeolian</span>
+            </div>
+            <div class="mode-card" data-mode="locrian" data-root="B" data-degree="7">
+                <span class="note-name">B</span>
+                <span class="name">Locrian</span>
+            </div>
+        </div>
+
+        <!-- Scale Pattern -->
+        <div class="pattern-display">
+            <div class="pattern-row">
+                <div class="pattern-label">Pattern</div>
+                <div class="intervals" id="pattern-intervals">
+                    <div class="interval whole">W</div>
+                    <div class="interval whole">W</div>
+                    <div class="interval half">H</div>
+                    <div class="interval whole">W</div>
+                    <div class="interval whole">W</div>
+                    <div class="interval whole">W</div>
+                    <div class="interval half">H</div>
+                </div>
+            </div>
+            <div class="pattern-row">
+                <div class="pattern-label">Notes</div>
+                <div class="intervals" id="pattern-notes">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <span id="current-mode">C MAJOR / IONIAN MODE</span>
+            <span>STANDARD TUNING</span>
+        </div>
+    </div>
+
+    <script>
+        // Music theory data
+        const ALL_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const C_MAJOR_SCALE = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+        // Standard tuning: strings from high to low (e, B, G, D, A, E)
+        const STRING_TUNINGS = [
+            { name: 'e', startNote: 'E', startOctave: 4 },
+            { name: 'B', startNote: 'B', startOctave: 3 },
+            { name: 'G', startNote: 'G', startOctave: 3 },
+            { name: 'D', startNote: 'D', startOctave: 3 },
+            { name: 'A', startNote: 'A', startOctave: 2 },
+            { name: 'E', startNote: 'E', startOctave: 2 }
+        ];
+
+        // Mode interval patterns (W = whole, H = half)
+        const MODE_PATTERNS = {
+            ionian:     ['W', 'W', 'H', 'W', 'W', 'W', 'H'],
+            dorian:     ['W', 'H', 'W', 'W', 'W', 'H', 'W'],
+            phrygian:   ['H', 'W', 'W', 'W', 'H', 'W', 'W'],
+            lydian:     ['W', 'W', 'W', 'H', 'W', 'W', 'H'],
+            mixolydian: ['W', 'W', 'H', 'W', 'W', 'H', 'W'],
+            aeolian:    ['W', 'H', 'W', 'W', 'H', 'W', 'W'],
+            locrian:    ['H', 'W', 'W', 'H', 'W', 'W', 'W']
+        };
+
+        // Current state
+        let currentMode = 'ionian';
+        let currentModeRoot = 'C';
+        let displayMode = 'note'; // 'note' or 'deg'
+
+        // Get note at fret position
+        function getNoteAtFret(startNote, fret) {
+            const startIndex = ALL_NOTES.indexOf(startNote);
+            const noteIndex = (startIndex + fret) % 12;
+            return ALL_NOTES[noteIndex];
+        }
+
+        // Check if note is in C major scale
+        function isInScale(note) {
+            if (note.includes('#')) {
+                return false;
+            }
+            return C_MAJOR_SCALE.includes(note);
+        }
+
+        // Get scale degree relative to current mode root
+        function getScaleDegree(note) {
+            const rootIndex = C_MAJOR_SCALE.indexOf(currentModeRoot);
+            const noteIndex = C_MAJOR_SCALE.indexOf(note);
+            if (noteIndex === -1) return null;
+
+            let degree = noteIndex - rootIndex;
+            if (degree < 0) degree += 7;
+            return degree + 1;
+        }
+
+        // Get degree class name - A+B scheme
+        function getDegreeClass(degree) {
+            if (degree === 1) return 'root';
+            if (degree === 3) return 'degree-3';
+            if (degree === 5) return 'degree-5';
+            if (degree === 7) return 'degree-7';
+            // Passing tones: 2, 4, 6
+            return `degree-${degree}`;
+        }
+
+        // Get display text for note
+        function getNoteDisplay(note, degree) {
+            if (displayMode === 'deg') {
+                return degree === 1 ? 'R' : degree.toString();
+            }
+            return note;
+        }
+
+        // Generate fretboard HTML
+        function generateFretboard() {
+            const fretboard = document.getElementById('fretboard');
+
+            const existingStrings = fretboard.querySelectorAll('.string-row, .fret-markers');
+            existingStrings.forEach(el => el.remove());
+
+            STRING_TUNINGS.forEach(string => {
+                const row = document.createElement('div');
+                row.className = 'string-row';
+
+                const label = document.createElement('div');
+                label.className = 'string-label';
+                label.textContent = string.name;
+                row.appendChild(label);
+
+                for (let fret = 0; fret <= 14; fret++) {
+                    const fretDiv = document.createElement('div');
+                    fretDiv.className = 'fret';
+
+                    const note = getNoteAtFret(string.startNote, fret);
+
+                    if (isInScale(note)) {
+                        const degree = getScaleDegree(note);
+                        const noteDiv = document.createElement('div');
+                        noteDiv.className = `note ${getDegreeClass(degree)}`;
+                        noteDiv.dataset.note = note;
+                        noteDiv.dataset.degree = degree;
+                        noteDiv.textContent = getNoteDisplay(note, degree);
+
+                        noteDiv.addEventListener('click', () => {
+                            noteDiv.style.transform = 'scale(1.3)';
+                            setTimeout(() => noteDiv.style.transform = '', 150);
+                        });
+
+                        fretDiv.appendChild(noteDiv);
+                    }
+
+                    row.appendChild(fretDiv);
+                }
+
+                fretboard.appendChild(row);
+            });
+
+            // Add fret markers
+            const markers = document.createElement('div');
+            markers.className = 'fret-markers';
+
+            const markerPositions = [0, 0, 0, 0, 3, 0, 5, 0, 7, 0, 9, 0, 0, 12, 0, 0];
+
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'marker-cell';
+            markers.appendChild(emptyCell);
+
+            markerPositions.forEach((pos, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'marker-cell';
+
+                if (pos === 12) {
+                    const inlay = document.createElement('div');
+                    inlay.className = 'inlay double';
+                    cell.appendChild(inlay);
+                } else if (pos > 0) {
+                    const inlay = document.createElement('div');
+                    inlay.className = 'inlay';
+                    cell.appendChild(inlay);
+                }
+
+                markers.appendChild(cell);
+            });
+
+            fretboard.appendChild(markers);
+        }
+
+        // Get pattern note class for A+B scheme
+        function getPatternNoteClass(index) {
+            // index 0 = root, 1 = 2nd, 2 = 3rd, etc.
+            if (index === 0) return 'root-note';
+            if (index === 2) return 'chord-3';
+            if (index === 4) return 'chord-5';
+            if (index === 6) return 'chord-7';
+            return 'passing';
+        }
+
+        // Update pattern display
+        function updatePatternDisplay() {
+            const patternDiv = document.getElementById('pattern-intervals');
+            const notesDiv = document.getElementById('pattern-notes');
+
+            const pattern = MODE_PATTERNS[currentMode];
+            patternDiv.innerHTML = pattern.map(int =>
+                `<div class="interval ${int === 'W' ? 'whole' : 'half'}">${int}</div>`
+            ).join('');
+
+            const rootIndex = C_MAJOR_SCALE.indexOf(currentModeRoot);
+            const reorderedNotes = [];
+            for (let i = 0; i < 7; i++) {
+                reorderedNotes.push(C_MAJOR_SCALE[(rootIndex + i) % 7]);
+            }
+
+            notesDiv.innerHTML = reorderedNotes.map((note, i) =>
+                `<div class="interval ${getPatternNoteClass(i)}">${note}</div>`
+            ).join('');
+        }
+
+        // Update all UI elements
+        function updateUI() {
+            const modeName = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+            document.querySelector('.mode-badge').textContent = `${currentModeRoot} ${modeName.toUpperCase()}`;
+
+            document.getElementById('lcd-root').textContent = currentModeRoot;
+
+            document.getElementById('current-mode').textContent =
+                `C MAJOR / ${currentModeRoot} ${modeName.toUpperCase()}`;
+
+            generateFretboard();
+            updatePatternDisplay();
+        }
+
+        // Mode button interaction
+        document.querySelectorAll('.mode-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+
+                currentMode = card.dataset.mode;
+                currentModeRoot = card.dataset.root;
+
+                updateUI();
+            });
+        });
+
+        // Display toggle (NOTE / DEG)
+        document.querySelectorAll('.button-row .btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.parentElement.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                displayMode = btn.dataset.display;
+                generateFretboard();
+            });
+        });
+
+        // Initial render
+        generateFretboard();
+        updatePatternDisplay();
+    </script>
+</body>
+</html>
