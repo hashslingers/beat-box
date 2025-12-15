@@ -722,13 +722,18 @@
       justify-content: center;
       align-items: flex-start;
       height: 160px;
-      position: relative;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 20px;
       overflow-x: auto; /* Allow horizontal scroll on very small screens */
       overflow-y: visible;
+    }
+
+    .piano-keys-wrapper {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
     }
 
     .piano-key {
@@ -2066,7 +2071,8 @@
         <div class="slider-group">
             <label class="slider-label">DRONE SOUND</label>
             <select class="select" id="droneSoundSelect">
-                <option value="pump_organ_wheezy" selected>Pump Organ - Wheezy</option>
+                <option value="tanpura" selected>Tanpura (Recommended)</option>
+                <option value="pump_organ_wheezy">Pump Organ - Wheezy</option>
                 <option value="pump_organ_classic">Pump Organ - Classic</option>
                 <option value="pump_organ_church">Pump Organ - Church</option>
                 <option value="pump_organ_celeste">Pump Organ - Celeste</option>
@@ -2286,7 +2292,7 @@
     let droneGain = 0.6;
     let drumGain = 0.7;
     let droneNotes = new Set(['E2']); // Support multiple notes (chords)
-    let droneSound = 'pump_organ_wheezy';
+    let droneSound = 'tanpura';
 
     // Note Frequencies - 2 full octaves (C2 to C4)
     const noteFreqs = {
@@ -2726,6 +2732,92 @@
         nodes: [...nodes, distortion, filter, mixGain],
         gainNodes: gainNodes,
         gainRamps: [0.6]
+      };
+    }
+
+    // TANPURA DRONE - Based on warm pad but louder, no oscillation
+    function createTanpuraDrone(ctx, notes, volume) {
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.6, 1 / Math.sqrt(notes.size));
+
+      notes.forEach(note => {
+        const baseFreq = noteFreqs[note];
+        if (!baseFreq) return;
+
+        // Shift up one octave for better speaker reproduction
+        const freq = baseFreq * 2;
+
+        // Detuned sawtooth oscillators (like warm pad) for rich, warm sound
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sawtooth';
+        osc1.frequency.value = freq;
+        osc1.detune.value = -6;
+
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'sawtooth';
+        osc2.frequency.value = freq;
+        osc2.detune.value = 6;
+
+        // Add a sub-oscillator for body (one octave down from shifted freq = original freq)
+        const subOsc = ctx.createOscillator();
+        subOsc.type = 'sine';
+        subOsc.frequency.value = baseFreq; // Original frequency
+
+        // Higher gain than warm pad
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(volume * 0.8 * gainReduction, ctx.currentTime + 0.8);
+
+        const subGain = ctx.createGain();
+        subGain.gain.setValueAtTime(0.001, ctx.currentTime);
+        subGain.gain.exponentialRampToValueAtTime(volume * 0.4 * gainReduction, ctx.currentTime + 0.8);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        subOsc.connect(subGain);
+
+        nodes.push(osc1, osc2, subOsc, gain, subGain);
+        gainNodes.push(gain);
+      });
+
+      // Static lowpass filter - no sweep, low Q (no resonance/oscillation)
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 1200; // Fixed cutoff
+      filter.Q.value = 0.7; // Low Q = no resonance
+
+      // Slight warmth boost
+      const warmthEQ = ctx.createBiquadFilter();
+      warmthEQ.type = 'peaking';
+      warmthEQ.frequency.value = 300;
+      warmthEQ.Q.value = 1;
+      warmthEQ.gain.value = 2;
+
+      const mixGain = ctx.createGain();
+      mixGain.gain.value = 1.2;
+
+      gainNodes.forEach(gainNode => {
+        gainNode.connect(mixGain);
+      });
+
+      // Connect sub oscillator gains too
+      nodes.filter(n => n instanceof GainNode && !gainNodes.includes(n)).forEach(g => {
+        g.connect(mixGain);
+      });
+
+      mixGain.connect(warmthEQ);
+      warmthEQ.connect(filter);
+      filter.connect(compressor);
+
+      nodes.forEach(node => {
+        if (node.start) node.start();
+      });
+
+      return {
+        nodes: [...nodes, filter, warmthEQ, mixGain],
+        gainNodes: gainNodes,
+        gainRamps: [0.8]
       };
     }
 
@@ -3466,6 +3558,9 @@
       if (droneNotes.size === 0) return;
 
       switch (droneSound) {
+        case 'tanpura':
+          activeDrone = createTanpuraDrone(ctx, droneNotes, droneGain);
+          break;
         case 'pump_organ_classic':
           activeDrone = createPumpOrganClassic(ctx, droneNotes, droneGain);
           break;
@@ -3544,6 +3639,10 @@
       const keyboard = $('pianoKeyboard');
       keyboard.innerHTML = '';
 
+      // Create wrapper for proper positioning
+      const wrapper = document.createElement('div');
+      wrapper.className = 'piano-keys-wrapper';
+
       // Render white keys first, then black keys on top
       pianoLayout.forEach(key => {
         if (key.type === 'white') {
@@ -3570,7 +3669,7 @@
           // Click handler
           keyEl.addEventListener('click', () => handlePianoKeyClick(key.note));
 
-          keyboard.appendChild(keyEl);
+          wrapper.appendChild(keyEl);
         }
       });
 
@@ -3596,10 +3695,11 @@
           // Click handler
           keyEl.addEventListener('click', () => handlePianoKeyClick(key.note));
 
-          keyboard.appendChild(keyEl);
+          wrapper.appendChild(keyEl);
         }
       });
 
+      keyboard.appendChild(wrapper);
       updatePianoDisplay();
     }
 
