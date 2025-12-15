@@ -1128,7 +1128,7 @@
     /* Fretboard Controls */
     .fretboard-controls {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
       gap: 12px;
       padding: 16px 20px;
       background: var(--border);
@@ -1220,9 +1220,12 @@
 
     .fb-legend-dot.root {
       background: var(--color-root);
-      width: 24px;
-      height: 24px;
-      font-size: 12px;
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(255,107,0,0.5);
+      border: 2px solid rgba(255,255,255,0.3);
     }
     .fb-legend-dot.chord-3 { background: var(--color-3); color: var(--text); }
     .fb-legend-dot.chord-5 { background: var(--color-5); }
@@ -1346,12 +1349,14 @@
 
     /* Note Color Classes - A+B Scheme */
     .note.root {
-      width: 38px;
-      height: 38px;
-      font-size: 15px;
+      width: 44px;
+      height: 44px;
+      font-size: 18px;
+      font-weight: 800;
       background: var(--color-root);
       color: white;
-      box-shadow: 0 3px 10px rgba(255,107,0,0.6);
+      box-shadow: 0 4px 14px rgba(255,107,0,0.7);
+      border: 2px solid rgba(255,255,255,0.3);
     }
 
     .note.degree-3 {
@@ -2115,6 +2120,13 @@
             <div class="fb-button-row">
               <button class="fb-btn active" data-display="note">NOTE</button>
               <button class="fb-btn" data-display="deg">DEG</button>
+            </div>
+          </div>
+          <div class="fb-control-group">
+            <div class="fb-control-label">Show Notes</div>
+            <div class="fb-button-row">
+              <button class="fb-btn fb-filter active" data-filter="246" title="2nd, 4th, 6th">2,4,6</button>
+              <button class="fb-btn fb-filter active" data-filter="7" title="7th">7</button>
             </div>
           </div>
         </div>
@@ -4669,6 +4681,8 @@
     let fbCurrentMode = 'ionian';
     let fbCurrentModeRoot = 'C';
     let fbDisplayMode = 'note'; // 'note' or 'deg'
+    let fbShow246 = true; // show 2nd, 4th, 6th
+    let fbShow7 = true; // show 7th
 
     // Get note at fret position
     function fbGetNoteAtFret(startNote, fret) {
@@ -4739,18 +4753,27 @@
 
           if (fbIsInScale(note)) {
             const degree = fbGetScaleDegree(note);
-            const noteDiv = document.createElement('div');
-            noteDiv.className = `note ${fbGetDegreeClass(degree)}`;
-            noteDiv.dataset.note = note;
-            noteDiv.dataset.degree = degree;
-            noteDiv.textContent = fbGetNoteDisplay(note, degree);
 
-            noteDiv.addEventListener('click', () => {
-              noteDiv.style.transform = 'scale(1.3)';
-              setTimeout(() => noteDiv.style.transform = '', 150);
-            });
+            // Check if this degree should be shown based on filters
+            const isPassingTone = [2, 4, 6].includes(degree);
+            const is7th = degree === 7;
 
-            fretDiv.appendChild(noteDiv);
+            if ((isPassingTone && !fbShow246) || (is7th && !fbShow7)) {
+              // Skip this note - don't render it
+            } else {
+              const noteDiv = document.createElement('div');
+              noteDiv.className = `note ${fbGetDegreeClass(degree)}`;
+              noteDiv.dataset.note = note;
+              noteDiv.dataset.degree = degree;
+              noteDiv.textContent = fbGetNoteDisplay(note, degree);
+
+              noteDiv.addEventListener('click', () => {
+                noteDiv.style.transform = 'scale(1.3)';
+                setTimeout(() => noteDiv.style.transform = '', 150);
+              });
+
+              fretDiv.appendChild(noteDiv);
+            }
           }
 
           row.appendChild(fretDiv);
@@ -4852,12 +4875,28 @@
       });
 
       // Display toggle (NOTE / DEG)
-      document.querySelectorAll('.fb-button-row .fb-btn').forEach(btn => {
+      document.querySelectorAll('.fb-btn[data-display]').forEach(btn => {
         btn.addEventListener('click', () => {
-          btn.parentElement.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.fb-btn[data-display]').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
 
           fbDisplayMode = btn.dataset.display;
+          fbGenerateFretboard();
+        });
+      });
+
+      // Filter toggles (2,4,6 and 7)
+      document.querySelectorAll('.fb-filter').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.classList.toggle('active');
+
+          const filter = btn.dataset.filter;
+          if (filter === '246') {
+            fbShow246 = btn.classList.contains('active');
+          } else if (filter === '7') {
+            fbShow7 = btn.classList.contains('active');
+          }
+
           fbGenerateFretboard();
         });
       });
