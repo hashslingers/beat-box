@@ -1683,9 +1683,9 @@
       flex-wrap: wrap;
     }
 
-    /* Circular Beat Visualizer */
+    /* Circular Beat Visualizer - Hidden by default */
     .beat-circle-container {
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: center;
       gap: 16px;
@@ -1829,8 +1829,9 @@
       animation: hihatFlash 0.15s ease-out;
     }
 
-    /* Visualization Controls */
+    /* Visualization Controls - Hidden by default */
     .viz-controls-section {
+      display: none;
       border-top: 1px solid var(--border);
       animation: fadeIn 0.8s var(--transition) 0.5s both;
     }
@@ -2265,7 +2266,7 @@
     let unlocked = false;
     
     // Pattern State
-    let STEPS = 8;
+    let STEPS = 4;
     const patterns = {
       kick: new Array(8).fill(false),
       snare: new Array(8).fill(false),
@@ -3653,8 +3654,8 @@
 
     // Visualization State
     const vizState = {
-      beatCircle: true,
-      pulse: true
+      beatCircle: false,
+      pulse: false
     };
 
     // Initialize Beat Circle Visualization
