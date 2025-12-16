@@ -2290,7 +2290,7 @@
     let compressor = null;
     let activeDrone = null; // Will store the current drone's nodes and gain controls
     let droneGain = 0.6;
-    let drumGain = 0.7;
+    let drumGain = 1.0;
     let droneNotes = new Set(['E2']); // Support multiple notes (chords)
     let droneSound = 'tanpura';
 
@@ -2402,13 +2402,13 @@
       click.frequency.setValueAtTime(1500, time);
       click.frequency.exponentialRampToValueAtTime(100, time + 0.02);
       
-      // Gain envelopes
+      // Gain envelopes - boosted for punch
       const oscGain = ctx.createGain();
-      oscGain.gain.setValueAtTime(drumGain, time);
+      oscGain.gain.setValueAtTime(drumGain * 1.2, time);
       oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
-      
+
       const clickGain = ctx.createGain();
-      clickGain.gain.setValueAtTime(drumGain * 0.3, time);
+      clickGain.gain.setValueAtTime(drumGain * 0.5, time);
       clickGain.gain.exponentialRampToValueAtTime(0.01, time + 0.02);
       
       // Connect
@@ -2456,13 +2456,13 @@
       bandpass.frequency.value = 3000;
       bandpass.Q.value = 2;
       
-      // Gain envelopes
+      // Gain envelopes - boosted for presence
       const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(drumGain * 0.8, time);
+      noiseGain.gain.setValueAtTime(drumGain * 1.0, time);
       noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-      
+
       const oscGain = ctx.createGain();
-      oscGain.gain.setValueAtTime(drumGain * 0.3, time);
+      oscGain.gain.setValueAtTime(drumGain * 0.5, time);
       oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
       
       // Connect
@@ -2507,9 +2507,9 @@
       bandpass.frequency.value = 10000;
       bandpass.Q.value = 1.5;
       
-      // Gain envelope
+      // Gain envelope - boosted for clarity
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(drumGain * 0.5, time);
+      gain.gain.setValueAtTime(drumGain * 0.8, time);
       gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
       
       // Connect
