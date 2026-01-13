@@ -8,17 +8,21 @@ BEAT-BOX is a minimalist web-based beat maker with an interactive piano keyboard
 
 ## Current State
 
-- **Status**: Functional single-file HTML application
+- **Status**: Functional single-file HTML application (Optimized for Guitarists)
 - **Location**: `initial/BeatBox_Pro_Minimal.html`
 - **Technology**: Vanilla JavaScript + Web Audio API
+- **Focus**: Mobile-first, immediate drone + beat setup
 - **Features**:
-  - 4/8-step drum sequencer (kick, snare, hi-hat)
-  - Interactive 2-octave piano keyboard for chord/drone synthesis
-  - Tap tempo detection
-  - Mobile-first responsive design
-  - Vertical volume sliders
-  - Pattern presets
-  - Real-time audio synthesis (no samples)
+  - 4/8-step drum sequencer (Kick, Snare, Hi-Hat)
+  - **Drone Wheel**: Intuitive pitch selector based on the Circle of Fifths
+  - **Custom Audio Drones**: Supports 60-minute `drones.mp3` file with 5-minute loops per key
+  - Interactive 2-octave piano keyboard (Advanced Mode)
+  - Simplified Drone Selection: Recorded Drone, Tanpura, Pump Organ, Warm Pad
+  - Snappy Tap Tempo (Median-based, 2s reset, 5-tap window)
+  - Visual Synchronization: `requestAnimationFrame` draw loop with `noteQueue`
+  - Screen Wake Lock API integration
+  - Presets: Metronome, Rock, Funk, Jazz
+  - Haptic feedback and touch-optimized gestures
 
 ## Development Guidelines
 
