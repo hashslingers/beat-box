@@ -1,3 +1,7 @@
+# Workflow: Claude Code - BeatBox Pro
+# Responds to @claude mentions with analysis or implementation
+# Triggers: @claude mentioned in issues or PRs
+
 name: Claude Code
 
 on:
@@ -6,45 +10,114 @@ on:
   pull_request_review_comment:
     types: [created]
   issues:
-    types: [opened, assigned]
-  pull_request_review:
-    types: [submitted]
+    types: [opened]
 
 jobs:
   claude:
+    # Only run when @claude is explicitly mentioned
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@claude'))
+    
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
     permissions:
-      contents: read
-      pull-requests: read
-      issues: read
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: read
       id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Claude Code
+      - name: Run Claude Code Action
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          
-          # This is an optional setting that allows Claude to read CI results on PRs
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: "--allowedTools Bash(git),Bash(gh),Bash(cat),Bash(ls),Bash(grep),Edit,Write,Read,Glob,Grep"
           additional_permissions: |
             actions: read
+          prompt: |
+            # Claude Code - BeatBox Pro Development Agent
+            
+            ## Context
+            - **Repository**: ${{ github.repository }}
+            - **Event**: ${{ github.event_name }}
+            - **Issue/PR**: #${{ github.event.issue.number || github.event.pull_request.number }}
+            
+            ## Mission
+            
+            You are a coding agent for BeatBox Pro, a web-based music production app.
+            
+            ### For Implementation Requests
+            If asked to **implement, fix, refactor, or modify code**:
+            1. Create a feature/fix branch (naming: `feature/issue-XXX-description` or `fix/issue-XXX-description`)
+            2. Make minimal, focused changes
+            3. Follow existing code patterns and conventions
+            4. Create a PR with clear description
+            5. Post ONE summary comment to the original issue with PR link
+            
+            ### For Analysis Requests
+            If asked to **review, analyze, explain, or provide recommendations**:
+            1. Perform thorough analysis
+            2. Post ONE detailed comment to the issue with findings
+            3. Do NOT create a PR
+            
+            ## Critical Guidelines
+            
+            - **Single Response**: Provide ONE response per @claude mention (no follow-ups)
+            - **Read Project Context**: Review `/CLAUDE.md` and `/README.md` for standards
+            - **Minimal Changes**: Only modify what's necessary
+            - **No Direct Main Commits**: Always work on feature branches
+            - **Test in Browser**: Verify changes work in Chrome/Safari/Firefox
+            
+            ## Project Context
+            
+            - **Architecture**: Single-file HTML app (`initial/BeatBox_Pro_Minimal.html`)
+            - **Technology**: Vanilla JavaScript + Web Audio API (no frameworks)
+            - **Audio**: Real-time synthesis using oscillators and noise (no samples)
+            - **Scheduler**: Mobile-optimized with 20-25ms lookahead
+            - **Design**: Mobile-first, minimal black/white aesthetic
+            
+            ## Performance Guidelines
+            
+            - Cache DOM references (no querySelectorAll in hot paths)
+            - Use CSS animations instead of setTimeout where possible
+            - Only run requestAnimationFrame loops when playing
+            - Target <20ms audio latency
+            - 60fps visual feedback on mobile
+            
+            ## Success Criteria
+            
+            - User request fully addressed in ONE interaction
+            - Code follows single-file architecture
+            - No external dependencies added
+            - Changes tested in browser
+            - PR ready for review (for implementation tasks)
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
-
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://docs.anthropic.com/en/docs/claude-code/sdk#command-line for available options
-          # claude_args: '--model claude-opus-4-1-20250805 --allowed-tools Bash(gh pr:*)'
-
+      - name: Post completion status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = ${{ github.event.issue.number || github.event.pull_request.number }};
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const outcome = '${{ steps.claude.outcome }}';
+            
+            if (outcome !== 'success') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue_number,
+                body: `⚠️ **Workflow Error**\n\nClaude Code encountered an issue.\n\n**Status**: ${outcome}\n**Run Details**: [View logs](${runUrl})`
+              });
+            }
