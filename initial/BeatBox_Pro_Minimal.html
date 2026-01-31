@@ -2088,6 +2088,7 @@
                   <option value="tanpura">Tanpura (Synth)</option>
                   <option value="pump_organ_classic">Pump Organ (Synth)</option>
                   <option value="warm_pad">Warm Pad (Synth)</option>
+                  <option value="wurlitzer">Wurlitzer (Synth)</option>
               </select>
           </div>
        </div>
@@ -2937,6 +2938,131 @@
       };
     }
 
+    // WURLITZER ELECTRIC PIANO DRONE - Classic 200A sound
+    function createWurlitzerDrone(ctx, notes, volume) {
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Tremolo LFO - Classic Wurlitzer has ~7 Hz tremolo
+      const tremolo = ctx.createOscillator();
+      tremolo.frequency.value = 7;
+      tremolo.type = 'sine';
+
+      const tremoloGain = ctx.createGain();
+      tremoloGain.gain.value = 0.15; // 15% depth for subtle effect
+
+      tremolo.connect(tremoloGain);
+
+      notes.forEach(note => {
+        const freq = noteFreqs[note];
+        if (!freq) return;
+
+        // FM synthesis for bell-like attack
+        // Modulator at 3.5x carrier frequency creates metallic attack
+        const modulator = ctx.createOscillator();
+        modulator.type = 'sine';
+        modulator.frequency.value = freq * 3.5;
+
+        const modulatorGain = ctx.createGain();
+        // Strong initial FM that decays quickly
+        modulatorGain.gain.setValueAtTime(300, ctx.currentTime);
+        modulatorGain.gain.exponentialRampToValueAtTime(1, ctx.currentTime + 0.08);
+
+        modulator.connect(modulatorGain);
+
+        // Main carrier oscillator
+        const carrier = ctx.createOscillator();
+        carrier.type = 'sine';
+        carrier.frequency.value = freq;
+
+        // Connect modulator to carrier frequency for FM synthesis
+        modulatorGain.connect(carrier.frequency);
+
+        // Carrier gain with fast attack, medium decay
+        const carrierGain = ctx.createGain();
+        carrierGain.gain.setValueAtTime(0.001, ctx.currentTime);
+        carrierGain.gain.exponentialRampToValueAtTime(volume * 0.6 * gainReduction, ctx.currentTime + 0.02);
+        carrierGain.gain.exponentialRampToValueAtTime(volume * 0.4 * gainReduction, ctx.currentTime + 0.3);
+
+        carrier.connect(carrierGain);
+
+        // Apply tremolo to carrier
+        const tremoloApply = ctx.createGain();
+        tremoloApply.gain.value = 1;
+        tremoloGain.connect(tremoloApply.gain);
+        carrierGain.connect(tremoloApply);
+
+        // Body oscillator (octave up for brightness)
+        const body = ctx.createOscillator();
+        body.type = 'sine';
+        body.frequency.value = freq * 2;
+
+        const bodyGain = ctx.createGain();
+        bodyGain.gain.setValueAtTime(0.001, ctx.currentTime);
+        bodyGain.gain.exponentialRampToValueAtTime(volume * 0.3 * gainReduction, ctx.currentTime + 0.05);
+        bodyGain.gain.exponentialRampToValueAtTime(volume * 0.2 * gainReduction, ctx.currentTime + 0.4);
+
+        body.connect(bodyGain);
+
+        // Sub-oscillator for warmth (triangle wave)
+        const sub = ctx.createOscillator();
+        sub.type = 'triangle';
+        sub.frequency.value = freq;
+
+        const subGain = ctx.createGain();
+        subGain.gain.setValueAtTime(0.001, ctx.currentTime);
+        subGain.gain.exponentialRampToValueAtTime(volume * 0.4 * gainReduction, ctx.currentTime + 0.1);
+        subGain.gain.exponentialRampToValueAtTime(volume * 0.3 * gainReduction, ctx.currentTime + 0.5);
+
+        sub.connect(subGain);
+
+        nodes.push(modulator, modulatorGain, carrier, carrierGain, tremoloApply, body, bodyGain, sub, subGain);
+        gainNodes.push(carrierGain, bodyGain, subGain);
+      });
+
+      // Mix all voices
+      const mixGain = ctx.createGain();
+      gainNodes.forEach(gn => gn.connect(mixGain));
+
+      // Bark filter - Peaking at 800 Hz for characteristic mid-range bite
+      const barkFilter = ctx.createBiquadFilter();
+      barkFilter.type = 'peaking';
+      barkFilter.frequency.value = 800;
+      barkFilter.Q.value = 2;
+      barkFilter.gain.value = 3; // +3dB boost
+
+      // Brilliance - High shelf for air and presence
+      const brilliance = ctx.createBiquadFilter();
+      brilliance.type = 'highshelf';
+      brilliance.frequency.value = 2000;
+      brilliance.gain.value = 2; // +2dB boost
+
+      // Smoothing filter to reduce digital artifacts
+      const smoothing = ctx.createBiquadFilter();
+      smoothing.type = 'lowpass';
+      smoothing.frequency.value = 4000;
+      smoothing.Q.value = 0.7;
+
+      // Connect effects chain
+      mixGain.connect(barkFilter);
+      barkFilter.connect(brilliance);
+      brilliance.connect(smoothing);
+      smoothing.connect(compressor);
+
+      // Start all oscillators
+      tremolo.start();
+      nodes.forEach(node => {
+        if (node.start) node.start();
+      });
+
+      return {
+        nodes: [...nodes, tremolo, tremoloGain, mixGain, barkFilter, brilliance, smoothing],
+        gainNodes: gainNodes,
+        gainRamps: [0.4, 0.2, 0.3] // carrier, body, sub ratios
+      };
+    }
+
     function createDefaultDrone(ctx, notes, volume) {
       const allNodes = [];
       const gainNodes = [];
@@ -3710,6 +3836,9 @@
           break;
         case 'warm_pad':
           activeDrone = createWarmPadDrone(ctx, droneNotes, droneGain);
+          break;
+        case 'wurlitzer':
+          activeDrone = createWurlitzerDrone(ctx, droneNotes, droneGain);
           break;
         case 'distorted':
           activeDrone = createDistortedDrone(ctx, droneNotes, droneGain);
