@@ -2364,7 +2364,14 @@
     let unlocked = false;
     let noteQueue = []; // Queue for visual scheduling
     let lastDrawTime = -1;
-    
+
+    // Cached DOM References (Performance Optimization)
+    let cachedBeatSegments = null;
+    let cachedStepNumbers = null;
+    let cachedKickSteps = null;
+    let cachedSnareSteps = null;
+    let cachedHihatSteps = null;
+
     // Pattern State
     let STEPS = 4;
     const patterns = {
@@ -3960,6 +3967,9 @@
       playhead.setAttribute('class', 'beat-playhead');
       playhead.setAttribute('id', 'beatPlayhead');
       svg.appendChild(playhead);
+
+      // Invalidate cached beat segments after rebuild
+      cachedBeatSegments = null;
     }
 
     // Create SVG arc path
@@ -3992,9 +4002,11 @@
     function updateBeatCircle(step) {
       if (!vizState.beatCircle) return;
 
-      // Update segments
-      const segments = document.querySelectorAll('.beat-segment');
-      segments.forEach((seg, i) => {
+      // Update segments (use cached reference)
+      if (!cachedBeatSegments) {
+        cachedBeatSegments = document.querySelectorAll('.beat-segment');
+      }
+      cachedBeatSegments.forEach((seg, i) => {
         seg.classList.toggle('active', i === step);
       });
 
@@ -4056,8 +4068,11 @@
 
     // Update Step Numbers with Enhanced Highlighting
     function updateStepNumbers(step) {
-      const stepNumbers = document.querySelectorAll('.step-number');
-      stepNumbers.forEach((num, i) => {
+      // Use cached reference
+      if (!cachedStepNumbers) {
+        cachedStepNumbers = document.querySelectorAll('.step-number');
+      }
+      cachedStepNumbers.forEach((num, i) => {
         num.classList.toggle('active', i === step);
       });
     }
@@ -4141,6 +4156,8 @@
     
     // Synchronized Visual Loop
     function draw() {
+      // Only run draw loop when playing (Performance Optimization)
+      if (!isPlaying) return;
       if (!audioCtx) return requestAnimationFrame(draw);
       
       // Check for audio loop reset
@@ -4175,18 +4192,26 @@
     }
     
     function updateStepUI(step) {
+      // Cache track step references if not already cached
+      if (!cachedKickSteps) {
+        cachedKickSteps = document.querySelectorAll('#kick-steps .step');
+      }
+      if (!cachedSnareSteps) {
+        cachedSnareSteps = document.querySelectorAll('#snare-steps .step');
+      }
+      if (!cachedHihatSteps) {
+        cachedHihatSteps = document.querySelectorAll('#hihat-steps .step');
+      }
+
       // Clear previous playing states
       document.querySelectorAll('.step.playing').forEach(el => {
         el.classList.remove('playing');
       });
-      
-      // Add playing state to current step
-      ['kick', 'snare', 'hihat'].forEach(track => {
-        const steps = document.querySelectorAll(`#${track}-steps .step`);
-        if (steps[step]) {
-          steps[step].classList.add('playing');
-        }
-      });
+
+      // Add playing state to current step using cached references
+      if (cachedKickSteps[step]) cachedKickSteps[step].classList.add('playing');
+      if (cachedSnareSteps[step]) cachedSnareSteps[step].classList.add('playing');
+      if (cachedHihatSteps[step]) cachedHihatSteps[step].classList.add('playing');
     }
     
     // Start/Stop
@@ -4208,7 +4233,10 @@
       
       startDrone();
       requestWakeLock();
-      
+
+      // Restart draw loop (Performance Optimization)
+      requestAnimationFrame(draw);
+
       // Optimized scheduler interval for mobile performance
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const interval = isMobile ? 20 : 25;
@@ -4481,8 +4509,14 @@
           container.appendChild(step);
         }
       });
+
+      // Invalidate cached DOM references after rebuild
+      cachedStepNumbers = null;
+      cachedKickSteps = null;
+      cachedSnareSteps = null;
+      cachedHihatSteps = null;
     }
-    
+
     // Drone Wheel Logic
     function initDroneWheel() {
       const wheel = $('droneWheel');
