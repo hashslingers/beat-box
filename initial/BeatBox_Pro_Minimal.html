@@ -2086,6 +2086,7 @@
               <select class="select" id="droneSoundSelect">
                   <option value="custom_audio" selected>Recorded Drone (drones.mp3)</option>
                   <option value="tanpura">Tanpura (Synth)</option>
+                  <option value="wurlitzer">Wurlitzer EP (Synth)</option>
                   <option value="pump_organ_classic">Pump Organ (Synth)</option>
                   <option value="warm_pad">Warm Pad (Synth)</option>
               </select>
@@ -2364,14 +2365,7 @@
     let unlocked = false;
     let noteQueue = []; // Queue for visual scheduling
     let lastDrawTime = -1;
-
-    // Cached DOM References (Performance Optimization)
-    let cachedBeatSegments = null;
-    let cachedStepNumbers = null;
-    let cachedKickSteps = null;
-    let cachedSnareSteps = null;
-    let cachedHihatSteps = null;
-
+    
     // Pattern State
     let STEPS = 4;
     const patterns = {
@@ -2389,6 +2383,8 @@
     // Audio Nodes
     let masterGain = null;
     let compressor = null;
+    let reverbSend = null;
+    let reverbReturn = null;
     let activeDrone = null; // Will store the current drone's nodes and gain controls
     let droneGain = 0.6;
     let drumGain = 1.0;
@@ -2477,22 +2473,102 @@
     const advancedToggle = $('advancedToggle');
     const advancedContent = $('advancedContent');
     
+    // Create algorithmic reverb using multi-tap delays
+    function createReverb(ctx) {
+      // Reverb input (send)
+      const input = ctx.createGain();
+      input.gain.value = 0.15; // Subtle reverb mix
+      
+      // Early reflections (small room ambience)
+      const earlyDelays = [0.011, 0.017, 0.023, 0.031]; // Prime-ish delays
+      const earlyGains = [0.6, 0.5, 0.4, 0.35];
+      
+      // Late reverb tail (diffuse reflections)
+      const lateDelays = [0.041, 0.059, 0.073, 0.089, 0.107];
+      const lateGains = [0.25, 0.2, 0.15, 0.12, 0.1];
+      
+      // Lowpass for natural roll-off
+      const lpf = ctx.createBiquadFilter();
+      lpf.type = 'lowpass';
+      lpf.frequency.value = 3500;
+      lpf.Q.value = 0.5;
+      
+      // Highpass to remove rumble
+      const hpf = ctx.createBiquadFilter();
+      hpf.type = 'highpass';
+      hpf.frequency.value = 150;
+      hpf.Q.value = 0.5;
+      
+      // Output gain
+      const output = ctx.createGain();
+      output.gain.value = 1;
+      
+      // Connect input through filters
+      input.connect(lpf);
+      lpf.connect(hpf);
+      
+      // Create early reflection delays
+      earlyDelays.forEach((time, i) => {
+        const delay = ctx.createDelay(0.1);
+        delay.delayTime.value = time;
+        const gain = ctx.createGain();
+        gain.gain.value = earlyGains[i];
+        hpf.connect(delay);
+        delay.connect(gain);
+        gain.connect(output);
+      });
+      
+      // Create late reverb delays with feedback
+      const feedbackNode = ctx.createGain();
+      feedbackNode.gain.value = 0.3; // Reverb decay
+      
+      lateDelays.forEach((time, i) => {
+        const delay = ctx.createDelay(0.2);
+        delay.delayTime.value = time;
+        const gain = ctx.createGain();
+        gain.gain.value = lateGains[i];
+        hpf.connect(delay);
+        delay.connect(gain);
+        gain.connect(output);
+        // Feedback for longer tail
+        gain.connect(feedbackNode);
+      });
+      
+      // Feedback loop with filtering
+      const fbFilter = ctx.createBiquadFilter();
+      fbFilter.type = 'lowpass';
+      fbFilter.frequency.value = 2000;
+      feedbackNode.connect(fbFilter);
+      fbFilter.connect(input);
+      
+      return { input, output };
+    }
+
     // Initialize Audio Context
     function initAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.value = -6;    // Only compress loud peaks
-        compressor.knee.value = 10;         // Gentler knee
-        compressor.ratio.value = 4;         // 4:1 is standard "soft limiting"
-        compressor.attack.value = 0.01;     // Slightly slower attack
-        compressor.release.value = 0.1;     // Faster release for more punch
+        compressor.threshold.value = -24;
+        compressor.knee.value = 30;
+        compressor.ratio.value = 12;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.25;
         
         masterGain = audioCtx.createGain();
         masterGain.gain.value = 0.9;
         
+        // Create subtle room reverb
+        const reverb = createReverb(audioCtx);
+        reverbSend = reverb.input;
+        reverbReturn = reverb.output;
+        
+        // Connect: compressor -> masterGain -> destination
+        //          compressor -> reverbSend -> reverbReturn -> masterGain
         compressor.connect(masterGain);
+        compressor.connect(reverbSend); // Parallel reverb send
+        reverbReturn.connect(masterGain);
         masterGain.connect(audioCtx.destination);
       }
       return audioCtx;
@@ -2651,13 +2727,13 @@
       const gainNodes = [];
       const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
 
-      // Shared LFO for vibrato
+      // Shared LFO for vibrato - slightly slower for smoother sound
       const lfo = ctx.createOscillator();
-      lfo.frequency.value = 5; // Vibrato speed
+      lfo.frequency.value = 4.5; // Vibrato speed
       lfo.type = 'sine';
 
       const lfoGain = ctx.createGain();
-      lfoGain.gain.value = 8; // Vibrato depth
+      lfoGain.gain.value = 6; // Reduced vibrato depth for cleaner sound
       lfo.connect(lfoGain);
 
       notes.forEach(note => {
@@ -2668,12 +2744,12 @@
         const osc1 = ctx.createOscillator(); // Fundamental
         osc1.type = 'sine';
         osc1.frequency.value = freq;
-        osc1.detune.value = -4;
+        osc1.detune.value = -3;
 
         const osc2 = ctx.createOscillator(); // Octave up
         osc2.type = 'sine';
         osc2.frequency.value = freq * 2;
-        osc2.detune.value = 4;
+        osc2.detune.value = 3;
 
         const osc3 = ctx.createOscillator(); // Sub-octave
         osc3.type = 'sine';
@@ -2684,54 +2760,62 @@
         lfoGain.connect(osc2.detune);
         lfoGain.connect(osc3.detune);
 
-        // Gain nodes for mixing
+        // Smoother gain envelopes using setTargetAtTime
         const gain1 = ctx.createGain();
-        gain1.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain1.gain.exponentialRampToValueAtTime(volume * 0.7 * gainReduction, ctx.currentTime + 0.8);
+        gain1.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain1.gain.setTargetAtTime(volume * 0.65 * gainReduction, ctx.currentTime, 0.25);
 
         const gain2 = ctx.createGain();
-        gain2.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(volume * 0.4 * gainReduction, ctx.currentTime + 0.8);
+        gain2.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain2.gain.setTargetAtTime(volume * 0.38 * gainReduction, ctx.currentTime, 0.25);
 
         const gain3 = ctx.createGain();
-        gain3.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain3.gain.exponentialRampToValueAtTime(volume * 0.5 * gainReduction, ctx.currentTime + 0.8);
+        gain3.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain3.gain.setTargetAtTime(volume * 0.45 * gainReduction, ctx.currentTime, 0.3);
 
         osc1.connect(gain1);
         osc2.connect(gain2);
         osc3.connect(gain3);
 
         nodes.push(osc1, osc2, osc3, gain1, gain2, gain3);
-        gainNodes.push(gain1, gain2, gain3); // For volume control
+        gainNodes.push(gain1, gain2, gain3);
       });
 
-      // Shared filter
+      // Lowpass filter with reduced Q for cleaner sound
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = 2200;
-      filter.Q.value = 3;
+      filter.frequency.value = 2400;
+      filter.Q.value = 1.5; // Reduced Q to minimize ringing
 
-      // Master gain for this sound
+      // Warmth EQ
+      const warmthEQ = ctx.createBiquadFilter();
+      warmthEQ.type = 'peaking';
+      warmthEQ.frequency.value = 300;
+      warmthEQ.Q.value = 0.8;
+      warmthEQ.gain.value = 1.5;
+
       const mixGain = ctx.createGain();
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 1.05;
 
-      // Connect all individual gain nodes to the mix gain
       gainNodes.forEach(gainNode => {
         gainNode.connect(mixGain);
       });
 
-      mixGain.connect(filter);
-      filter.connect(compressor);
+      mixGain.connect(warmthEQ);
+      warmthEQ.connect(filter);
+      filter.connect(outputGain);
+      outputGain.connect(compressor);
 
-      // Start oscillators and LFO
       lfo.start();
       nodes.forEach(node => {
         if (node.start) node.start();
       });
 
       return {
-        nodes: [...nodes, filter, lfo, lfoGain, mixGain],
+        nodes: [...nodes, filter, warmthEQ, lfo, lfoGain, mixGain, outputGain],
         gainNodes: gainNodes,
-        gainRamps: [0.7, 0.4, 0.5] // Store initial mix ratios
+        gainRamps: [0.65, 0.38, 0.45]
       };
     }
 
@@ -2739,6 +2823,14 @@
       const nodes = [];
       const gainNodes = [];
       const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Subtle chorus LFO for movement
+      const chorusLFO = ctx.createOscillator();
+      chorusLFO.frequency.value = 0.4;
+      chorusLFO.type = 'sine';
+      const chorusDepth = ctx.createGain();
+      chorusDepth.gain.value = 4; // Subtle detune modulation
+      chorusLFO.connect(chorusDepth);
 
       notes.forEach(note => {
         const freq = noteFreqs[note];
@@ -2748,17 +2840,21 @@
         const osc1 = ctx.createOscillator();
         osc1.type = 'sawtooth';
         osc1.frequency.value = freq;
-        osc1.detune.value = -7; // Detune down
+        osc1.detune.value = -8; // Detune down
 
         const osc2 = ctx.createOscillator();
         osc2.type = 'sawtooth';
         osc2.frequency.value = freq;
-        osc2.detune.value = 7; // Detune up
+        osc2.detune.value = 8; // Detune up
 
-        // A single gain node for each note's oscillator pair
+        // Add chorus modulation
+        chorusDepth.connect(osc1.detune);
+        chorusDepth.connect(osc2.detune);
+
+        // Smoother envelope using setTargetAtTime (no clicks)
         const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(volume * 0.5 * gainReduction, ctx.currentTime + 1.2);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.setTargetAtTime(volume * 0.5 * gainReduction, ctx.currentTime, 0.4); // Smooth attack
 
         osc1.connect(gain);
         osc2.connect(gain);
@@ -2766,31 +2862,42 @@
         gainNodes.push(gain);
       });
 
-      // A sweeping lowpass filter for a classic pad sound.
-      // No LFO is used; the filter sweep provides the primary movement.
+      // Sweeping lowpass filter with smoother Q for less resonance artifacts
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.Q.value = 5;
-      filter.frequency.setValueAtTime(100, ctx.currentTime);
-      filter.frequency.linearRampToValueAtTime(800, ctx.currentTime + 2); // Slow sweep up
+      filter.Q.value = 2.5; // Reduced Q to minimize ringing
+      filter.frequency.setValueAtTime(120, ctx.currentTime);
+      filter.frequency.setTargetAtTime(900, ctx.currentTime, 0.8); // Smoother sweep
+
+      // Add warmth EQ
+      const warmthEQ = ctx.createBiquadFilter();
+      warmthEQ.type = 'peaking';
+      warmthEQ.frequency.value = 250;
+      warmthEQ.Q.value = 0.8;
+      warmthEQ.gain.value = 2;
 
       const mixGain = ctx.createGain();
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 1.1;
 
       gainNodes.forEach(gainNode => {
         gainNode.connect(mixGain);
       });
 
       mixGain.connect(filter);
-      filter.connect(compressor);
+      filter.connect(warmthEQ);
+      warmthEQ.connect(outputGain);
+      outputGain.connect(compressor);
 
+      chorusLFO.start();
       nodes.forEach(node => {
         if (node.start) node.start();
       });
 
       return {
-        nodes: [...nodes, filter, mixGain],
+        nodes: [...nodes, filter, warmthEQ, mixGain, outputGain, chorusLFO, chorusDepth],
         gainNodes: gainNodes,
-        gainRamps: [0.5] // Single gain ramp for this sound
+        gainRamps: [0.5]
       };
     }
 
@@ -2858,11 +2965,19 @@
       };
     }
 
-    // TANPURA DRONE - Based on warm pad but louder, no oscillation
+    // TANPURA DRONE - Rich, warm drone inspired by Indian tanpura
     function createTanpuraDrone(ctx, notes, volume) {
       const nodes = [];
       const gainNodes = [];
       const gainReduction = Math.max(0.6, 1 / Math.sqrt(notes.size));
+
+      // Very subtle shimmer for tanpura string vibration
+      const shimmerLFO = ctx.createOscillator();
+      shimmerLFO.frequency.value = 0.15; // Very slow
+      shimmerLFO.type = 'sine';
+      const shimmerDepth = ctx.createGain();
+      shimmerDepth.gain.value = 2;
+      shimmerLFO.connect(shimmerDepth);
 
       notes.forEach(note => {
         const baseFreq = noteFreqs[note];
@@ -2871,76 +2986,84 @@
         // Shift up one octave for better speaker reproduction
         const freq = baseFreq * 2;
 
-        // Detuned sawtooth oscillators (like warm pad) for rich, warm sound
+        // Detuned sawtooth oscillators for rich, warm sound
         const osc1 = ctx.createOscillator();
         osc1.type = 'sawtooth';
         osc1.frequency.value = freq;
-        osc1.detune.value = -6;
+        osc1.detune.value = -5;
 
         const osc2 = ctx.createOscillator();
         osc2.type = 'sawtooth';
         osc2.frequency.value = freq;
-        osc2.detune.value = 6;
+        osc2.detune.value = 5;
 
-        // Add a sub-oscillator for body (one octave down from shifted freq = original freq)
+        // Add shimmer
+        shimmerDepth.connect(osc1.detune);
+        shimmerDepth.connect(osc2.detune);
+
+        // Sub-oscillator for body (original frequency)
         const subOsc = ctx.createOscillator();
         subOsc.type = 'sine';
-        subOsc.frequency.value = baseFreq; // Original frequency
+        subOsc.frequency.value = baseFreq;
 
-        // Higher gain than warm pad
+        // Smooth envelopes using setTargetAtTime
         const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(volume * 0.8 * gainReduction, ctx.currentTime + 0.8);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.setTargetAtTime(volume * 0.75 * gainReduction, ctx.currentTime, 0.25);
 
         const subGain = ctx.createGain();
-        subGain.gain.setValueAtTime(0.001, ctx.currentTime);
-        subGain.gain.exponentialRampToValueAtTime(volume * 0.4 * gainReduction, ctx.currentTime + 0.8);
+        subGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        subGain.gain.setTargetAtTime(volume * 0.35 * gainReduction, ctx.currentTime, 0.3);
 
         osc1.connect(gain);
         osc2.connect(gain);
         subOsc.connect(subGain);
 
         nodes.push(osc1, osc2, subOsc, gain, subGain);
-        gainNodes.push(gain);
+        gainNodes.push(gain, subGain);
       });
 
-      // Static lowpass filter - no sweep, low Q (no resonance/oscillation)
+      // Static lowpass filter - clean with minimal resonance
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = 1200; // Fixed cutoff
-      filter.Q.value = 0.7; // Low Q = no resonance
+      filter.frequency.value = 1400;
+      filter.Q.value = 0.5; // Very low Q for clean sound
 
-      // Slight warmth boost
+      // Warmth boost
       const warmthEQ = ctx.createBiquadFilter();
       warmthEQ.type = 'peaking';
-      warmthEQ.frequency.value = 300;
-      warmthEQ.Q.value = 1;
-      warmthEQ.gain.value = 2;
+      warmthEQ.frequency.value = 280;
+      warmthEQ.Q.value = 0.8;
+      warmthEQ.gain.value = 2.5;
+
+      // Presence boost for clarity
+      const presenceEQ = ctx.createBiquadFilter();
+      presenceEQ.type = 'peaking';
+      presenceEQ.frequency.value = 2500;
+      presenceEQ.Q.value = 1;
+      presenceEQ.gain.value = 1.5;
 
       const mixGain = ctx.createGain();
-      mixGain.gain.value = 1.2;
+      mixGain.gain.value = 1.15;
 
       gainNodes.forEach(gainNode => {
         gainNode.connect(mixGain);
       });
 
-      // Connect sub oscillator gains too
-      nodes.filter(n => n instanceof GainNode && !gainNodes.includes(n)).forEach(g => {
-        g.connect(mixGain);
-      });
-
       mixGain.connect(warmthEQ);
-      warmthEQ.connect(filter);
+      warmthEQ.connect(presenceEQ);
+      presenceEQ.connect(filter);
       filter.connect(compressor);
 
+      shimmerLFO.start();
       nodes.forEach(node => {
         if (node.start) node.start();
       });
 
       return {
-        nodes: [...nodes, filter, warmthEQ, mixGain],
+        nodes: [...nodes, filter, warmthEQ, presenceEQ, mixGain, shimmerLFO, shimmerDepth],
         gainNodes: gainNodes,
-        gainRamps: [0.8]
+        gainRamps: [0.75, 0.35]
       };
     }
 
@@ -3675,6 +3798,147 @@
       };
     }
 
+    // WURLITZER ELECTRIC PIANO DRONE
+    // Wurlitzer 200A characteristics: warm bell-like attack, 6-8 Hz tremolo,
+    // characteristic "bark" on hard notes, rich low-mids
+    function createWurlitzerDrone(ctx, notes, volume) {
+      const nodes = [];
+      const gainNodes = [];
+      const gainReduction = Math.max(0.5, 1 / Math.sqrt(notes.size));
+
+      // Characteristic Wurlitzer tremolo (6-8 Hz amplitude modulation)
+      const tremoloLFO = ctx.createOscillator();
+      tremoloLFO.frequency.value = 7; // Classic Wurlitzer tremolo rate
+      tremoloLFO.type = 'sine';
+
+      const tremoloDepth = ctx.createGain();
+      tremoloDepth.gain.value = 0.25; // Depth of tremolo
+      tremoloLFO.connect(tremoloDepth);
+
+      // Master tremolo node - all voices go through this
+      const tremoloMaster = ctx.createGain();
+      tremoloMaster.gain.value = 0.75; // Base level
+      tremoloDepth.connect(tremoloMaster.gain);
+
+      notes.forEach(note => {
+        const freq = noteFreqs[note];
+        if (!freq) return;
+
+        // === FM SYNTHESIS for bell-like attack ===
+        // Modulator oscillator - creates the metallic/bell character
+        const modulator = ctx.createOscillator();
+        modulator.type = 'sine';
+        modulator.frequency.value = freq * 2; // 2:1 ratio for bell-like tone
+
+        const modGain = ctx.createGain();
+        // FM depth - starts high for attack "bark", then settles
+        modGain.gain.setValueAtTime(freq * 0.6, ctx.currentTime); // Strong initial FM
+        modGain.gain.exponentialRampToValueAtTime(freq * 0.12, ctx.currentTime + 0.25); // Decay to subtle
+
+        modulator.connect(modGain);
+
+        // Carrier oscillator - the main tone
+        const carrier = ctx.createOscillator();
+        carrier.type = 'sine';
+        carrier.frequency.value = freq;
+
+        // Connect modulator to carrier frequency for FM
+        modGain.connect(carrier.frequency);
+
+        // === Tine/Reed simulation - adds warmth and character ===
+        const tineOsc = ctx.createOscillator();
+        tineOsc.type = 'triangle';
+        tineOsc.frequency.value = freq;
+        tineOsc.detune.value = 3; // Slight detune for warmth
+
+        // Sub oscillator for body
+        const subOsc = ctx.createOscillator();
+        subOsc.type = 'sine';
+        subOsc.frequency.value = freq * 0.5; // Sub-octave
+
+        // === Smooth ADSR-style envelope for each component ===
+        // Carrier gain - main body with bell-like attack
+        const carrierGain = ctx.createGain();
+        carrierGain.gain.setValueAtTime(0.001, ctx.currentTime);
+        carrierGain.gain.setTargetAtTime(volume * 0.55 * gainReduction, ctx.currentTime, 0.008); // Smooth fast attack
+        carrierGain.gain.setTargetAtTime(volume * 0.42 * gainReduction, ctx.currentTime + 0.12, 0.15); // Decay to sustain
+
+        // Tine gain - adds reed character  
+        const tineGain = ctx.createGain();
+        tineGain.gain.setValueAtTime(0.001, ctx.currentTime);
+        tineGain.gain.setTargetAtTime(volume * 0.3 * gainReduction, ctx.currentTime, 0.012);
+        tineGain.gain.setTargetAtTime(volume * 0.22 * gainReduction, ctx.currentTime + 0.15, 0.2);
+
+        // Sub gain - warm body
+        const subGain = ctx.createGain();
+        subGain.gain.setValueAtTime(0.001, ctx.currentTime);
+        subGain.gain.setTargetAtTime(volume * 0.28 * gainReduction, ctx.currentTime, 0.05);
+
+        // Connect oscillators to their gains, then to tremolo master
+        carrier.connect(carrierGain);
+        tineOsc.connect(tineGain);
+        subOsc.connect(subGain);
+        
+        carrierGain.connect(tremoloMaster);
+        tineGain.connect(tremoloMaster);
+        subGain.connect(tremoloMaster);
+
+        nodes.push(modulator, carrier, tineOsc, subOsc, modGain, carrierGain, tineGain, subGain);
+        gainNodes.push(carrierGain, tineGain, subGain);
+      });
+
+      // === FILTERING - Wurlitzer characteristic warmth ===
+      // Low-mid boost for Wurlitzer warmth (around 300-400 Hz)
+      const warmthEQ = ctx.createBiquadFilter();
+      warmthEQ.type = 'peaking';
+      warmthEQ.frequency.value = 350;
+      warmthEQ.Q.value = 1.2;
+      warmthEQ.gain.value = 3.5; // Boost low-mids
+
+      // "Bark" simulation - resonant peak that sweeps on attack
+      const barkFilter = ctx.createBiquadFilter();
+      barkFilter.type = 'peaking';
+      barkFilter.Q.value = 2.5;
+      barkFilter.gain.setValueAtTime(6, ctx.currentTime); // Initial bark
+      barkFilter.gain.setTargetAtTime(0, ctx.currentTime + 0.2, 0.15); // Decay bark
+      barkFilter.frequency.setValueAtTime(1400, ctx.currentTime);
+      barkFilter.frequency.setTargetAtTime(600, ctx.currentTime, 0.2);
+
+      // Lowpass for warmth
+      const lowpass = ctx.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      lowpass.frequency.value = 2400;
+      lowpass.Q.value = 0.8;
+
+      // High-frequency rolloff for vintage character
+      const highCut = ctx.createBiquadFilter();
+      highCut.type = 'lowpass';
+      highCut.frequency.value = 4500;
+      highCut.Q.value = 0.5;
+
+      // Output gain
+      const outputGain = ctx.createGain();
+      outputGain.gain.value = 1.5;
+
+      // Filter chain: tremolo -> warmth -> bark -> lowpass -> highcut -> output
+      tremoloMaster.connect(warmthEQ);
+      warmthEQ.connect(barkFilter);
+      barkFilter.connect(lowpass);
+      lowpass.connect(highCut);
+      highCut.connect(outputGain);
+      outputGain.connect(compressor);
+
+      // Start all oscillators
+      tremoloLFO.start();
+      nodes.forEach(node => { if (node.start) node.start(); });
+
+      return {
+        nodes: [...nodes, warmthEQ, barkFilter, lowpass, highCut, tremoloMaster, outputGain, tremoloLFO, tremoloDepth],
+        gainNodes: gainNodes,
+        gainRamps: [0.42, 0.22, 0.28] // Match sustain levels
+      };
+    }
+
     function startDrone() {
       const ctx = audioCtx;
       stopDrone();
@@ -3690,6 +3954,9 @@
       switch (droneSound) {
         case 'tanpura':
           activeDrone = createTanpuraDrone(ctx, droneNotes, droneGain);
+          break;
+        case 'wurlitzer':
+          activeDrone = createWurlitzerDrone(ctx, droneNotes, droneGain);
           break;
         case 'pump_organ_classic':
           activeDrone = createPumpOrganClassic(ctx, droneNotes, droneGain);
@@ -3967,9 +4234,6 @@
       playhead.setAttribute('class', 'beat-playhead');
       playhead.setAttribute('id', 'beatPlayhead');
       svg.appendChild(playhead);
-
-      // Invalidate cached beat segments after rebuild
-      cachedBeatSegments = null;
     }
 
     // Create SVG arc path
@@ -4002,11 +4266,9 @@
     function updateBeatCircle(step) {
       if (!vizState.beatCircle) return;
 
-      // Update segments (use cached reference)
-      if (!cachedBeatSegments) {
-        cachedBeatSegments = document.querySelectorAll('.beat-segment');
-      }
-      cachedBeatSegments.forEach((seg, i) => {
+      // Update segments
+      const segments = document.querySelectorAll('.beat-segment');
+      segments.forEach((seg, i) => {
         seg.classList.toggle('active', i === step);
       });
 
@@ -4068,11 +4330,8 @@
 
     // Update Step Numbers with Enhanced Highlighting
     function updateStepNumbers(step) {
-      // Use cached reference
-      if (!cachedStepNumbers) {
-        cachedStepNumbers = document.querySelectorAll('.step-number');
-      }
-      cachedStepNumbers.forEach((num, i) => {
+      const stepNumbers = document.querySelectorAll('.step-number');
+      stepNumbers.forEach((num, i) => {
         num.classList.toggle('active', i === step);
       });
     }
@@ -4156,8 +4415,6 @@
     
     // Synchronized Visual Loop
     function draw() {
-      // Only run draw loop when playing (Performance Optimization)
-      if (!isPlaying) return;
       if (!audioCtx) return requestAnimationFrame(draw);
       
       // Check for audio loop reset
@@ -4192,26 +4449,18 @@
     }
     
     function updateStepUI(step) {
-      // Cache track step references if not already cached
-      if (!cachedKickSteps) {
-        cachedKickSteps = document.querySelectorAll('#kick-steps .step');
-      }
-      if (!cachedSnareSteps) {
-        cachedSnareSteps = document.querySelectorAll('#snare-steps .step');
-      }
-      if (!cachedHihatSteps) {
-        cachedHihatSteps = document.querySelectorAll('#hihat-steps .step');
-      }
-
       // Clear previous playing states
       document.querySelectorAll('.step.playing').forEach(el => {
         el.classList.remove('playing');
       });
-
-      // Add playing state to current step using cached references
-      if (cachedKickSteps[step]) cachedKickSteps[step].classList.add('playing');
-      if (cachedSnareSteps[step]) cachedSnareSteps[step].classList.add('playing');
-      if (cachedHihatSteps[step]) cachedHihatSteps[step].classList.add('playing');
+      
+      // Add playing state to current step
+      ['kick', 'snare', 'hihat'].forEach(track => {
+        const steps = document.querySelectorAll(`#${track}-steps .step`);
+        if (steps[step]) {
+          steps[step].classList.add('playing');
+        }
+      });
     }
     
     // Start/Stop
@@ -4233,10 +4482,7 @@
       
       startDrone();
       requestWakeLock();
-
-      // Restart draw loop (Performance Optimization)
-      requestAnimationFrame(draw);
-
+      
       // Optimized scheduler interval for mobile performance
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const interval = isMobile ? 20 : 25;
@@ -4509,14 +4755,8 @@
           container.appendChild(step);
         }
       });
-
-      // Invalidate cached DOM references after rebuild
-      cachedStepNumbers = null;
-      cachedKickSteps = null;
-      cachedSnareSteps = null;
-      cachedHihatSteps = null;
     }
-
+    
     // Drone Wheel Logic
     function initDroneWheel() {
       const wheel = $('droneWheel');
