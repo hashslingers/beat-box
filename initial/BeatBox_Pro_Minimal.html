@@ -437,6 +437,7 @@
       border-bottom: 12px solid transparent;
       margin-left: 4px;
       transition: all 0.25s var(--transition);
+      pointer-events: none; /* Ensure touches go to parent button */
     }
 
     .play-button.playing .play-icon {
@@ -5550,11 +5551,22 @@
       
       // Step buttons are now created in rebuildSequencer()
       
-      // Play button
+      // Play button — click for desktop, touchend for instant mobile response
+      let playTouchHandled = false;
       playBtn.addEventListener('click', () => {
+        if (playTouchHandled) return; // Already handled by touchend
         if (isPlaying) stop();
         else start();
       });
+      
+      // Faster touch response on mobile (avoids 300ms click delay)
+      playBtn.addEventListener('touchend', e => {
+        e.preventDefault();
+        playTouchHandled = true;
+        if (isPlaying) stop();
+        else start();
+        setTimeout(() => { playTouchHandled = false; }, 400);
+      }, { passive: false });
       
       // Tempo control (both slider and display click)
       tempoSlider.addEventListener('input', e => {
