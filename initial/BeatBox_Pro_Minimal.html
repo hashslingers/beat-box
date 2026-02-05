@@ -1247,50 +1247,63 @@
       /* Stack volume controls horizontally below tempo on small phones */
       .vertical-volume {
         flex-direction: row;
-        gap: 16px;
-        padding: 16px;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
         background: var(--surface);
         border-radius: 12px;
         border: 1px solid var(--border);
+        width: 100%;
       }
       
       .vertical-volume .volume-label {
         writing-mode: horizontal-tb;
         font-size: 10px;
-        min-width: 50px;
+        font-weight: 600;
+        min-width: 42px;
+        text-align: right;
+        order: -1;
+      }
+      
+      .vertical-volume .volume-value {
+        font-size: 11px;
+        min-width: 36px;
+        text-align: left;
+        order: 3;
       }
       
       .volume-track {
         width: 100%;
-        height: 12px;
+        height: 32px;
         flex: 1;
         transform: none;
+        border-radius: 16px;
       }
       
       .volume-track::before {
         left: -8px;
         right: -8px;
-        top: -14px;
-        bottom: -14px;
+        top: -10px;
+        bottom: -10px;
       }
       
       .volume-fill {
-        height: 12px;
-        width: auto;
+        height: 100%;
+        width: 60%;
         left: 0;
         bottom: 0;
         top: 0;
         right: auto;
-        border-radius: 6px;
+        border-radius: 16px;
       }
       
       .volume-thumb {
         top: 50%;
-        bottom: auto;
-        left: auto;
-        transform: translateY(-50%);
-        width: 28px;
-        height: 28px;
+        bottom: auto !important;
+        left: 60%;
+        transform: translate(-50%, -50%);
+        width: 36px;
+        height: 36px;
       }
       
       .tempo-display {
@@ -5183,16 +5196,38 @@
       
       let isDragging = false;
       
+      function isHorizontal() {
+        // Detect orientation: if track is wider than tall, it's horizontal (mobile layout)
+        const rect = track.getBoundingClientRect();
+        return rect.width > rect.height;
+      }
+      
       function updateSlider(e) {
         const rect = track.getBoundingClientRect();
-        // Invert Y coordinate: bottom of track = 100%, top = 0%
-        const percent = Math.max(0, Math.min(100, 
-          Math.round((1 - (e.clientY - rect.top) / rect.height) * 100)
-        ));
+        let percent;
         
-        // Update visual elements
-        fill.style.height = percent + '%';
-        thumb.style.bottom = percent + '%';
+        if (isHorizontal()) {
+          // Horizontal mode (mobile): left = 0%, right = 100%
+          percent = Math.max(0, Math.min(100,
+            Math.round(((e.clientX - rect.left) / rect.width) * 100)
+          ));
+          // Update visual elements for horizontal layout
+          fill.style.width = percent + '%';
+          fill.style.height = '';
+          thumb.style.left = percent + '%';
+          thumb.style.bottom = '';
+        } else {
+          // Vertical mode (desktop): bottom = 100%, top = 0%
+          percent = Math.max(0, Math.min(100, 
+            Math.round((1 - (e.clientY - rect.top) / rect.height) * 100)
+          ));
+          // Update visual elements for vertical layout
+          fill.style.height = percent + '%';
+          fill.style.width = '';
+          thumb.style.bottom = percent + '%';
+          thumb.style.left = '';
+        }
+        
         valueDisplay.textContent = percent + '%';
         
         // Trigger audio parameter update
@@ -5201,13 +5236,17 @@
       
       // Desktop mouse interaction
       track.addEventListener('mousedown', e => {
+        e.preventDefault();
         isDragging = true;
         updateSlider(e);
       });
       
       // Global listeners for smooth dragging
       document.addEventListener('mousemove', e => {
-        if (isDragging) updateSlider(e);
+        if (isDragging) {
+          e.preventDefault();
+          updateSlider(e);
+        }
       });
       
       document.addEventListener('mouseup', () => {
@@ -5216,21 +5255,43 @@
       
       // Mobile touch interaction
       track.addEventListener('touchstart', e => {
+        e.preventDefault(); // Prevent page scroll while dragging slider
         isDragging = true;
         const touch = e.touches[0];
         updateSlider(touch);
-      });
+      }, { passive: false });
       
       document.addEventListener('touchmove', e => {
         if (isDragging) {
+          e.preventDefault(); // Prevent page scroll while dragging
           const touch = e.touches[0];
           updateSlider(touch);
         }
-      });
+      }, { passive: false });
       
       document.addEventListener('touchend', () => {
         isDragging = false;
       });
+      
+      // Set initial position correctly based on current orientation
+      function setInitialPosition() {
+        if (isHorizontal()) {
+          fill.style.width = initialValue + '%';
+          fill.style.height = '';
+          thumb.style.left = initialValue + '%';
+          thumb.style.bottom = '';
+        } else {
+          fill.style.height = initialValue + '%';
+          fill.style.width = '';
+          thumb.style.bottom = initialValue + '%';
+          thumb.style.left = '';
+        }
+        valueDisplay.textContent = initialValue + '%';
+      }
+      
+      // Initialize now and on resize (orientation change)
+      setInitialPosition();
+      window.addEventListener('resize', setInitialPosition);
     }
     
     // Step Count Management
