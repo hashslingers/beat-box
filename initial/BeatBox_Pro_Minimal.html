@@ -68,8 +68,8 @@
     }
     
     /* Mono font for data values */
-    .mono, .tempo-value, .control-value, .volume-value, .slider-value, 
-    .fb-lcd-display, .drone-wheel-value, .step-number {
+    .mono, .tempo-value, .control-value, .volume-value, .slider-value,
+    .fb-lcd-display, .step-number {
       font-family: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
     }
 
@@ -288,7 +288,7 @@
       width: 8px;
       background: linear-gradient(180deg, var(--accent), var(--text));
       border-radius: 4px;
-      transition: height 0.15s var(--transition);
+      transition: height 0.15s var(--transition), width 0.15s var(--transition);
       pointer-events: none;
     }
 
@@ -413,12 +413,14 @@
       box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     }
 
-    .play-button:hover {
-      border-color: var(--text-muted);
-      transform: translateY(-50%) scale(1.05);
-      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+    @media (hover: hover) {
+      .play-button:hover {
+        border-color: var(--text-muted);
+        transform: translateY(-50%) scale(1.05);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+      }
     }
-    
+
     .play-button:active {
       transform: translateY(-50%) scale(0.95);
     }
@@ -934,89 +936,6 @@
       box-shadow: 0 0 0 3px var(--accent-glow);
     }
 
-    /* Drone Wheel - Touch-optimized */
-    .drone-wheel-container {
-      position: relative;
-      height: 100px;
-      overflow: hidden;
-      background: var(--surface);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      margin-bottom: 12px;
-      /* Mask for fading edges */
-      -webkit-mask-image: linear-gradient(to right, transparent 5%, black 25%, black 75%, transparent 95%);
-      mask-image: linear-gradient(to right, transparent 5%, black 25%, black 75%, transparent 95%);
-    }
-
-    .drone-wheel {
-      display: flex;
-      align-items: center;
-      height: 100%;
-      padding: 0 50%; /* Center the first item */
-      overflow-x: auto;
-      scroll-behavior: smooth;
-      -ms-overflow-style: none;  /* IE and Edge */
-      scrollbar-width: none;  /* Firefox */
-      cursor: grab;
-      scroll-snap-type: x mandatory;
-    }
-    
-    .drone-wheel::-webkit-scrollbar {
-      display: none;
-    }
-    
-    .drone-wheel:active {
-      cursor: grabbing;
-    }
-
-    .drone-note-item {
-      flex: 0 0 72px; /* Larger width for touch */
-      height: 72px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 400;
-      color: var(--text-muted);
-      transition: all 0.2s var(--transition);
-      user-select: none;
-      scroll-snap-align: center;
-      border-radius: 8px;
-    }
-
-    .drone-note-item.active {
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--text);
-      transform: scale(1.15);
-    }
-
-    .drone-wheel-center-marker {
-      position: absolute;
-      top: 8px;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 3px;
-      background: var(--accent);
-      border-radius: 2px;
-      pointer-events: none;
-      box-shadow: 0 0 8px var(--accent-glow);
-    }
-    
-    .drone-wheel-value {
-        text-align: center;
-        font-size: 14px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        color: var(--text);
-        margin-bottom: 12px;
-        padding: 8px 16px;
-        background: var(--surface);
-        border-radius: 8px;
-        display: inline-block;
-    }
-
     /* Piano Keyboard */
     .piano-section {
       grid-column: 1 / -1; /* Span all columns */
@@ -1279,8 +1198,10 @@
         flex: 1;
         transform: none;
         border-radius: 16px;
+        padding: 0;
+        margin: 0;
       }
-      
+
       .volume-track::before {
         left: -8px;
         right: -8px;
@@ -1363,7 +1284,7 @@
       }
       
       .drone-controls-container {
-        padding: 16px !important;
+        padding: 16px;
       }
       
       .controls {
@@ -1402,6 +1323,19 @@
       
       .slider-group {
         padding: 8px 0;
+      }
+
+      .piano-keyboard {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .piano-key.white {
+        width: 36px;
+      }
+
+      .piano-key.black {
+        width: 24px;
       }
     }
 
@@ -1514,7 +1448,12 @@
         top: auto;
         transform: translateX(-50%);
       }
-      
+
+      .volume-track:active .volume-thumb,
+      .volume-thumb.active {
+        transform: translateX(-50%) scale(1.2);
+      }
+
       .tempo-value {
         font-size: 56px;
       }
@@ -1623,7 +1562,7 @@
       }
       
       .volume-track:active .volume-thumb {
-        transform: translateX(-50%) scale(1.2);
+        transform: translate(-50%, -50%) scale(1.2);
         background: var(--accent);
       }
 
@@ -2272,6 +2211,26 @@
       opacity: 0.6;
     }
 
+    .build-info {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 16px;
+      font-family: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      gap: 6px;
+      margin-top: 20px;
+    }
+
+    /* Drone Controls Container */
+    .drone-controls-container {
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
     /* Key Selector Grid */
     .key-selector-grid {
       display: grid;
@@ -2444,7 +2403,7 @@
 
     /* Enhanced Step Numbers */
     .step-number.active {
-      color: #ffffff;
+      color: var(--text);
       font-weight: 700;
       transform: scale(1.2);
     }
@@ -2472,15 +2431,15 @@
 
     /* Pulsing Background Animations */
     @keyframes beatPulse {
-      0% { background-color: #000000; }
-      3% { background-color: #0a0a0a; }
-      100% { background-color: #000000; }
+      0% { background-color: var(--bg); }
+      3% { background-color: #EBE8E3; }
+      100% { background-color: var(--bg); }
     }
 
     @keyframes beatOnePulse {
-      0% { background-color: #000000; }
-      4% { background-color: #150a0a; }
-      100% { background-color: #000000; }
+      0% { background-color: var(--bg); }
+      4% { background-color: #E8E0D8; }
+      100% { background-color: var(--bg); }
     }
 
     body.beat-pulse {
@@ -2541,7 +2500,7 @@
       font-size: 9px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: #666;
+      color: var(--text-muted);
       cursor: pointer;
       transition: color 0.2s;
       user-select: none;
@@ -2555,15 +2514,15 @@
       appearance: none;
       width: 14px;
       height: 14px;
-      border: 1px solid #333;
-      background: #000;
+      border: 1px solid var(--border);
+      background: var(--surface);
       cursor: pointer;
       transition: all 0.2s;
     }
 
     .viz-toggle input[type="checkbox"]:checked {
-      background: #fff;
-      border-color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
     }
 
     .viz-toggle input[type="checkbox"]:checked::after {
@@ -2678,7 +2637,7 @@
        <audio id="droneAudio" src="drones.mp3" preload="metadata" loop></audio>
 
        <!-- Drone Controls - Wheel Interface -->
-       <div class="drone-controls-container" style="padding: 20px 40px; border-bottom: 1px solid var(--border);">
+       <div class="drone-controls-container">
           <div class="slider-group" style="margin-bottom: 20px;">
             <label class="slider-label" style="text-align:center; margin-bottom: 15px;">DRONE KEY</label>
             
@@ -5327,9 +5286,14 @@
       }
       
       // Update CSS grid columns for sequencer
+      const isMobileNarrow = window.innerWidth <= 480;
       const stepContainers = document.querySelectorAll('.steps, .numbers-grid');
       stepContainers.forEach(container => {
-        container.style.gridTemplateColumns = `repeat(${STEPS}, 1fr)`;
+        if (STEPS === 8 && isMobileNarrow) {
+          container.style.gridTemplateColumns = 'repeat(4, 1fr)';
+        } else {
+          container.style.gridTemplateColumns = `repeat(${STEPS}, 1fr)`;
+        }
       });
       
       // Rebuild step buttons
@@ -5418,7 +5382,7 @@
             if (swipeStart) {
               const timeDiff = performance.now() - swipeStart.time;
               // Normal tap if short duration and minimal movement
-              if (timeDiff < 200) {
+              if (timeDiff < 500) {
                 handleStepClick(e);
               }
             }
@@ -5534,7 +5498,20 @@
 
       // Initial sequencer build
       rebuildSequencer();
-      
+
+      // Re-layout grid on resize/orientation change for mobile 8-step wrap
+      window.addEventListener('resize', () => {
+        const isMobileNarrow = window.innerWidth <= 480;
+        const stepContainers = document.querySelectorAll('.steps, .numbers-grid');
+        stepContainers.forEach(container => {
+          if (STEPS === 8 && isMobileNarrow) {
+            container.style.gridTemplateColumns = 'repeat(4, 1fr)';
+          } else {
+            container.style.gridTemplateColumns = `repeat(${STEPS}, 1fr)`;
+          }
+        });
+      });
+
       // Initialize volume sliders
       initVolumeSlider('droneVolume', 60, value => {
         droneGain = value / 100;
@@ -5800,24 +5777,28 @@
         This ensures clean, predictable tempo detection without UI interference.
       */
       const tempoDisplay = $('tempoDisplay');
-      
+      let tempoTouchHandled = false;
+
       const handleTempoClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+        if (tempoTouchHandled) return;
+
         // Lock scroll position to prevent page jumping
         window.scrollTo(0, window.pageYOffset);
-        
+
         handleTapTempo();
         return false;
       };
-      
+
       // Desktop and mobile event handling
       tempoDisplay.addEventListener('click', handleTempoClick, { passive: false });
       tempoDisplay.addEventListener('touchend', e => {
         e.preventDefault();
         e.stopPropagation();
+        tempoTouchHandled = true;
         handleTapTempo();
+        setTimeout(() => { tempoTouchHandled = false; }, 400);
       }, { passive: false });
 
       // Keyboard shortcuts
@@ -5987,12 +5968,14 @@
     
     document.addEventListener('touchstart', e => {
       if (e.touches.length === 2) {
+        e.preventDefault();
         initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
       }
-    }, { passive: true });
-    
+    }, { passive: false });
+
     document.addEventListener('touchmove', e => {
       if (e.touches.length === 2 && initialPinchDistance) {
+        e.preventDefault();
         const currentDistance = getDistance(e.touches[0], e.touches[1]);
         const scale = currentDistance / initialPinchDistance;
         
@@ -6014,8 +5997,8 @@
           if (navigator.vibrate) navigator.vibrate(50);
         }
       }
-    }, { passive: true });
-    
+    }, { passive: false });
+
     document.addEventListener('touchend', () => {
       initialPinchDistance = null;
     }, { passive: true });
