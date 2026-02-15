@@ -3052,9 +3052,15 @@
     const droneVolValue = $('droneVolValue');
     const droneVolSlider = $('droneVolSlider');
     const droneVolSliderValue = $('droneVolSliderValue');
+    const droneVolumeFill = $('droneVolumeFill');
+    const droneVolumeThumb = $('droneVolumeThumb');
+    const droneVolumeValue = $('droneVolumeValue');
     const drumVolValue = $('drumVolValue');
     const drumVolSlider = $('drumVolSlider');
     const drumVolSliderValue = $('drumVolSliderValue');
+    const drumVolumeFill = $('drumVolumeFill');
+    const drumVolumeThumb = $('drumVolumeThumb');
+    const drumVolumeValue = $('drumVolumeValue');
     const advancedToggle = $('advancedToggle');
     const advancedContent = $('advancedContent');
     
@@ -5595,9 +5601,6 @@
         droneVolSliderValue.textContent = `${value}%`;
         
         // Sync custom volume slider visuals
-        const droneVolumeFill = $('droneVolumeFill');
-        const droneVolumeThumb = $('droneVolumeThumb');
-        const droneVolumeValue = $('droneVolumeValue');
         droneVolumeFill.style.height = value + '%';
         droneVolumeThumb.style.bottom = value + '%';
         droneVolumeValue.textContent = value + '%';
@@ -5618,9 +5621,6 @@
         drumVolSliderValue.textContent = `${value}%`;
         
         // Sync custom volume slider visuals
-        const drumVolumeFill = $('drumVolumeFill');
-        const drumVolumeThumb = $('drumVolumeThumb');
-        const drumVolumeValue = $('drumVolumeValue');
         drumVolumeFill.style.height = value + '%';
         drumVolumeThumb.style.bottom = value + '%';
         drumVolumeValue.textContent = value + '%';
