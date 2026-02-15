@@ -3052,9 +3052,15 @@
     const droneVolValue = $('droneVolValue');
     const droneVolSlider = $('droneVolSlider');
     const droneVolSliderValue = $('droneVolSliderValue');
+    const droneVolumeFill = $('droneVolumeFill');
+    const droneVolumeThumb = $('droneVolumeThumb');
+    const droneVolumeValue = $('droneVolumeValue');
     const drumVolValue = $('drumVolValue');
     const drumVolSlider = $('drumVolSlider');
     const drumVolSliderValue = $('drumVolSliderValue');
+    const drumVolumeFill = $('drumVolumeFill');
+    const drumVolumeThumb = $('drumVolumeThumb');
+    const drumVolumeValue = $('drumVolumeValue');
     const advancedToggle = $('advancedToggle');
     const advancedContent = $('advancedContent');
     
@@ -5517,13 +5523,17 @@
         droneGain = value / 100;
         droneVolValue.textContent = value + '%';
         droneVolSliderValue.textContent = value + '%';
-        updateDroneVolume();
+        droneVolSlider.value = value; // Sync with HTML range input
+        updateDroneVolume(); // Apply to active drone's gain nodes
       });
       
       initVolumeSlider('drumVolume', 70, value => {
         drumGain = value / 100;
         drumVolValue.textContent = value + '%';
         drumVolSliderValue.textContent = value + '%';
+        drumVolSlider.value = value; // Sync with HTML range input
+        // Drums don't need updateDrumVolume() - they're synthesized on-demand
+        // and use current drumGain value at playback time (see playKick/playSnare/playHihat)
       });
       
       // Step buttons are now created in rebuildSequencer()
@@ -5586,9 +5596,16 @@
       
       // Volume controls
       droneVolSlider.addEventListener('input', e => {
-        droneGain = parseInt(e.target.value) / 100;
-        droneVolValue.textContent = `${e.target.value}%`;
-        droneVolSliderValue.textContent = `${e.target.value}%`;
+        const value = parseInt(e.target.value);
+        droneGain = value / 100;
+        droneVolValue.textContent = `${value}%`;
+        droneVolSliderValue.textContent = `${value}%`;
+        
+        // Sync custom volume slider visuals
+        droneVolumeFill.style.height = value + '%';
+        droneVolumeThumb.style.bottom = value + '%';
+        droneVolumeValue.textContent = value + '%';
+        
         updateDroneVolume();
       });
       
@@ -5599,9 +5616,15 @@
       });
       
       drumVolSlider.addEventListener('input', e => {
-        drumGain = parseInt(e.target.value) / 100;
-        drumVolValue.textContent = `${e.target.value}%`;
-        drumVolSliderValue.textContent = `${e.target.value}%`;
+        const value = parseInt(e.target.value);
+        drumGain = value / 100;
+        drumVolValue.textContent = `${value}%`;
+        drumVolSliderValue.textContent = `${value}%`;
+        
+        // Sync custom volume slider visuals
+        drumVolumeFill.style.height = value + '%';
+        drumVolumeThumb.style.bottom = value + '%';
+        drumVolumeValue.textContent = value + '%';
       });
       
       $('drumVolControl').addEventListener('click', () => {
