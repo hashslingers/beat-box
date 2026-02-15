@@ -5517,6 +5517,7 @@
         droneGain = value / 100;
         droneVolValue.textContent = value + '%';
         droneVolSliderValue.textContent = value + '%';
+        droneVolSlider.value = value; // Sync with HTML range input
         updateDroneVolume();
       });
       
@@ -5524,6 +5525,8 @@
         drumGain = value / 100;
         drumVolValue.textContent = value + '%';
         drumVolSliderValue.textContent = value + '%';
+        drumVolSlider.value = value; // Sync with HTML range input
+        // No updateDrumVolume needed - drums use drumGain value at play time
       });
       
       // Step buttons are now created in rebuildSequencer()
@@ -5586,9 +5589,19 @@
       
       // Volume controls
       droneVolSlider.addEventListener('input', e => {
-        droneGain = parseInt(e.target.value) / 100;
-        droneVolValue.textContent = `${e.target.value}%`;
-        droneVolSliderValue.textContent = `${e.target.value}%`;
+        const value = parseInt(e.target.value);
+        droneGain = value / 100;
+        droneVolValue.textContent = `${value}%`;
+        droneVolSliderValue.textContent = `${value}%`;
+        
+        // Sync custom volume slider visuals
+        const droneVolumeFill = $('droneVolumeFill');
+        const droneVolumeThumb = $('droneVolumeThumb');
+        const droneVolumeValue = $('droneVolumeValue');
+        droneVolumeFill.style.height = value + '%';
+        droneVolumeThumb.style.bottom = value + '%';
+        droneVolumeValue.textContent = value + '%';
+        
         updateDroneVolume();
       });
       
@@ -5599,9 +5612,18 @@
       });
       
       drumVolSlider.addEventListener('input', e => {
-        drumGain = parseInt(e.target.value) / 100;
-        drumVolValue.textContent = `${e.target.value}%`;
-        drumVolSliderValue.textContent = `${e.target.value}%`;
+        const value = parseInt(e.target.value);
+        drumGain = value / 100;
+        drumVolValue.textContent = `${value}%`;
+        drumVolSliderValue.textContent = `${value}%`;
+        
+        // Sync custom volume slider visuals
+        const drumVolumeFill = $('drumVolumeFill');
+        const drumVolumeThumb = $('drumVolumeThumb');
+        const drumVolumeValue = $('drumVolumeValue');
+        drumVolumeFill.style.height = value + '%';
+        drumVolumeThumb.style.bottom = value + '%';
+        drumVolumeValue.textContent = value + '%';
       });
       
       $('drumVolControl').addEventListener('click', () => {
