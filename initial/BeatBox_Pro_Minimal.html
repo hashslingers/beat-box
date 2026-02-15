@@ -5153,19 +5153,20 @@
       const fill = $(id + 'Fill');
       const thumb = $(id + 'Thumb');
       const valueDisplay = $(id + 'Value');
-      
+
       let isDragging = false;
-      
+      let currentValue = initialValue;
+
       function isHorizontal() {
         // Detect orientation: if track is wider than tall, it's horizontal (mobile layout)
         const rect = track.getBoundingClientRect();
         return rect.width > rect.height;
       }
-      
+
       function updateSlider(e) {
         const rect = track.getBoundingClientRect();
         let percent;
-        
+
         if (isHorizontal()) {
           // Horizontal mode (mobile): left = 0%, right = 100%
           percent = Math.max(0, Math.min(100,
@@ -5178,7 +5179,7 @@
           thumb.style.bottom = '';
         } else {
           // Vertical mode (desktop): bottom = 100%, top = 0%
-          percent = Math.max(0, Math.min(100, 
+          percent = Math.max(0, Math.min(100,
             Math.round((1 - (e.clientY - rect.top) / rect.height) * 100)
           ));
           // Update visual elements for vertical layout
@@ -5187,9 +5188,10 @@
           thumb.style.bottom = percent + '%';
           thumb.style.left = '';
         }
-        
+
+        currentValue = percent;
         valueDisplay.textContent = percent + '%';
-        
+
         // Trigger audio parameter update
         if (onChange) onChange(percent);
       }
@@ -5233,25 +5235,25 @@
         isDragging = false;
       });
       
-      // Set initial position correctly based on current orientation
-      function setInitialPosition() {
+      // Set position correctly based on current orientation
+      function updateSliderPosition() {
         if (isHorizontal()) {
-          fill.style.width = initialValue + '%';
+          fill.style.width = currentValue + '%';
           fill.style.height = '';
-          thumb.style.left = initialValue + '%';
+          thumb.style.left = currentValue + '%';
           thumb.style.bottom = '';
         } else {
-          fill.style.height = initialValue + '%';
+          fill.style.height = currentValue + '%';
           fill.style.width = '';
-          thumb.style.bottom = initialValue + '%';
+          thumb.style.bottom = currentValue + '%';
           thumb.style.left = '';
         }
-        valueDisplay.textContent = initialValue + '%';
+        valueDisplay.textContent = currentValue + '%';
       }
-      
+
       // Initialize now and on resize (orientation change)
-      setInitialPosition();
-      window.addEventListener('resize', setInitialPosition);
+      updateSliderPosition();
+      window.addEventListener('resize', updateSliderPosition);
     }
     
     // Step Count Management
