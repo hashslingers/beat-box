@@ -5524,7 +5524,7 @@
         droneVolValue.textContent = value + '%';
         droneVolSliderValue.textContent = value + '%';
         droneVolSlider.value = value; // Sync with HTML range input
-        updateDroneVolume();
+        updateDroneVolume(); // Apply to active drone's gain nodes
       });
       
       initVolumeSlider('drumVolume', 70, value => {
@@ -5532,7 +5532,8 @@
         drumVolValue.textContent = value + '%';
         drumVolSliderValue.textContent = value + '%';
         drumVolSlider.value = value; // Sync with HTML range input
-        // No updateDrumVolume needed - drums use drumGain value at play time
+        // Drums don't need updateDrumVolume() - they're synthesized on-demand
+        // and use current drumGain value at playback time (see playKick/playSnare/playHihat)
       });
       
       // Step buttons are now created in rebuildSequencer()
