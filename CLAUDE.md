@@ -23,6 +23,8 @@ BEAT-BOX is a minimalist web-based beat maker with an interactive piano keyboard
   - Screen Wake Lock API integration
   - Presets: Metronome, Rock, Funk, Jazz
   - Haptic feedback and touch-optimized gestures
+  - **Day/Night themes**: header toggle (persisted to `localStorage` as `bb-theme`); URL params `?theme=day|night` and `?view=beatbox|fretboard`
+  - **"No Frills Studio" visual language** (adapted from the agent-factory design system): pure white paper / inverted ink, hairline borders, Helvetica, semantic highlighter swipes encoding state (green = armed step, coral = playhead), coral-pen play ring
 
 ## Development Guidelines
 
@@ -48,7 +50,7 @@ open "https://hashslingers.github.io/beat-box/initial/BeatBox_Pro_Minimal.html"
 - Web Audio API for all audio synthesis (no audio samples)
 - Mobile-first responsive design with touch optimization
 - Self-contained single-file architecture (no external dependencies)
-- Minimal black/white aesthetic with JetBrains Mono font
+- "No Frills Studio" aesthetic: pure white/ink, hairline 1.5px borders, Helvetica (no monospace), semantic highlighter swipes; day/night theming via `[data-theme]` on `<html>`
 - All code in one HTML file for easy deployment
 
 ### Audio Architecture

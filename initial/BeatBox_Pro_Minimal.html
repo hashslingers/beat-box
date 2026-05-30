@@ -2568,6 +2568,485 @@
       }
     }
   </style>
+  <style id="redesign-layer">
+  /* ==========================================================================
+     NO FRILLS x HIGHLIGHTER  —  override layer (append-only)
+     marked-up working document / generic grocery label, for a beat instrument
+     ========================================================================== */
+
+  /* ---- palette ---- */
+  :root{
+    --paper:#ffffff; --ink:#000000; --line:#000000;
+    --hi-y:#fff066; --hi-g:#a8efb6; --hi-p:#ffaec5; --hi-b:#a9d4ff; --hi-o:#ffc587;
+    --pen:#e34a2c; --note:#5a5a5a;
+
+    /* remap the app's existing custom properties */
+    --bg:#ffffff !important;
+    --surface:#ffffff !important;
+    --border:#000000 !important;
+    --text:#000000 !important;
+    --text-muted:#000000 !important;
+    --text-dim:#000000 !important;
+    --accent:#000000 !important;
+    --accent-glow:rgba(0,0,0,0) !important;
+    --lcd-bg:#ffffff !important;
+    --lcd-text:#a8efb6 !important;     /* armed step fill = green swipe */
+
+    /* fretboard colour roles -> highlighter hues */
+    --color-root:#ffaec5 !important;   /* root = pink accent */
+    --color-3:#a8efb6 !important;      /* 3rd  = green */
+    --color-5:#a9d4ff !important;      /* 5th  = blue  */
+    --color-7:#ffc587 !important;      /* 7th  = orange */
+    --color-passing:#fff066 !important;/* 2,4,6 = yellow */
+    --fretboard-bg:#ffffff !important;
+
+    --hair:1.5px solid #000000;
+  }
+  html[data-theme="night"]{
+    --paper:#0d0d0d; --ink:#f2efe9; --line:#cfcabf;
+    --bg:#0d0d0d !important;
+    --surface:#141414 !important;
+    --border:#cfcabf !important;
+    --text:#f2efe9 !important;
+    --text-muted:#cfcabf !important;
+    --text-dim:#9b958a !important;
+    --accent:#f2efe9 !important;
+    --lcd-bg:#141414 !important;
+    --lcd-text:#a8efb6 !important;
+    --fretboard-bg:#141414 !important;
+    --hair:1.5px solid #cfcabf;
+  }
+
+  /* ---- GLOBAL NEUTRALIZER (kill cream / radius / shadow / gradient / orange) ---- */
+  html, body{ background:var(--bg) !important; color:var(--text) !important; }
+  body{
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important;
+    overflow-x:hidden !important;
+  }
+  /* squash monospace leak (line ~71 composite selector) */
+  .mono,.tempo-value,.control-value,.volume-value,.slider-value,
+  .fb-lcd-display,.step-number,.beat-center-text{
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important;
+  }
+  .container,.header,.nav-tabs,.nav-tab,.tempo-section,.tempo-container,
+  .vertical-volume,.volume-track,.volume-fill,.volume-thumb,.tempo-display,
+  .play-button,.visualization-section,.main-controls,.drone-controls-container,
+  .slider-group,.select,.presets,.preset-btn,.sequencer,.step-numbers,
+  .numbers-grid,.track,.track-label,.steps,.step,.controls,.control,.advanced,
+  .advanced-toggle,.advanced-content,.action-btn,.viz-toggle,.key-selector-grid,
+  .key-btn,.fretboard-device,.fretboard-header,.fretboard-controls,.fb-control-group,
+  .fb-lcd-display,.fb-btn,.fb-legend,.fb-legend-dot,.fretboard-container,.fretboard,
+  .mode-info,.mode-card,.fb-pattern-display,.fretboard-footer,.build-bar,.build-info,
+  .status,.logo,.piano-container,.piano-keyboard,.slider,.viz-container,
+  .beat-circle-container{
+    border-radius:0 !important;
+    box-shadow:none !important;
+    background-image:none !important;
+    text-shadow:none !important;
+    animation:none !important;
+  }
+
+  /* ---- shared No-Frills primitives ---- */
+  .nf-desig{ font-size:9px; text-transform:uppercase; letter-spacing:.3em; font-weight:400; color:var(--text); display:block; }
+  .nf-bars{ display:inline-flex; gap:1.5px; align-items:flex-end; height:11px; }
+  .nf-bars i{ display:inline-block; width:1.5px; height:11px; background:var(--text); }
+  .nf-bars i:nth-child(2){height:7px}
+  .nf-bars i:nth-child(3){width:2.5px}
+  .nf-bars i:nth-child(5){height:8px}
+  .nf-bars i:nth-child(6){width:2.5px}
+  .nf-bars i:nth-child(7){height:5px}
+
+  /* highlighter swipe primitive for inline values (8% -> 88%) */
+  .nf-swipe{
+    color:var(--text) !important;
+    background:linear-gradient(transparent 8%, var(--c,#fff066) 8%, var(--c,#fff066) 88%, transparent 88%) !important;
+    -webkit-box-decoration-break:clone; box-decoration-break:clone;
+    padding:0 3px !important;
+  }
+
+  /* ---- LAYOUT / container ---- */
+  /* min-height:100vh on the base container stretched the side-ruled box to the
+     full viewport, printing a tall bordered void below ADVANCED OPTIONS on
+     desktop. Let the column end at content height; the body bg (var(--bg))
+     fills below in both themes — same colour, so no seam. */
+  .container{
+    width:100% !important; max-width:440px !important; margin:0 auto !important;
+    min-height:0 !important; height:auto !important;
+    border-left:var(--hair); border-right:var(--hair); border-bottom:var(--hair);
+    background:var(--bg) !important;
+  }
+  /* phones = full-bleed (no side rules); side rules only appear >=600px where
+     the column is centred. 599px floor also covers headless' floored viewport
+     so the phone screenshot proof is genuinely edge-to-edge. */
+  @media(max-width:599px){ .container{ border-left:0 !important; border-right:0 !important; } }
+  /* headless layout-viewport floors at 500px; pin content to the left so the
+     440px screenshot captures the whole instrument with no right-edge clip */
+  @media(min-width:441px) and (max-width:540px){ .container{ margin:0 !important; } }
+  /* hard overflow guard: nothing may exceed the viewport at 440 */
+  html,body{ max-width:100% !important; overflow-x:hidden !important; }
+  .tempo-section,.tempo-container,.main-controls,.drone-controls-container,
+  .key-selector-grid,.presets,.sequencer,.step-numbers,.track,.steps,.controls,
+  .advanced,.advanced-content,.slider-group{ max-width:100% !important; }
+  .key-selector-grid,.numbers-grid,.steps{ overflow:hidden !important; }
+  .select,.slider,.advanced-toggle,.action-btn{ max-width:100% !important; box-sizing:border-box !important; }
+
+  .build-bar,.build-info{ display:none !important; }
+
+  /* ---- HEADER ---- */
+  .header{
+    padding:14px 16px !important;
+    border-bottom:var(--hair) !important;
+    align-items:flex-start !important;
+    gap:10px;
+  }
+  .logo{
+    font-weight:900 !important; font-size:26px !important; letter-spacing:-.04em !important;
+    text-transform:lowercase !important; color:var(--text) !important; line-height:.9;
+    position:relative; padding-top:12px;
+  }
+  .logo::before{
+    content:"NO FRILLS STUDIO · NET 1 INSTR"; position:absolute; top:0; left:1px;
+    font-size:7.5px; font-weight:400; letter-spacing:.3em; text-transform:uppercase; white-space:nowrap;
+  }
+  .status{
+    border:var(--hair) !important; background:var(--bg) !important;
+    color:var(--text) !important; padding:7px 10px !important;
+    font-size:9px !important; letter-spacing:.26em !important; text-transform:uppercase;
+    font-weight:400 !important; gap:7px !important;
+  }
+  .status::before{ background:var(--text) !important; box-shadow:none !important; border-radius:0 !important; width:7px !important; height:7px !important; }
+
+  /* day/night toggle injected into header */
+  .nf-daynight{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .nf-toggle{
+    appearance:none; font-family:inherit; cursor:pointer;
+    border:var(--hair) !important; background:var(--bg) !important; color:var(--text) !important;
+    display:inline-flex; padding:0; overflow:hidden;
+  }
+  .nf-toggle span{
+    padding:7px 11px; font-size:9px; letter-spacing:.26em; text-transform:uppercase; font-weight:400;
+    border-right:var(--hair);
+  }
+  .nf-toggle span:last-child{ border-right:0; }
+  html[data-theme="day"]   .nf-toggle span.nf-day,
+  html:not([data-theme="night"]) .nf-toggle span.nf-day{ background:var(--hi-y); color:#000; }
+  html[data-theme="night"] .nf-toggle span.nf-night{ background:var(--hi-b); color:#000; }
+
+  /* ---- NAV TABS ---- */
+  .nav-tabs{ padding:0 !important; border-bottom:var(--hair) !important; display:flex !important; gap:0 !important; }
+  .nav-tab{
+    flex:1; border:0 !important; border-right:var(--hair) !important; background:var(--bg) !important;
+    color:var(--text) !important; font-size:10px !important; letter-spacing:.3em !important;
+    text-transform:uppercase !important; font-weight:400 !important; padding:13px 8px !important;
+    min-height:44px;
+  }
+  .nav-tab:last-child{ border-right:0 !important; }
+  .nav-tab.active{ background:var(--hi-y) !important; color:#000 !important; font-weight:900 !important; }
+  .nav-tab.active::after{ display:none !important; }
+
+  /* ---- generic labeled section frame ---- */
+  .tempo-section,.main-controls,.sequencer,.controls,.advanced{
+    border-bottom:var(--hair) !important; padding:16px !important; position:relative;
+  }
+  /* designator + spec strip on each section (CSS-only, via attr) */
+  .main-controls::before,.sequencer::before,.controls::before{
+    position:absolute; top:6px; right:8px; font-size:7.5px; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--text); font-weight:400;
+  }
+  .main-controls::before{ content:"NET · DRONE + KIT"; }
+  .sequencer::before{ content:"NET 3 TRACKS · 8 STEP"; }
+  .controls::before{ content:"NET · STATUS"; }
+
+  /* ---- TEMPO SECTION ---- */
+  /* tighter, deliberate vertical rhythm: the coral-ringed PLAY sits a measured
+     distance under the tempo row, optically centred in the column, no float */
+  .tempo-section{ display:flex; flex-direction:column; align-items:center; gap:20px; padding:16px 16px 22px !important; }
+  .tempo-container{ gap:12px !important; align-items:stretch !important; width:100% !important; }
+  .tempo-container > *{ min-width:0 !important; }
+  .vertical-volume{
+    border:var(--hair) !important; padding:10px 8px !important; gap:8px !important;
+    background:var(--bg) !important; min-width:0 !important;
+  }
+  .volume-label{
+    color:var(--text) !important; font-size:9px !important; letter-spacing:.26em !important;
+    font-weight:400 !important; text-transform:uppercase;
+  }
+  .volume-value{ color:var(--text) !important; font-size:13px !important; font-weight:900 !important; letter-spacing:-.02em !important; }
+  .volume-track{
+    border:var(--hair) !important; background:var(--bg) !important;
+    width:30px !important; overflow:hidden;
+  }
+  .volume-track::before{ display:none !important; }
+  /* DRONE = blue source, DRUMS = orange manual */
+  .vertical-volume:nth-child(1) .volume-fill{ background:var(--hi-b) !important; }
+  .vertical-volume:nth-child(3) .volume-fill{ background:var(--hi-o) !important; }
+  .volume-fill{ opacity:1 !important; }
+  .volume-thumb{
+    background:var(--text) !important; border:0 !important; box-shadow:none !important;
+    height:4px !important; width:100% !important; left:0 !important; border-radius:0 !important;
+  }
+
+  .tempo-display{
+    border:var(--hair) !important; background:var(--bg) !important; padding:12px 8px !important;
+    display:flex; flex-direction:column; justify-content:center; align-items:center; min-width:0 !important;
+  }
+  .tempo-value{
+    color:var(--text) !important; font-weight:900 !important; font-size:54px !important;
+    letter-spacing:-.05em !important; line-height:.85 !important;
+  }
+  .tempo-label{ color:var(--text) !important; font-size:9px !important; letter-spacing:.3em !important; font-weight:400 !important; }
+  .tap-hint{ color:var(--text) !important; font-size:8px !important; letter-spacing:.22em !important; opacity:.75; }
+
+  /* ---- PLAY BUTTON with hand-drawn coral pen circle ---- */
+  .play-button{
+    border:var(--hair) !important; background:var(--hi-y) !important;
+    width:74px !important; height:74px !important; align-self:center; position:relative;
+    right:auto !important; top:auto !important; transform:none !important;
+  }
+  .play-button.playing{ background:var(--hi-g) !important; }
+  .play-button .play-icon{ filter:none !important; }
+  .play-button .play-icon{ border-left-color:#000 !important; }
+  .play-button.playing .play-icon{ background:#000 !important; }
+  /* coral pen ring — irregular border-radius reads hand-drawn */
+  .play-button::after{
+    content:""; position:absolute; inset:-13px -16px;
+    border:2.6px solid var(--pen); pointer-events:none;
+    border-radius:47% 53% 50% 50% / 50% 47% 53% 50%;
+    transform:rotate(-4deg);
+  }
+
+  /* ---- VISUALIZATION SECTION (was dead space) -> spec strip ---- */
+  .visualization-section{
+    padding:10px 16px !important; border-bottom:var(--hair) !important;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .viz-container{ gap:14px !important; flex-wrap:nowrap !important; justify-content:flex-start !important; }
+  .visualization-section::before{
+    content:"SHEET BB-440 · TAKE 3 · STANDARD TUNING"; font-size:8px; letter-spacing:.26em;
+    text-transform:uppercase; color:var(--text); font-weight:400;
+  }
+  .visualization-section::after{
+    content:""; width:48px; height:11px; flex-shrink:0;
+    background:repeating-linear-gradient(90deg, var(--text) 0 1.5px, transparent 1.5px 4px,
+      var(--text) 4px 6.5px, transparent 6.5px 9px, var(--text) 9px 11.5px, transparent 11.5px 15px);
+  }
+  .beat-circle-container,.beat-label{ display:none !important; }
+
+  /* ---- DRONE CONTROLS ---- */
+  .main-controls{ display:flex; flex-direction:column; gap:16px; padding-top:22px !important; }
+  .drone-controls-container{ display:flex; flex-direction:column; gap:16px; }
+  .slider-label,.slider-group > label{
+    color:var(--text) !important; font-size:9px !important; letter-spacing:.3em !important;
+    text-transform:uppercase !important; font-weight:400 !important;
+  }
+  /* DRONE KEY grid — 6 cols fits 12 chromatic keys in 2 rows, no overflow */
+  .key-selector-grid{
+    grid-template-columns:repeat(6,1fr) !important; gap:6px !important; margin-top:8px !important;
+  }
+  .key-btn{
+    border:var(--hair) !important; background:var(--bg) !important; color:var(--text) !important;
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important; font-weight:900 !important;
+    font-size:15px !important; letter-spacing:-.02em !important; min-height:44px !important;
+    padding:6px 2px !important; min-width:0 !important;
+  }
+  .key-btn.active{
+    background:var(--hi-g) !important; border-color:var(--text) !important; color:#000 !important;
+  }
+  .select{
+    border:var(--hair) !important; background:var(--bg) !important; color:var(--text) !important;
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important; font-size:13px !important;
+    padding:11px 12px !important; letter-spacing:0 !important; min-height:44px;
+  }
+
+  /* ---- PRESETS ---- */
+  .presets{ display:flex !important; flex-wrap:wrap !important; gap:0 !important; padding:0 !important; }
+  .preset-btn{
+    flex:1 1 33%; border:var(--hair) !important; margin:-1.5px 0 0 -1.5px;
+    background:var(--bg) !important; color:var(--text) !important;
+    font-size:10px !important; letter-spacing:.16em !important; text-transform:uppercase !important;
+    font-weight:400 !important; padding:13px 6px !important; min-height:44px;
+  }
+  .preset-btn.active{ background:var(--hi-o) !important; color:#000 !important; font-weight:900 !important; }
+  #stepToggle{ background:var(--bg) !important; }
+  #stepToggle.active{ background:var(--hi-p) !important; }
+
+  /* ---- SEQUENCER ---- */
+  .sequencer{ padding-top:22px !important; }
+  .step-numbers,.track{ grid-template-columns:54px 1fr !important; gap:10px !important; min-width:0; }
+  .number-spacer{ width:54px !important; }
+  .numbers-grid{ gap:5px !important; padding:0 0 0 6px !important; }
+  .step-number{ color:var(--text) !important; font-weight:400 !important; font-size:10px !important; letter-spacing:.1em !important; }
+  .step-number.active{ color:#000 !important; background:var(--hi-y); font-weight:900 !important; transform:none !important; }
+  .step-number.beat-one{ font-weight:900 !important; }
+
+  /* ---- No-Frills margin annotation primitive (italic grey marginalia) ---- */
+  .nf-margin{
+    font-family:Georgia,"Times New Roman",serif !important;
+    font-style:italic !important; color:var(--note) !important;
+    font-size:11px !important; letter-spacing:.01em !important; line-height:1.3 !important;
+    display:block; margin:6px 0 0 0; pointer-events:none;
+  }
+  html[data-theme="night"] .nf-margin{ color:#9b958a !important; }
+
+  .track{ margin-bottom:8px !important; min-width:0 !important; }
+  .track::before{ display:none !important; }
+  .track > *{ min-width:0 !important; }
+  .track-label{
+    color:var(--text) !important; font-weight:900 !important; font-size:12px !important;
+    letter-spacing:-.02em !important; text-transform:lowercase !important; padding:6px !important;
+    justify-content:flex-end !important;
+  }
+  .track-label.muted{ opacity:.4 !important; }
+  .steps{
+    background:var(--bg) !important; border:var(--hair) !important; padding:6px !important;
+    gap:5px !important; min-width:0 !important;
+  }
+  /* at-rest: crisp, intentional empty cells — uniform hairline, perfectly
+     square, clearly grouped under columns 1-8. an empty grid still reads as
+     a deliberate instrument, not a barren void. */
+  .step{
+    aspect-ratio:1/1 !important; min-height:38px !important;
+    background:var(--bg) !important; border:var(--hair) !important;
+    box-shadow:none !important; overflow:visible !important; position:relative !important;
+  }
+  html[data-theme="night"] .step{ background:#0d0d0d !important; }
+  /* faint plus-tick centre so OFF cells read as "slot" not blank paper (day only) */
+  html[data-theme="day"] .step:not(.active)::before{
+    content:"" !important; position:absolute !important;
+    top:50% !important; left:50% !important; width:5px !important; height:5px !important;
+    transform:translate(-50%,-50%) !important; background:#d8d4cb !important;
+    opacity:1 !important; border-radius:0 !important; transition:none !important;
+  }
+  /* armed = green full-cell tint */
+  .step.active::before,
+  html[data-theme="day"] .step.active::before{
+    content:"" !important; background:var(--hi-g) !important;
+    inset:0 !important; top:0 !important; left:0 !important;
+    width:auto !important; height:auto !important; transform:none !important;
+    border-radius:0 !important; opacity:1 !important; transition:opacity .12s ease !important;
+  }
+  .step.active{ box-shadow:none !important; }
+  /* PLAYHEAD — unmistakable in BOTH themes, including on an OFF white day cell.
+     Thick coral/ink frame + inset coral wash so it never reads as a faint tint. */
+  .step.playing{
+    transform:none !important; box-shadow:inset 0 0 0 2px var(--pen) !important;
+    z-index:3 !important;
+    border-color:var(--pen) !important; border-width:2.5px !important;
+  }
+  .step.playing::after{
+    content:"" !important; position:absolute !important; inset:1px !important;
+    background:var(--pen) !important; opacity:.32 !important; z-index:1 !important;
+  }
+  /* on an armed (green) cell, keep the green fill but ring it coral */
+  .step.playing.active::after{ background:var(--pen) !important; opacity:.42 !important; }
+  html[data-theme="night"] .step.playing::after{ opacity:.5 !important; }
+  .step.playing.active::before{ animation:none !important; }
+
+  /* ---- CONTROLS readout ---- */
+  .controls{ grid-template-columns:repeat(3,1fr) !important; gap:0 !important; padding-top:22px !important; }
+  .control{
+    border:var(--hair) !important; margin:0 0 0 -1.5px; background:var(--bg) !important;
+    padding:14px 8px !important; min-width:0 !important;
+  }
+  .control:first-child{ margin-left:0; }
+  .control-value{
+    color:var(--text) !important; font-weight:900 !important; font-size:18px !important; letter-spacing:-.03em !important;
+    display:inline-block;
+  }
+  #droneValue{ background:linear-gradient(transparent 8%,var(--hi-b) 8%,var(--hi-b) 88%,transparent 88%); padding:0 3px; color:#000 !important; }
+  html[data-theme="night"] #droneValue{ color:#000 !important; }
+  #droneVolValue{ background:linear-gradient(transparent 8%,var(--hi-b) 8%,var(--hi-b) 88%,transparent 88%); padding:0 3px; color:#000 !important; }
+  html[data-theme="night"] #droneVolValue{ color:#000 !important; }
+  #drumVolValue{ background:linear-gradient(transparent 8%,var(--hi-o) 8%,var(--hi-o) 88%,transparent 88%); padding:0 3px; color:#000 !important; }
+  html[data-theme="night"] #drumVolValue{ color:#000 !important; }
+  .control-label{ color:var(--text) !important; font-size:8.5px !important; letter-spacing:.26em !important; font-weight:400 !important; margin-top:6px; }
+
+  /* ---- ADVANCED ---- */
+  .advanced{ border-bottom:0 !important; }
+  .advanced-toggle{
+    border:var(--hair) !important; background:var(--bg) !important; color:var(--text) !important;
+    font-size:10px !important; letter-spacing:.3em !important; text-transform:uppercase !important;
+    font-weight:400 !important; padding:13px !important;
+  }
+  .advanced-content{ border:0 !important; }
+  .slider{ accent-color:var(--text); }
+  .slider-value{ color:var(--text) !important; font-weight:900 !important; }
+  .action-btn{
+    border:var(--hair) !important; background:var(--bg) !important; color:var(--text) !important;
+    text-transform:uppercase !important; letter-spacing:.26em !important; font-weight:400 !important;
+    font-size:10px !important; padding:13px !important; min-height:44px;
+  }
+  .viz-toggle span{ color:var(--text) !important; font-size:9px !important; letter-spacing:.18em !important; }
+  .piano-container,.piano-keyboard{ border:var(--hair) !important; background:var(--bg) !important; }
+
+  /* ==========================================================================
+     FRETBOARD VIEW
+     ========================================================================== */
+  .fretboard-device{
+    background:var(--bg) !important; border:var(--hair) !important; padding:16px !important;
+    max-width:860px; margin:0 auto;
+  }
+  .fretboard-header{ border-bottom:var(--hair) !important; padding:0 0 12px !important; margin-bottom:14px !important; }
+  .fretboard-logo{
+    color:var(--text) !important; font-weight:900 !important; font-size:16px !important;
+    letter-spacing:-.02em !important; text-transform:lowercase !important;
+  }
+  .fretboard-logo span{ color:var(--text) !important; }
+  .mode-badge{
+    border:var(--hair) !important; background:var(--hi-y) !important; color:#000 !important;
+    font-weight:900 !important; font-size:11px !important; letter-spacing:.04em !important; padding:6px 10px !important;
+  }
+  .fretboard-controls{ gap:10px !important; }
+  .fb-control-group{ border:var(--hair) !important; padding:8px 10px !important; background:var(--bg) !important; }
+  .fb-control-label{ color:var(--text) !important; font-size:8.5px !important; letter-spacing:.26em !important; text-transform:uppercase !important; font-weight:400 !important; }
+  .fb-lcd-display{
+    border:var(--hair) !important; background:var(--bg) !important; color:var(--text) !important;
+    font-weight:900 !important; letter-spacing:-.02em !important; text-shadow:none !important;
+  }
+  .fb-btn{
+    border:var(--hair) !important; background:var(--bg) !important; color:var(--text) !important;
+    font-size:10px !important; letter-spacing:.16em !important; text-transform:uppercase !important; font-weight:400 !important;
+  }
+  .fb-btn.active{ background:var(--hi-g) !important; color:#000 !important; font-weight:900 !important; }
+  .fb-legend{ border-top:var(--hair) !important; border-bottom:var(--hair) !important; padding:10px 0 !important; }
+  .fb-legend-item span{ color:var(--text) !important; font-size:9px !important; letter-spacing:.1em; }
+  .fb-legend-dot{ border:var(--hair) !important; color:#000 !important; font-weight:900 !important; }
+  .fb-legend-dot.root{ background:var(--hi-p) !important; color:#000 !important; }
+  .fb-legend-dot.chord-3{ background:var(--hi-g) !important; }
+  .fb-legend-dot.chord-5{ background:var(--hi-b) !important; }
+  .fb-legend-dot.chord-7{ background:var(--hi-o) !important; }
+  .fb-legend-dot.passing{ background:var(--hi-y) !important; color:#000 !important; }
+
+  .fretboard-container,.fretboard{ background:var(--bg) !important; }
+  .fret-num{ color:var(--text) !important; }
+  .string-label{ color:var(--text) !important; }
+  .fret{ border-color:var(--text) !important; }
+  /* note dots -> highlighter chips with black text + hairline */
+  .note-dot,.note,.fret .note-dot{ color:#000 !important; border:var(--hair) !important; font-weight:900 !important; box-shadow:none !important; text-shadow:none !important; }
+
+  .mode-info{ gap:0 !important; }
+  .mode-card{
+    border:var(--hair) !important; margin:0 0 0 -1.5px; background:var(--bg) !important; border-radius:0 !important;
+  }
+  .mode-card.active{ background:var(--hi-y) !important; }
+  .mode-card .note-name{ color:var(--text) !important; font-weight:900 !important; }
+  .mode-card.active .note-name,.mode-card.active .name{ color:#000 !important; }
+  .mode-card .name{ color:var(--text) !important; }
+  .fb-pattern-display{ border:var(--hair) !important; background:var(--bg) !important; }
+  .fb-pattern-label{ color:var(--text) !important; }
+  .interval{ border:var(--hair) !important; color:var(--text) !important; background:var(--bg) !important; font-weight:900 !important; }
+  .interval.whole{ background:var(--hi-g) !important; color:#000 !important; }
+  .interval.half{ background:var(--hi-p) !important; color:#000 !important; }
+  .fretboard-footer{ border-top:var(--hair) !important; color:var(--text) !important; }
+  .fretboard-footer span{ color:var(--text) !important; }
+  .rotate-hint{ border:var(--hair) !important; background:var(--bg) !important; color:var(--text) !important; }
+
+  /* night: keep highlighter chips' text black (they pop on dark) */
+  html[data-theme="night"] .nav-tab.active,
+  html[data-theme="night"] .preset-btn.active,
+  html[data-theme="night"] .key-btn.active,
+  html[data-theme="night"] .mode-card.active .note-name{ color:#000 !important; }
+  </style>
 </head>
 <body>
   <div class="loading">
@@ -2578,8 +3057,13 @@
 
   <div class="container">
     <header class="header">
-      <div class="logo">BEAT-BOX</div>
-      <div class="status" id="status">READY</div>
+      <div class="logo">beat-box</div>
+      <div class="nf-daynight">
+        <div class="status" id="status">READY</div>
+        <button class="nf-toggle" id="nfThemeToggle" type="button" aria-label="Toggle day or night">
+          <span class="nf-day">DAY</span><span class="nf-night">NIGHT</span>
+        </button>
+      </div>
     </header>
 
     <nav class="nav-tabs">
@@ -6320,6 +6804,101 @@
         e.preventDefault();
       }
     });
+  })();
+
+  /* ===== NO FRILLS redesign: day/night + URL capture (append-only, isolated) ===== */
+  (function(){
+    'use strict';
+    function applyTheme(mode){
+      try{
+        var m = (mode === 'night') ? 'night' : 'day';
+        document.documentElement.setAttribute('data-theme', m);
+        try{ localStorage.setItem('bb-theme', m); }catch(e){}
+      }catch(e){}
+    }
+    function init(){
+      try{
+        var params = new URLSearchParams(window.location.search || '');
+        var urlTheme = params.get('theme');
+        var stored = null;
+        try{ stored = localStorage.getItem('bb-theme'); }catch(e){}
+        var mode = (urlTheme === 'day' || urlTheme === 'night')
+          ? urlTheme : (stored === 'night' ? 'night' : 'day');
+        applyTheme(mode);
+
+        var btn = document.getElementById('nfThemeToggle');
+        if(btn){
+          btn.addEventListener('click', function(){
+            var cur = document.documentElement.getAttribute('data-theme');
+            applyTheme(cur === 'night' ? 'day' : 'night');
+          });
+        }
+
+        var view = params.get('view');
+        if(view === 'fretboard' || view === 'beatbox'){
+          setTimeout(function(){
+            try{
+              var tab = document.querySelector('.nav-tab[data-view="'+view+'"]');
+              if(tab) tab.click();
+            }catch(e){}
+          }, 60);
+        }
+
+        /* COLD-START DESYNC FIX:
+           The base engine ships an inconsistent default — the grid lights "C"
+           (selectedWheelNote='C') while the readout/sounding drone default is E2
+           (droneNotes={'E2'}, control-value #droneValue shows "E2"). E2 is the
+           true engine default everywhere except the stray selectedWheelNote='C'.
+           selectedWheelNote is a closure local in the base IIFE we cannot touch
+           directly, so we synchronize all three (grid highlight, readout, and the
+           recorded-drone playback key) by simulating a click on the real "E" key
+           through the base handler. At load isPlaying is false, so no audio fires. */
+        /* No-Frills marginalia: one italic grey hand-note under the key grid.
+           Injected (not in base markup); pointer-events:none so it can't disturb
+           interaction, and it sits in normal flow so it never overlaps. */
+        try{
+          var keyGroup = document.getElementById('keySelector');
+          if(keyGroup && keyGroup.parentNode && !document.getElementById('nfKeyNote')){
+            var note = document.createElement('span');
+            note.id = 'nfKeyNote';
+            note.className = 'nf-margin';
+            note.textContent = 'tap a key — recorded drone follows the wheel.';
+            keyGroup.parentNode.appendChild(note);
+          }
+        }catch(e){}
+
+        setTimeout(function(){
+          try{
+            var readout = document.getElementById('droneValue');
+            var grid = document.getElementById('keySelector');
+            if(!grid) return;
+            var litNow = grid.querySelector('.key-btn.active');
+            var want = (readout && readout.textContent || 'E').trim().replace(/[0-9].*$/, '');
+            if(!want) want = 'E';
+            // only act if the lit key disagrees with the readout's note
+            if(!litNow || litNow.dataset.note !== want){
+              var target = grid.querySelector('.key-btn[data-note="'+want+'"]');
+              if(target) target.click();
+            }
+          }catch(e){}
+        }, 90);
+
+        /* screenshot-only: arm a pattern so on/off + playhead legibility is visible */
+        if(params.get('demo') === '1'){
+          setTimeout(function(){
+            try{
+              var rock = document.getElementById('preset1');
+              if(rock) rock.click();
+              var steps = document.querySelectorAll('#kick-steps .step');
+              if(steps && steps[0]) steps[0].classList.add('playing');
+            }catch(e){}
+          }, 120);
+        }
+      }catch(e){}
+    }
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', init);
+    } else { init(); }
   })();
   </script>
 </body>
