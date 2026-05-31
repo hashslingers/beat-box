@@ -61,6 +61,8 @@ open "https://hashslingers.github.io/beat-box/initial/BeatBox_Pro_Minimal.html"
   - Shared lowpass filter and chorus effect
 - **Scheduler**: Mobile-optimized with 20-25ms lookahead
 - **Latency**: Target <20ms for real-time feel
+- **Mix bus topology** (`initAudio`): drums and drone run on **separate buses** so drum hits never duck the drone (no shared compressor). Drums → gentle `compressor` (ratio ~5) → `drumBusGain` → master; drone → `droneBus` → `droneComp` → `droneBusGain` → master. Master = makeup `masterGain` → memoryless **tanh soft-clip** (`makeSoftClipCurve`, `masterLimiter`, no time constant so it cannot pump) → destination. Loudness comes from gain-staging into the soft clip; tune via measurement, not by ear. The recorded `drones.mp3` is ~12 dB quieter than the synth drones, so the `custom_audio` path is boosted by `CUSTOM_DRONE_BOOST` (applied in `playCustomDrone` + `updateDroneVolume`). NB the soft clip is a *shared* nonlinearity: cross-talk is eliminated at the bus level, with a small peak-only residual (~0.5 dB on hard hits, no pumping) at the master.
+- **Audio test hook**: loading the app with `?audittest=1` exposes `window.__bbOffline(opts)`, which renders the real engine through an `OfflineAudioContext` and returns `{peakDb, rmsDb, clip}` (modes: `master`/`droneBus`/`drumBus`). Inert without the flag. Use it to regression-test loudness/clipping/cross-talk after any audio change (drive it via Chrome DevTools Protocol with real wall-clock polling — `OfflineAudioContext.startRendering` does not resolve under `--virtual-time-budget`). **The hook mirrors the live graph by hand — keep both master stages identical when editing.**
 
 ### Piano Keyboard Implementation
 - 25 keys (C2 to C4) - 2 full octaves

@@ -3439,12 +3439,22 @@
     
     // Audio Nodes
     let masterGain = null;
-    let compressor = null;
+    let compressor = null;      // DRUM BUS compressor (gentle glue) - drums connect here
+    let drumBusGain = null;     // makeup gain after drum compressor
+    let droneBus = null;        // DRONE BUS input gain - all drone sources connect here (no shared dynamics with drums)
+    let droneComp = null;       // gentle drone-only comp (slow attack, keeps timbre, never pumps on drum hits)
+    let droneBusGain = null;    // makeup/level after droneComp
+    let masterLimiter = null;   // safety limiter on the master chain (kept DORMANT in normal program)
     let reverbSend = null;
     let reverbReturn = null;
     let activeDrone = null; // Will store the current drone's nodes and gain controls
     let droneGain = 0.6;
     let drumGain = 1.0;
+    // The recorded drones.mp3 is mastered ~12 dB quieter than the synth drones,
+    // so the default drone sounded buried. Boost ONLY the recorded-drone path to
+    // sit at a comparable, present level (peaks still caught by the master soft
+    // clip; clean at typical settings). Applied in playCustomDrone + updateDroneVolume.
+    const CUSTOM_DRONE_BOOST = 4.0;
     let droneNotes = new Set(['E2']); // Support multiple notes (chords)
     let droneSound = 'tanpura';
     
@@ -3620,39 +3630,113 @@
     }
 
     // Initialize Audio Context
-    function initAudio() {
+    async function initAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
+        // === DRUM BUS ===
+        // Gentle compressor for punch/glue only (was an aggressive 12:1 shared comp
+        // that ducked the whole mix on every hit). Now drums-only, low ratio, with
+        // post makeup gain to restore (and slightly raise) level.
+        // NOTE: kept the variable name `compressor` so the 5 drum connect sites are unchanged.
         compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.value = -24;
-        compressor.knee.value = 30;
-        compressor.ratio.value = 12;
-        compressor.attack.value = 0.003;
-        compressor.release.value = 0.25;
-        
+        compressor.threshold.value = -22;
+        compressor.knee.value = 8;
+        compressor.ratio.value = 5;
+        compressor.attack.value = 0.002;
+        compressor.release.value = 0.14;
+
+        // Makeup gain for the drum bus (DynamicsCompressor has no native makeup param).
+        // Tamed so drums-only peaks land ~3 dB below 0 dBFS (master limiter stays dormant).
+        drumBusGain = audioCtx.createGain();
+        drumBusGain.gain.value = 0.86;
+
+        // === DRONE BUS ===
+        // All drone sources connect to droneBus (the isolation tap point). The drone
+        // gets its OWN gentle, slow-attack compressor so its peaks are controlled on
+        // its own bus -> the master limiter never has to clamp the drone, so the
+        // drone CANNOT pump on drum hits. NO dynamics are shared with drums.
+        // droneGain is applied inside each drone source's own gain nodes already.
+        droneBus = audioCtx.createGain();
+        droneBus.gain.value = 0.45;   // pre-comp trim (raw drone sum was very hot)
+
+        droneComp = audioCtx.createDynamicsCompressor();
+        droneComp.threshold.value = -26;
+        droneComp.knee.value = 16;
+        droneComp.ratio.value = 6;
+        droneComp.attack.value = 0.008;  // catches chord-beat peaks; still smooth on a sustained tone
+        droneComp.release.value = 0.30;
+
+        droneBusGain = audioCtx.createGain();
+        droneBusGain.gain.value = 1.32;   // makeup after droneComp (drives mix RMS up). Kept high for loudness; the tightened droneComp above does the peak control so the combined program peak still lands <=-0.45 dBFS pre-clipper (clipper dormant, no clipped transients)
+
+        // === MASTER CHAIN ===
+        // Loudness comes from the bus makeup gains above, staged so program peaks
+        // land just under 0 dBFS. The master limiter is a fast safety catcher that
+        // stays mostly DORMANT, so it does not duck the drone on drum hits (no
+        // master-stage pumping). Synchronous standard nodes only (no AudioWorklet),
+        // so the live graph can never race an async module load -- robust on iOS.
         masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.9;
-        
+        masterGain.gain.value = 1.7; // drive into the soft clipper for loudness
+
+        // Memoryless soft-clip safety ceiling (tanh). With NO time constant it
+        // CANNOT pump/duck the drone on drum hits, and it rounds peaks smoothly
+        // (gentle harmonics) instead of hard-flattening them -- so it stays
+        // transparent while guaranteeing the output never reaches 0 dBFS.
+        masterLimiter = audioCtx.createWaveShaper();
+        masterLimiter.curve = makeSoftClipCurve(0.95);
+        masterLimiter.oversample = '4x';
+
         // Create subtle room reverb
         const reverb = createReverb(audioCtx);
         reverbSend = reverb.input;
         reverbReturn = reverb.output;
-        
-        // Connect: compressor -> masterGain -> destination
-        //          compressor -> reverbSend -> reverbReturn -> masterGain
-        compressor.connect(masterGain);
-        compressor.connect(reverbSend); // Parallel reverb send
+
+        // Subtle drum send into reverb (kept low so it doesn't smear the punch)
+        const drumReverbSend = audioCtx.createGain();
+        drumReverbSend.gain.value = 0.15;
+
+        // Wiring (buses unchanged; master stage simplified):
+        //   drums -> compressor -> drumBusGain -> masterGain  (+ subtle reverb send)
+        //   drone -> droneBus -> droneComp -> droneBusGain -> masterGain (+ reverb send)
+        //   reverbReturn -> masterGain
+        //   masterGain -> masterLimiter -> destination
+        compressor.connect(drumBusGain);
+        drumBusGain.connect(masterGain);
+        drumBusGain.connect(drumReverbSend);
+        drumReverbSend.connect(reverbSend);
+
+        droneBus.connect(droneComp);
+        droneComp.connect(droneBusGain);
+        droneBusGain.connect(masterGain);
+        droneBusGain.connect(reverbSend); // Parallel reverb send (drone, post-comp)
+
         reverbReturn.connect(masterGain);
-        masterGain.connect(audioCtx.destination);
+
+        masterGain.connect(masterLimiter);
+        masterLimiter.connect(audioCtx.destination);
       }
       return audioCtx;
     }
+
+    // Soft-clip transfer curve (tanh) asymptoting to +/-ceiling. Memoryless, so
+    // it cannot pump; near-linear (transparent) for small signals and rounds
+    // loud peaks smoothly (gentle harmonics) instead of hard-flattening them.
+    function makeSoftClipCurve(ceiling) {
+      const n = 4096;
+      const k = ceiling;
+      const curve = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        const x = (i / (n - 1)) * 2 - 1; // -1..1
+        curve[i] = k * Math.tanh(x / k);
+      }
+      return curve;
+    }
     
     // Unlock iOS Audio
-    function unlockAudio() {
+    async function unlockAudio() {
       if (unlocked) return;
-      const ctx = initAudio();
+      const ctx = await initAudio();
       const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
       const source = ctx.createBufferSource();
       source.buffer = buffer;
@@ -3880,7 +3964,7 @@
       mixGain.connect(warmthEQ);
       warmthEQ.connect(filter);
       filter.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       lfo.start();
       nodes.forEach(node => {
@@ -3962,7 +4046,7 @@
       mixGain.connect(filter);
       filter.connect(warmthEQ);
       warmthEQ.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       chorusLFO.start();
       nodes.forEach(node => {
@@ -4027,7 +4111,7 @@
 
       mixGain.connect(distortion);
       distortion.connect(filter);
-      filter.connect(compressor);
+      filter.connect(droneBus);
 
       nodes.forEach(node => {
         if (node.start) node.start();
@@ -4128,7 +4212,7 @@
       mixGain.connect(warmthEQ);
       warmthEQ.connect(presenceEQ);
       presenceEQ.connect(filter);
-      filter.connect(compressor);
+      filter.connect(droneBus);
 
       shimmerLFO.start();
       nodes.forEach(node => {
@@ -4211,7 +4295,7 @@
       });
 
       mixGain.connect(filter);
-      filter.connect(compressor);
+      filter.connect(droneBus);
       mixGain.connect(delay);
       delay.connect(filter); // Feedback loop for chorus effect
 
@@ -4298,7 +4382,7 @@
       gainNodes.forEach(gn => gn.connect(mixGain));
       mixGain.connect(filter);
       filter.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       pressureLFO.start();
       nodes.forEach(node => { if (node.start) node.start(); });
@@ -4385,7 +4469,7 @@
       gainNodes.forEach(gn => gn.connect(mixGain));
       mixGain.connect(filter);
       filter.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       wheezeLFO.start();
       nodes.forEach(node => { if (node.start) node.start(); });
@@ -4480,7 +4564,7 @@
       gainNodes.forEach(gn => gn.connect(mixGain));
       mixGain.connect(filter);
       filter.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       lfo.start();
       nodes.forEach(node => { if (node.start) node.start(); });
@@ -4579,7 +4663,7 @@
       gainNodes.forEach(gn => gn.connect(mixGain));
       mixGain.connect(filter);
       filter.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       lfo.start();
       nodes.forEach(node => { if (node.start) node.start(); });
@@ -4673,7 +4757,7 @@
       gainNodes.forEach(gn => gn.connect(mixGain));
       mixGain.connect(formantFilter);
       formantFilter.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       tremolo.start();
       nodes.forEach(node => { if (node.start) node.start(); });
@@ -4767,7 +4851,7 @@
       gainNodes.forEach(gn => gn.connect(mixGain));
       mixGain.connect(filter);
       filter.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       lfo.start();
       nodes.forEach(node => { if (node.start) node.start(); });
@@ -4861,7 +4945,7 @@
       gainNodes.forEach(gn => gn.connect(mixGain));
       mixGain.connect(filter);
       filter.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       vibrato.start();
       nodes.forEach(node => { if (node.start) node.start(); });
@@ -5001,7 +5085,7 @@
       barkFilter.connect(lowpass);
       lowpass.connect(highCut);
       highCut.connect(outputGain);
-      outputGain.connect(compressor);
+      outputGain.connect(droneBus);
 
       // Start all oscillators
       tremoloLFO.start();
@@ -5129,7 +5213,7 @@
         
         // Handle Custom Audio Volume
         if (activeDrone.isCustom) {
-           activeDrone.gainNodes[0].gain.setTargetAtTime(droneGain, ctx.currentTime, 0.1);
+           activeDrone.gainNodes[0].gain.setTargetAtTime(droneGain * CUSTOM_DRONE_BOOST, ctx.currentTime, 0.1);
            return;
         }
 
@@ -5539,14 +5623,14 @@
     }
     
     // Start/Stop
-    function start() {
-      unlockAudio();
-      initAudio();
-      
+    async function start() {
+      await unlockAudio();   // builds the audio graph (incl. async lookahead worklet)
+      await initAudio();     // no-op once audioCtx exists; resolves immediately
+
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
-      
+
       isPlaying = true;
       currentStep = 0;
       nextNoteTime = audioCtx.currentTime;
@@ -5943,10 +6027,10 @@
       }
       
       const gain = ctx.createGain();
-      gain.gain.value = volume;
-      
+      gain.gain.value = volume * CUSTOM_DRONE_BOOST; // recorded drone runs hotter to match synth level
+
       audioFileNode.connect(gain);
-      gain.connect(compressor); // Connect to main mix
+      gain.connect(droneBus); // Connect to DRONE BUS (independent of drums)
       
       // Set time and play
       // Check if we are already in the correct range to avoid stutter
@@ -6804,6 +6888,197 @@
         e.preventDefault();
       }
     });
+
+    // ===================================================================
+    // OFFLINE AUDIT HOOK (INERT unless URL contains ?audittest=1)
+    // Renders the NEW split-bus graph offline so the drum/drone routing,
+    // ducking, loudness and clipping can be measured without a mic.
+    //   mode 'master'   -> full chain: ...->masterGain->masterLimiter->dest
+    //                      (loudness / clip safety)
+    //   mode 'droneBus' -> taps droneBus DIRECTLY to dest (pre-limiter)
+    //                      to prove the drone bus is structurally clean (~0
+    //                      cross-talk by construction). For HONEST ducking,
+    //                      use mode 'master' with residual = (drone+drums)-drumsAlone.
+    // The hook temporarily swaps the module-scoped audio globals to point at
+    // a freshly-built OfflineAudioContext bus, drives the REAL engine
+    // functions (createTanpuraDrone / playKick / playSnare / playHiHat),
+    // renders, then restores every global. Math.random is seeded (mulberry32)
+    // so drum noise is bit-identical across renders.
+    // ===================================================================
+    if (location.search.indexOf('audittest=1') !== -1) {
+      window.__bbOffline = async function(opts) {
+        opts = opts || {};
+        const dur        = opts.duration || 4.0;
+        const sr         = opts.sampleRate || 44100;
+        const mode       = opts.mode || 'master';      // 'master' | 'droneBus'
+        const withDrone  = opts.drone !== false;       // default on
+        const withDrums  = opts.drums !== false;       // default on
+        const droneVol   = (opts.droneGain != null) ? opts.droneGain : 0.6;
+        const drumVol    = (opts.drumGain  != null) ? opts.drumGain  : 0.7;
+        const bpm        = opts.bpm || 120;
+        const droneType  = opts.droneType || 'tanpura';
+
+        // --- seeded PRNG so drum noise is deterministic run-to-run ---
+        function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+        // --- save every module global we will mutate ---
+        const saved = {
+          audioCtx, compressor, drumBusGain, droneBus, droneComp, droneBusGain,
+          masterGain, masterLimiter, reverbSend, reverbReturn, droneGain, drumGain,
+          activeDrone, rnd: Math.random
+        };
+
+        try {
+          const octx = new OfflineAudioContext(2, Math.ceil(sr * dur), sr);
+
+          // Rebuild the production bus topology in the offline context,
+          // mirroring initAudio() exactly.
+          compressor = octx.createDynamicsCompressor();
+          compressor.threshold.value = -22;
+          compressor.knee.value = 8;
+          compressor.ratio.value = 5;
+          compressor.attack.value = 0.002;
+          compressor.release.value = 0.14;
+
+          drumBusGain = octx.createGain();
+          drumBusGain.gain.value = 0.86;
+
+          droneBus = octx.createGain();
+          droneBus.gain.value = 0.45;
+
+          droneComp = octx.createDynamicsCompressor();
+          droneComp.threshold.value = -26;
+          droneComp.knee.value = 16;
+          droneComp.ratio.value = 6;
+          droneComp.attack.value = 0.008;
+          droneComp.release.value = 0.30;
+
+          droneBusGain = octx.createGain();
+          droneBusGain.gain.value = 1.32;  // mirror of initAudio
+
+          masterGain = octx.createGain();
+          masterGain.gain.value = 1.7;  // mirror of initAudio
+
+          // mirror of initAudio: memoryless soft-clip ceiling (tanh)
+          masterLimiter = octx.createWaveShaper();
+          masterLimiter.curve = makeSoftClipCurve(0.95);
+          masterLimiter.oversample = '4x';
+
+          const reverb = createReverb(octx);
+          reverbSend = reverb.input;
+          reverbReturn = reverb.output;
+          const drumReverbSend = octx.createGain();
+          drumReverbSend.gain.value = 0.15;
+
+          compressor.connect(drumBusGain);
+          drumBusGain.connect(masterGain);
+          drumBusGain.connect(drumReverbSend);
+          drumReverbSend.connect(reverbSend);
+
+          droneBus.connect(droneComp);
+          droneComp.connect(droneBusGain);
+          droneBusGain.connect(masterGain);
+          droneBusGain.connect(reverbSend);
+
+          reverbReturn.connect(masterGain);
+
+          if (mode === 'droneBus') {
+            // Isolation tap: ONLY the drone bus output (post-comp) -> destination.
+            // Proves the drone path carries no drum energy by construction.
+            droneBusGain.connect(octx.destination);
+          } else if (mode === 'drumBus') {
+            // Isolation tap: ONLY the drum bus output (post-comp+makeup) -> dest.
+            // Lets the drum bus be staged by pre-limiter measurement.
+            drumBusGain.connect(octx.destination);
+          } else {
+            masterGain.connect(masterLimiter);
+            masterLimiter.connect(octx.destination);
+          }
+
+          // Point the engine at the offline context + faders
+          audioCtx = octx;
+          droneGain = droneVol;
+          drumGain  = drumVol;
+
+          // --- schedule drone (real creator) ---
+          if (withDrone && droneType === 'mp3') {
+            // Measure the REAL recorded drone (drones.mp3) through the same
+            // gain(droneGain) -> droneBus -> droneComp -> droneBusGain -> master
+            // path that playCustomDrone uses (decodeAudioData works offline;
+            // only MediaElementSource does not). opts.mp3Url -> a decodable slice.
+            const url = opts.mp3Url || '_mp3slice.wav';
+            const buf = await fetch(url).then(r => r.arrayBuffer()).then(b => octx.decodeAudioData(b));
+            const src = octx.createBufferSource();
+            src.buffer = buf; src.loop = true;
+            const g = octx.createGain();
+            const boost = (opts.mp3Boost != null) ? opts.mp3Boost : CUSTOM_DRONE_BOOST;
+            g.gain.value = droneGain * boost; // mirrors playCustomDrone gain staging
+            src.connect(g); g.connect(droneBus); src.start(0);
+          } else if (withDrone) {
+            const notes = new Set(opts.notes || ['C2','G2','C3']);
+            let creator = createTanpuraDrone;
+            if (droneType === 'warmpad' && typeof createWarmPadDrone === 'function') creator = createWarmPadDrone;
+            else if (droneType === 'airorgan' && typeof createAirOrganDrone === 'function') creator = createAirOrganDrone;
+            else if (droneType === 'default' && typeof createDefaultDrone === 'function') creator = createDefaultDrone;
+            creator(octx, notes, droneGain);
+          }
+
+          // --- schedule drums (real engine fns), seeded ---
+          if (withDrums) {
+            Math.random = mulberry32(opts.seed || 0x9E3779B9);
+            const sixteenth = 60 / bpm / 4;
+            const savedMuted = { k: muted.kick, s: muted.snare, h: muted.hihat };
+            muted.kick = muted.snare = muted.hihat = false;
+            const n16 = Math.floor(dur / sixteenth);
+            for (let i = 0; i < n16; i++) {
+              const t = i * sixteenth;
+              if (i % 4 === 0) playKick(t);          // quarters
+              if (i % 8 === 4) playSnare(t);         // backbeat (beats 2 & 4)
+              playHiHat(t);                          // every 16th
+            }
+            muted.kick = savedMuted.k; muted.snare = savedMuted.s; muted.hihat = savedMuted.h;
+          }
+
+          const rendered = await octx.startRendering();
+
+          // --- measure ---
+          const L = rendered.getChannelData(0);
+          const R = rendered.numberOfChannels > 1 ? rendered.getChannelData(1) : L;
+          const N = L.length;
+          let peak = 0, sumsq = 0, clip = 0;
+          for (let i = 0; i < N; i++) {
+            const a = Math.abs(L[i]), b = Math.abs(R[i]);
+            if (a > peak) peak = a;
+            if (b > peak) peak = b;
+            sumsq += L[i]*L[i] + R[i]*R[i];
+            if (a > 1.0) clip++;
+            if (b > 1.0) clip++;
+          }
+          const rms = Math.sqrt(sumsq / (2 * N));
+          const dB = v => v > 0 ? 20 * Math.log10(v) : -Infinity;
+
+          return {
+            mode, duration: dur, sampleRate: sr, droneGain: droneVol, drumGain: drumVol,
+            withDrone, withDrums, droneType,
+            peak, peakDb: dB(peak),
+            rms,  rmsDb: dB(rms),
+            clip,
+            // raw channel data so the caller can do sample-aligned residual
+            // ducking math: (drone+drums) - drumsAlone
+            channelL: L, channelR: R, length: N
+          };
+        } finally {
+          // restore EVERY global so the live app is untouched
+          audioCtx = saved.audioCtx; compressor = saved.compressor;
+          drumBusGain = saved.drumBusGain; droneBus = saved.droneBus;
+          droneComp = saved.droneComp; droneBusGain = saved.droneBusGain;
+          masterGain = saved.masterGain; masterLimiter = saved.masterLimiter;
+          reverbSend = saved.reverbSend; reverbReturn = saved.reverbReturn;
+          droneGain = saved.droneGain; drumGain = saved.drumGain;
+          activeDrone = saved.activeDrone; Math.random = saved.rnd;
+        }
+      };
+    }
   })();
 
   /* ===== NO FRILLS redesign: day/night + URL capture (append-only, isolated) ===== */
@@ -6899,6 +7174,8 @@
     if(document.readyState === 'loading'){
       document.addEventListener('DOMContentLoaded', init);
     } else { init(); }
+
+    // ===================================================================
   })();
   </script>
 </body>
