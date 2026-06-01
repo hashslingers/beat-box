@@ -3450,11 +3450,38 @@
     let activeDrone = null; // Will store the current drone's nodes and gain controls
     let droneGain = 0.6;
     let drumGain = 1.0;
-    // The recorded drones.mp3 is mastered ~12 dB quieter than the synth drones,
-    // so the default drone sounded buried. Boost ONLY the recorded-drone path to
-    // sit at a comparable, present level (peaks still caught by the master soft
-    // clip; clean at typical settings). Applied in playCustomDrone + updateDroneVolume.
-    const CUSTOM_DRONE_BOOST = 4.0;
+    // Per-source loudness normalization. Each drone voice was at a wildly different
+    // native level (the 4 synths ran ~+4 dB hotter than the drums while the recorded
+    // drones.mp3 sat ~16 dB quieter), so a given fader % meant a different loudness
+    // per sound and the drone didn't track the drums. These trims (measured offline
+    // against the drums) bring every source to ~the same level, landing the drone a
+    // touch under the drums at matched fader positions. Applied via droneSrcGain()
+    // in startDrone + updateDroneVolume (peaks still caught by the master soft clip).
+    const DRONE_SOURCE_TRIM = {
+      custom_audio: 10.0,         // recorded drones.mp3 — mastered very quiet
+      tanpura: 0.316,
+      wurlitzer: 0.443,
+      pump_organ_classic: 0.301,
+      warm_pad: 0.519,
+    };
+    const DRONE_TRIM_DEFAULT = 0.4; // other synth voices not in the dropdown
+    function droneSrcGain() {
+      const t = DRONE_SOURCE_TRIM[droneSound];
+      return droneGain * (t != null ? t : DRONE_TRIM_DEFAULT);
+    }
+    // The recorded drones.mp3 holds a separate ~5-min drone per key, and those
+    // segments were mastered up to ~11 dB apart, so the recorded drone jumped in
+    // level when you changed key. These per-key trims (measured offline, normalized
+    // to E) level them so every key sits at the same loudness. Applied only to the
+    // custom_audio path (synths render any note at a consistent level).
+    const DRONE_KEY_TRIM = {
+      C:1.157, G:0.339, D:0.581, A:0.359, E:1.0, B:0.361,
+      'F#':0.635, 'C#':0.316, 'G#':0.742, 'D#':0.368, 'A#':0.57, F:0.456
+    };
+    function droneKeyTrim(note) {
+      const t = DRONE_KEY_TRIM[note];
+      return (t != null) ? t : 1;
+    }
     let droneNotes = new Set(['E2']); // Support multiple notes (chords)
     let droneSound = 'tanpura';
     
@@ -3661,9 +3688,9 @@
         droneBus.gain.value = 0.45;   // pre-comp trim (raw drone sum was very hot)
 
         droneComp = audioCtx.createDynamicsCompressor();
-        droneComp.threshold.value = -26;
-        droneComp.knee.value = 16;
-        droneComp.ratio.value = 6;
+        droneComp.threshold.value = -14;
+        droneComp.knee.value = 10;
+        droneComp.ratio.value = 2.5;
         droneComp.attack.value = 0.008;  // catches chord-beat peaks; still smooth on a sustained tone
         droneComp.release.value = 0.30;
 
@@ -5101,54 +5128,57 @@
     function startDrone() {
       const ctx = audioCtx;
       stopDrone();
-      
+
+      // Normalized per-source gain so every drone voice sits at a comparable level.
+      const dg = droneSrcGain();
+
       // For custom audio, we use the wheel selection
       if (droneSound === 'custom_audio') {
-        activeDrone = playCustomDrone(ctx, selectedWheelNote, droneGain);
+        activeDrone = playCustomDrone(ctx, selectedWheelNote, dg);
         return;
       }
-      
+
       if (droneNotes.size === 0) return;
 
       switch (droneSound) {
         case 'tanpura':
-          activeDrone = createTanpuraDrone(ctx, droneNotes, droneGain);
+          activeDrone = createTanpuraDrone(ctx, droneNotes, dg);
           break;
         case 'wurlitzer':
-          activeDrone = createWurlitzerDrone(ctx, droneNotes, droneGain);
+          activeDrone = createWurlitzerDrone(ctx, droneNotes, dg);
           break;
         case 'pump_organ_classic':
-          activeDrone = createPumpOrganClassic(ctx, droneNotes, droneGain);
+          activeDrone = createPumpOrganClassic(ctx, droneNotes, dg);
           break;
         case 'pump_organ_wheezy':
-          activeDrone = createPumpOrganWheezy(ctx, droneNotes, droneGain);
+          activeDrone = createPumpOrganWheezy(ctx, droneNotes, dg);
           break;
         case 'pump_organ_church':
-          activeDrone = createPumpOrganChurch(ctx, droneNotes, droneGain);
+          activeDrone = createPumpOrganChurch(ctx, droneNotes, dg);
           break;
         case 'pump_organ_celeste':
-          activeDrone = createPumpOrganCeleste(ctx, droneNotes, droneGain);
+          activeDrone = createPumpOrganCeleste(ctx, droneNotes, dg);
           break;
         case 'pump_organ_vox':
-          activeDrone = createPumpOrganVox(ctx, droneNotes, droneGain);
+          activeDrone = createPumpOrganVox(ctx, droneNotes, dg);
           break;
         case 'pump_organ_harmonium':
-          activeDrone = createPumpOrganHarmonium(ctx, droneNotes, droneGain);
+          activeDrone = createPumpOrganHarmonium(ctx, droneNotes, dg);
           break;
         case 'pump_organ_theater':
-          activeDrone = createPumpOrganTheater(ctx, droneNotes, droneGain);
+          activeDrone = createPumpOrganTheater(ctx, droneNotes, dg);
           break;
         case 'air_organ':
-          activeDrone = createAirOrganDrone(ctx, droneNotes, droneGain);
+          activeDrone = createAirOrganDrone(ctx, droneNotes, dg);
           break;
         case 'warm_pad':
-          activeDrone = createWarmPadDrone(ctx, droneNotes, droneGain);
+          activeDrone = createWarmPadDrone(ctx, droneNotes, dg);
           break;
         case 'distorted':
-          activeDrone = createDistortedDrone(ctx, droneNotes, droneGain);
+          activeDrone = createDistortedDrone(ctx, droneNotes, dg);
           break;
         default:
-          activeDrone = createDefaultDrone(ctx, droneNotes, droneGain);
+          activeDrone = createDefaultDrone(ctx, droneNotes, dg);
       }
     }
     
@@ -5213,16 +5243,16 @@
         
         // Handle Custom Audio Volume
         if (activeDrone.isCustom) {
-           activeDrone.gainNodes[0].gain.setTargetAtTime(droneGain * CUSTOM_DRONE_BOOST, ctx.currentTime, 0.1);
+           activeDrone.gainNodes[0].gain.setTargetAtTime(droneSrcGain() * droneKeyTrim(selectedWheelNote), ctx.currentTime, 0.1);
            return;
         }
 
         const gainReduction = Math.max(0.5, 1 / Math.sqrt(droneNotes.size));
-        // ... (rest of existing logic)
+        const dg = droneSrcGain();
         let rampIndex = 0;
         activeDrone.gainNodes.forEach(gainNode => {
           const rampValue = activeDrone.gainRamps[rampIndex % activeDrone.gainRamps.length];
-          const targetGain = droneGain * rampValue * gainReduction;
+          const targetGain = dg * rampValue * gainReduction;
           gainNode.gain.cancelScheduledValues(ctx.currentTime);
           gainNode.gain.exponentialRampToValueAtTime(targetGain, ctx.currentTime + 0.2);
           rampIndex++;
@@ -6027,7 +6057,7 @@
       }
       
       const gain = ctx.createGain();
-      gain.gain.value = volume * CUSTOM_DRONE_BOOST; // recorded drone runs hotter to match synth level
+      gain.gain.value = volume * droneKeyTrim(note); // source-normalized (startDrone) x per-key level
 
       audioFileNode.connect(gain);
       gain.connect(droneBus); // Connect to DRONE BUS (independent of drums)
@@ -6154,6 +6184,10 @@
       });
 
       // Drone sound selection
+      // Sync the engine's drone sound to what the dropdown actually shows on load
+      // (the <select> defaults to custom_audio while the JS var inits to 'tanpura').
+      // Without this, a cold-start play would run the wrong voice + wrong trim.
+      droneSound = $('droneSoundSelect').value;
       $('droneSoundSelect').addEventListener('change', e => {
           droneSound = e.target.value;
           if (isPlaying) {
@@ -6947,9 +6981,9 @@
           droneBus.gain.value = 0.45;
 
           droneComp = octx.createDynamicsCompressor();
-          droneComp.threshold.value = -26;
-          droneComp.knee.value = 16;
-          droneComp.ratio.value = 6;
+          droneComp.threshold.value = -14;
+          droneComp.knee.value = 10;
+          droneComp.ratio.value = 2.5;
           droneComp.attack.value = 0.008;
           droneComp.release.value = 0.30;
 
@@ -7011,16 +7045,23 @@
             const src = octx.createBufferSource();
             src.buffer = buf; src.loop = true;
             const g = octx.createGain();
-            const boost = (opts.mp3Boost != null) ? opts.mp3Boost : CUSTOM_DRONE_BOOST;
-            g.gain.value = droneGain * boost; // mirrors playCustomDrone gain staging
+            const boost = (opts.mp3Boost != null) ? opts.mp3Boost : (DRONE_SOURCE_TRIM.custom_audio || 1);
+            g.gain.value = droneGain * boost;
             src.connect(g); g.connect(droneBus); src.start(0);
           } else if (withDrone) {
             const notes = new Set(opts.notes || ['C2','G2','C3']);
-            let creator = createTanpuraDrone;
-            if (droneType === 'warmpad' && typeof createWarmPadDrone === 'function') creator = createWarmPadDrone;
-            else if (droneType === 'airorgan' && typeof createAirOrganDrone === 'function') creator = createAirOrganDrone;
-            else if (droneType === 'default' && typeof createDefaultDrone === 'function') creator = createDefaultDrone;
-            creator(octx, notes, droneGain);
+            const map = {
+              tanpura: createTanpuraDrone,
+              wurlitzer: (typeof createWurlitzerDrone === 'function') ? createWurlitzerDrone : null,
+              pump_organ_classic: (typeof createPumpOrganClassic === 'function') ? createPumpOrganClassic : null,
+              warm_pad: (typeof createWarmPadDrone === 'function') ? createWarmPadDrone : null,
+              warmpad: (typeof createWarmPadDrone === 'function') ? createWarmPadDrone : null,
+              default: (typeof createDefaultDrone === 'function') ? createDefaultDrone : createTanpuraDrone,
+            };
+            const creator = map[droneType] || createTanpuraDrone;
+            const trim = (opts.srcTrim != null) ? opts.srcTrim
+              : (DRONE_SOURCE_TRIM[droneType] != null ? DRONE_SOURCE_TRIM[droneType] : DRONE_TRIM_DEFAULT);
+            creator(octx, notes, droneGain * trim);
           }
 
           // --- schedule drums (real engine fns), seeded ---
