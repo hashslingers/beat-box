@@ -3445,6 +3445,7 @@
     let droneComp = null;       // gentle drone-only comp (slow attack, keeps timbre, never pumps on drum hits)
     let droneBusGain = null;    // makeup/level after droneComp
     let masterLimiter = null;   // safety limiter on the master chain (kept DORMANT in normal program)
+    let masterHP = null;        // subsonic/DC high-pass on the master chain
     let reverbSend = null;
     let reverbReturn = null;
     let activeDrone = null; // Will store the current drone's nodes and gain controls
@@ -3457,14 +3458,17 @@
     // against the drums) bring every source to ~the same level, landing the drone a
     // touch under the drums at matched fader positions. Applied via droneSrcGain()
     // in startDrone + updateDroneVolume (peaks still caught by the master soft clip).
+    // (Values include a global ~-2 dB vs the first pass: once the subsonic/DC
+    // high-pass stopped the drums' inaudible sub from inflating their RMS, the
+    // drone needed trimming down to keep sitting a touch UNDER the AUDIBLE drums.)
     const DRONE_SOURCE_TRIM = {
-      custom_audio: 10.0,         // recorded drones.mp3 — mastered very quiet
-      tanpura: 0.316,
-      wurlitzer: 0.443,
-      pump_organ_classic: 0.301,
-      warm_pad: 0.519,
+      custom_audio: 7.8,          // recorded drones.mp3 — mastered very quiet
+      tanpura: 0.246,
+      wurlitzer: 0.346,
+      pump_organ_classic: 0.235,
+      warm_pad: 0.405,
     };
-    const DRONE_TRIM_DEFAULT = 0.4; // other synth voices not in the dropdown
+    const DRONE_TRIM_DEFAULT = 0.312; // other synth voices not in the dropdown
     function droneSrcGain() {
       const t = DRONE_SOURCE_TRIM[droneSound];
       return droneGain * (t != null ? t : DRONE_TRIM_DEFAULT);
@@ -3714,6 +3718,16 @@
         masterLimiter.curve = makeSoftClipCurve(0.95);
         masterLimiter.oversample = '4x';
 
+        // Subsonic / DC high-pass. The kick sweeps to ~0 Hz, dumping ~56% of the
+        // drum energy plus a DC offset below 30 Hz -- inaudible on phone/laptop
+        // speakers but eating real headroom and driving the soft clip with garbage.
+        // 30 Hz, Q 0.707 (Butterworth, no resonant peak) removes it while leaving
+        // the kick body (40 Hz+) and the lowest drone fundamental (C2 ~65 Hz) intact.
+        masterHP = audioCtx.createBiquadFilter();
+        masterHP.type = 'highpass';
+        masterHP.frequency.value = 30;
+        masterHP.Q.value = 0.707;
+
         // Create subtle room reverb
         const reverb = createReverb(audioCtx);
         reverbSend = reverb.input;
@@ -3727,7 +3741,7 @@
         //   drums -> compressor -> drumBusGain -> masterGain  (+ subtle reverb send)
         //   drone -> droneBus -> droneComp -> droneBusGain -> masterGain (+ reverb send)
         //   reverbReturn -> masterGain
-        //   masterGain -> masterLimiter -> destination
+        //   masterGain -> masterHP (subsonic/DC) -> masterLimiter -> destination
         compressor.connect(drumBusGain);
         drumBusGain.connect(masterGain);
         drumBusGain.connect(drumReverbSend);
@@ -3740,7 +3754,8 @@
 
         reverbReturn.connect(masterGain);
 
-        masterGain.connect(masterLimiter);
+        masterGain.connect(masterHP);
+        masterHP.connect(masterLimiter);
         masterLimiter.connect(audioCtx.destination);
       }
       return audioCtx;
@@ -6998,6 +7013,12 @@
           masterLimiter.curve = makeSoftClipCurve(0.95);
           masterLimiter.oversample = '4x';
 
+          // mirror of initAudio: subsonic/DC high-pass (local; doesn't touch globals)
+          const masterHP = octx.createBiquadFilter();
+          masterHP.type = 'highpass';
+          masterHP.frequency.value = 30;
+          masterHP.Q.value = 0.707;
+
           const reverb = createReverb(octx);
           reverbSend = reverb.input;
           reverbReturn = reverb.output;
@@ -7025,7 +7046,8 @@
             // Lets the drum bus be staged by pre-limiter measurement.
             drumBusGain.connect(octx.destination);
           } else {
-            masterGain.connect(masterLimiter);
+            masterGain.connect(masterHP);
+            masterHP.connect(masterLimiter);
             masterLimiter.connect(octx.destination);
           }
 
