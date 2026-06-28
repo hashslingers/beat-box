@@ -3418,18 +3418,30 @@
     let currentStep = 0;
     let bpm = 120;
     let nextNoteTime = 0;
-    let schedulerTimer = null;
+    let schedulerTimer = null;   // fallback setInterval id (used only if a Worker can't be created)
+    let schedulerWorker = null;  // Web Worker timer that drives the scheduler (see startSchedulerClock)
     let unlocked = false;
     let noteQueue = []; // Queue for visual scheduling
     let lastDrawTime = -1;
     
     // Pattern State
+    const TRACKS = ['kick', 'snare', 'hihat'];
     let STEPS = 4;
     const patterns = {
       kick: new Array(8).fill(false),
       snare: new Array(8).fill(false),
       hihat: new Array(8).fill(false)
     };
+
+    // Cached step-element references, rebuilt whenever the sequencer is rebuilt.
+    // The playhead runs 2-8x/sec; caching lets updateStepUI/updateStepNumbers move
+    // the highlight by touching only the outgoing + incoming cells, with zero
+    // per-beat DOM queries. highlightedStep/highlightedNumber track what's lit so
+    // we know which cell to un-highlight.
+    const stepEls = { kick: [], snare: [], hihat: [] };
+    let stepNumberEls = [];
+    let highlightedStep = -1;
+    let highlightedNumber = -1;
     
     const muted = {
       kick: false,
@@ -3438,6 +3450,10 @@
     };
     
     // Audio Nodes
+    // Device class is fixed for the page lifetime — compute the UA test once
+    // instead of re-running the regex inside the scheduler (fires every ~20 ms).
+    const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     let masterGain = null;
     let compressor = null;      // DRUM BUS compressor (gentle glue) - drums connect here
     let drumBusGain = null;     // makeup gain after drum compressor
@@ -3450,7 +3466,10 @@
     let reverbReturn = null;
     let activeDrone = null; // Will store the current drone's nodes and gain controls
     let droneGain = 0.6;
-    let drumGain = 1.0;
+    let drumGain = 0.7;   // must match the 70% shown on the drum fader/pill/slider at load
+                          // (initVolumeSlider does not fire onChange at init, so nothing
+                          //  else syncs this — a wrong default plays at the wrong level
+                          //  until the user first touches the control)
     // Per-source loudness normalization. Each drone voice was at a wildly different
     // native level (the 4 synths ran ~+4 dB hotter than the drums while the recorded
     // drones.mp3 sat ~16 dB quieter), so a given fader % meant a different loudness
@@ -3577,15 +3596,11 @@
     const droneVolValue = $('droneVolValue');
     const droneVolSlider = $('droneVolSlider');
     const droneVolSliderValue = $('droneVolSliderValue');
-    const droneVolumeFill = $('droneVolumeFill');
-    const droneVolumeThumb = $('droneVolumeThumb');
-    const droneVolumeValue = $('droneVolumeValue');
     const drumVolValue = $('drumVolValue');
     const drumVolSlider = $('drumVolSlider');
     const drumVolSliderValue = $('drumVolSliderValue');
-    const drumVolumeFill = $('drumVolumeFill');
-    const drumVolumeThumb = $('drumVolumeThumb');
-    const drumVolumeValue = $('drumVolumeValue');
+    // The fader-widget fill/thumb/value elements are addressed by id inside
+    // paintVolumeWidget(), so they don't need module-level const handles.
     const advancedToggle = $('advancedToggle');
     const advancedContent = $('advancedContent');
     
@@ -5267,8 +5282,12 @@
         let rampIndex = 0;
         activeDrone.gainNodes.forEach(gainNode => {
           const rampValue = activeDrone.gainRamps[rampIndex % activeDrone.gainRamps.length];
-          const targetGain = dg * rampValue * gainReduction;
+          // exponentialRampToValueAtTime cannot target 0 (it throws RangeError and would
+          // abort this loop, leaving later voices stuck at their old gain). Floor to an
+          // inaudible value so dragging the drone fader to 0% still works and fully mutes.
+          const targetGain = Math.max(0.0001, dg * rampValue * gainReduction);
           gainNode.gain.cancelScheduledValues(ctx.currentTime);
+          gainNode.gain.setValueAtTime(gainNode.gain.value, ctx.currentTime);
           gainNode.gain.exponentialRampToValueAtTime(targetGain, ctx.currentTime + 0.2);
           rampIndex++;
         });
@@ -5534,10 +5553,10 @@
 
     // Update Step Numbers with Enhanced Highlighting
     function updateStepNumbers(step) {
-      const stepNumbers = document.querySelectorAll('.step-number');
-      stepNumbers.forEach((num, i) => {
-        num.classList.toggle('active', i === step);
-      });
+      // Same cached two-cell swap as updateStepUI (no per-beat DOM query).
+      if (highlightedNumber !== -1) stepNumberEls[highlightedNumber]?.classList.remove('active');
+      stepNumberEls[step]?.classList.add('active');
+      highlightedNumber = step;
     }
 
     // Initialize Visualization Controls
@@ -5588,7 +5607,7 @@
     // Mobile-Optimized Scheduler
     function scheduler() {
       const ctx = audioCtx;
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isMobile = IS_MOBILE;
       // Increased lookahead for better stability
       const lookaheadTime = isMobile ? 0.15 : 0.1;
       const scheduleAheadTime = isMobile ? 0.15 : 0.1;
@@ -5653,21 +5672,62 @@
     }
     
     function updateStepUI(step) {
-      // Clear previous playing states
-      document.querySelectorAll('.step.playing').forEach(el => {
-        el.classList.remove('playing');
+      // Move the playhead highlight by touching only the outgoing and incoming
+      // cells, from cached refs — no per-beat DOM queries. (`?.` guards the brief
+      // window during a rebuild before the cache is repopulated.)
+      TRACKS.forEach(track => {
+        if (highlightedStep !== -1) stepEls[track][highlightedStep]?.classList.remove('playing');
+        stepEls[track][step]?.classList.add('playing');
       });
-      
-      // Add playing state to current step
-      ['kick', 'snare', 'hihat'].forEach(track => {
-        const steps = document.querySelectorAll(`#${track}-steps .step`);
-        if (steps[step]) {
-          steps[step].classList.add('playing');
-        }
-      });
+      highlightedStep = step;
     }
     
     // Start/Stop
+    // Scheduler clock. The timer that wakes scheduler() lives in a Web Worker so
+    // heavy main-thread work (scroll, layout, animation) can't delay it and push
+    // notes out past the lookahead window — the classic "A Tale of Two Clocks"
+    // pattern. Only the *timing* runs in the worker; all Web Audio scheduling
+    // stays on the main thread (it must). The worker is built from an inline Blob
+    // so the app stays a single self-contained file. If a Worker can't be created
+    // (blob: blocked by CSP, ancient browser), we fall back to setInterval — the
+    // 100-150 ms lookahead makes that path perfectly usable, just less jank-proof.
+    function ensureSchedulerWorker() {
+      if (schedulerWorker || schedulerWorker === false) return; // built, or known-unavailable
+      try {
+        const src =
+          'var t=null;self.onmessage=function(e){' +
+          'var d=e.data;' +
+          'if(d&&d.command==="start"){if(t)clearInterval(t);t=setInterval(function(){postMessage("tick")},d.interval||25);}' +
+          'else if(d&&d.command==="stop"){if(t){clearInterval(t);t=null;}}' +
+          '};';
+        const url = URL.createObjectURL(new Blob([src], { type: 'application/javascript' }));
+        schedulerWorker = new Worker(url);
+        URL.revokeObjectURL(url); // the worker keeps running after the URL is revoked
+        schedulerWorker.onmessage = () => { if (isPlaying) scheduler(); };
+      } catch (e) {
+        schedulerWorker = false; // signal "use the setInterval fallback"
+      }
+    }
+
+    function startSchedulerClock(interval) {
+      ensureSchedulerWorker();
+      if (schedulerWorker) {
+        schedulerWorker.postMessage({ command: 'start', interval });
+      } else {
+        schedulerTimer = setInterval(scheduler, interval);
+      }
+    }
+
+    function stopSchedulerClock() {
+      if (schedulerWorker) {
+        schedulerWorker.postMessage({ command: 'stop' });
+      }
+      if (schedulerTimer) {
+        clearInterval(schedulerTimer);
+        schedulerTimer = null;
+      }
+    }
+
     async function start() {
       await unlockAudio();   // builds the audio graph (incl. async lookahead worklet)
       await initAudio();     // no-op once audioCtx exists; resolves immediately
@@ -5688,15 +5748,13 @@
       requestWakeLock();
       
       // Optimized scheduler interval for mobile performance
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const interval = isMobile ? 20 : 25;
-      schedulerTimer = setInterval(scheduler, interval);
+      const interval = IS_MOBILE ? 20 : 25;
+      startSchedulerClock(interval);
     }
-    
+
     function stop() {
       isPlaying = false;
-      clearInterval(schedulerTimer);
-      schedulerTimer = null;
+      stopSchedulerClock();
       
       if (wakeLock) {
         wakeLock.release()
@@ -5709,11 +5767,22 @@
       status.textContent = 'STOPPED';
       
       stopDrone();
-      
-      // Clear playing states
-      document.querySelectorAll('.step.playing').forEach(el => {
-        el.classList.remove('playing');
-      });
+
+      // Drop pending visual notes so the draw loop can't re-light a cell after we
+      // clear it below (the lookahead leaves ~150 ms of queued steps at stop).
+      noteQueue.length = 0;
+      lastDrawTime = -1;
+
+      // Clear the playhead highlight via the cached refs and reset the trackers
+      // so the next start() begins from a clean slate.
+      if (highlightedStep !== -1) {
+        TRACKS.forEach(track => stepEls[track][highlightedStep]?.classList.remove('playing'));
+      }
+      if (highlightedNumber !== -1) {
+        stepNumberEls[highlightedNumber]?.classList.remove('active');
+      }
+      highlightedStep = -1;
+      highlightedNumber = -1;
     }
     
     // Pattern Management
@@ -5767,110 +5836,102 @@
       - Touch events for mobile/tablet
       - Unified coordinate calculation for both input types
     */
-    function initVolumeSlider(id, initialValue, onChange) {
+    // ---- Volume controls: one source of truth per channel ----------------
+    // Each channel (drone, drum) is driven by THREE UI surfaces that must stay
+    // in lockstep: the vertical fader widget, the collapsed pill, and the range
+    // slider in Advanced. Earlier these were wired independently and could drift
+    // (and the gain var didn't match the displayed default at load). Now every
+    // surface routes through applyDroneVolume()/applyDrumVolume(), the only
+    // places that mutate droneGain/drumGain and repaint the UI.
+
+    // Paint the custom vertical fader widget. orientation is cached by the drag
+    // handler to avoid a getBoundingClientRect() (forced reflow) on every move;
+    // when omitted we read it once (cheap on init / resize / range-slider input).
+    function paintVolumeWidget(id, percent, horizontal) {
       const track = $(id + 'Track');
       const fill = $(id + 'Fill');
       const thumb = $(id + 'Thumb');
       const valueDisplay = $(id + 'Value');
-      
-      let isDragging = false;
-      
-      function isHorizontal() {
-        // Detect orientation: if track is wider than tall, it's horizontal (mobile layout)
+      if (horizontal == null) {
         const rect = track.getBoundingClientRect();
-        return rect.width > rect.height;
+        horizontal = rect.width > rect.height;
       }
-      
-      function updateSlider(e) {
-        const rect = track.getBoundingClientRect();
-        let percent;
-        
-        if (isHorizontal()) {
-          // Horizontal mode (mobile): left = 0%, right = 100%
-          percent = Math.max(0, Math.min(100,
-            Math.round(((e.clientX - rect.left) / rect.width) * 100)
-          ));
-          // Update visual elements for horizontal layout
-          fill.style.width = percent + '%';
-          fill.style.height = '';
-          thumb.style.left = percent + '%';
-          thumb.style.bottom = '';
-        } else {
-          // Vertical mode (desktop): bottom = 100%, top = 0%
-          percent = Math.max(0, Math.min(100, 
-            Math.round((1 - (e.clientY - rect.top) / rect.height) * 100)
-          ));
-          // Update visual elements for vertical layout
-          fill.style.height = percent + '%';
-          fill.style.width = '';
-          thumb.style.bottom = percent + '%';
-          thumb.style.left = '';
-        }
-        
-        valueDisplay.textContent = percent + '%';
-        
-        // Trigger audio parameter update
-        if (onChange) onChange(percent);
+      if (horizontal) {
+        // Horizontal mode (mobile): left = 0%, right = 100%
+        fill.style.width = percent + '%';  fill.style.height = '';
+        thumb.style.left = percent + '%';  thumb.style.bottom = '';
+      } else {
+        // Vertical mode (desktop): bottom = 100%, top = 0%
+        fill.style.height = percent + '%'; fill.style.width = '';
+        thumb.style.bottom = percent + '%'; thumb.style.left = '';
       }
-      
-      // Desktop mouse interaction
-      track.addEventListener('mousedown', e => {
+      valueDisplay.textContent = percent + '%';
+    }
+
+    function applyDroneVolume(value, opts) {
+      value = Math.max(0, Math.min(100, Math.round(value)));
+      droneGain = value / 100;
+      droneVolValue.textContent = value + '%';
+      droneVolSliderValue.textContent = value + '%';
+      if (parseInt(droneVolSlider.value, 10) !== value) droneVolSlider.value = value;
+      // The widget repaints itself during its own drag (cached orientation);
+      // skip the redundant repaint+reflow in that case.
+      if (!(opts && opts.widgetPainted)) paintVolumeWidget('droneVolume', value);
+      updateDroneVolume(); // no-op when nothing is playing (guarded)
+    }
+
+    function applyDrumVolume(value, opts) {
+      value = Math.max(0, Math.min(100, Math.round(value)));
+      drumGain = value / 100;
+      drumVolValue.textContent = value + '%';
+      drumVolSliderValue.textContent = value + '%';
+      if (parseInt(drumVolSlider.value, 10) !== value) drumVolSlider.value = value;
+      if (!(opts && opts.widgetPainted)) paintVolumeWidget('drumVolume', value);
+      // Drums are synthesized on demand and read drumGain at playback time, so
+      // there is no live gain node to update here.
+    }
+
+    // Wire the custom vertical fader widget to a channel apply() function.
+    // Pointer Events unify mouse + touch; pointer capture keeps the drag alive
+    // even if the finger/cursor leaves the track. The track rect is read once at
+    // drag start and reused, so dragging never forces a layout reflow.
+    function initVolumeSlider(id, apply) {
+      const track = $(id + 'Track');
+      track.style.touchAction = 'none'; // we own the drag; don't let the page scroll/zoom
+
+      let rect = null;
+      let horizontal = false;
+
+      function percentFrom(e) {
+        return horizontal
+          ? Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)))
+          : Math.max(0, Math.min(100, Math.round((1 - (e.clientY - rect.top) / rect.height) * 100)));
+      }
+
+      function onMove(e) {
+        const percent = percentFrom(e);
+        paintVolumeWidget(id, percent, horizontal); // cached orientation, no reflow
+        apply(percent, { widgetPainted: true });
+      }
+
+      function onUp(e) {
+        try { track.releasePointerCapture(e.pointerId); } catch (_) {}
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        rect = null;
+      }
+
+      track.addEventListener('pointerdown', e => {
         e.preventDefault();
-        isDragging = true;
-        updateSlider(e);
+        rect = track.getBoundingClientRect();
+        horizontal = rect.width > rect.height;
+        try { track.setPointerCapture(e.pointerId); } catch (_) {}
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+        onMove(e);
       });
-      
-      // Global listeners for smooth dragging
-      document.addEventListener('mousemove', e => {
-        if (isDragging) {
-          e.preventDefault();
-          updateSlider(e);
-        }
-      });
-      
-      document.addEventListener('mouseup', () => {
-        isDragging = false;
-      });
-      
-      // Mobile touch interaction
-      track.addEventListener('touchstart', e => {
-        e.preventDefault(); // Prevent page scroll while dragging slider
-        isDragging = true;
-        const touch = e.touches[0];
-        updateSlider(touch);
-      }, { passive: false });
-      
-      document.addEventListener('touchmove', e => {
-        if (isDragging) {
-          e.preventDefault(); // Prevent page scroll while dragging
-          const touch = e.touches[0];
-          updateSlider(touch);
-        }
-      }, { passive: false });
-      
-      document.addEventListener('touchend', () => {
-        isDragging = false;
-      });
-      
-      // Set initial position correctly based on current orientation
-      function setInitialPosition() {
-        if (isHorizontal()) {
-          fill.style.width = initialValue + '%';
-          fill.style.height = '';
-          thumb.style.left = initialValue + '%';
-          thumb.style.bottom = '';
-        } else {
-          fill.style.height = initialValue + '%';
-          fill.style.width = '';
-          thumb.style.bottom = initialValue + '%';
-          thumb.style.left = '';
-        }
-        valueDisplay.textContent = initialValue + '%';
-      }
-      
-      // Initialize now and on resize (orientation change)
-      setInitialPosition();
-      window.addEventListener('resize', setInitialPosition);
     }
     
     // Step Count Management
@@ -5894,6 +5955,12 @@
     }
     
     function rebuildSequencer() {
+      // The DOM is about to be replaced — drop stale cached refs and the highlight.
+      stepNumberEls = [];
+      TRACKS.forEach(t => { stepEls[t] = []; });
+      highlightedStep = -1;
+      highlightedNumber = -1;
+
       // Update step numbers grid
       const stepNumbers = $('stepNumbers');
       stepNumbers.innerHTML = '';
@@ -5902,6 +5969,7 @@
         number.className = 'step-number' + (i === 0 ? ' beat-one' : '');
         number.textContent = i + 1;
         stepNumbers.appendChild(number);
+        stepNumberEls.push(number);
       }
       
       // Update CSS grid columns for sequencer
@@ -6010,10 +6078,11 @@
           }, { passive: false });
           
           container.appendChild(step);
+          stepEls[track].push(step);
         }
       });
     }
-    
+
     // Chromatic Key Selector
     const CHROMATIC_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -6131,24 +6200,22 @@
         });
       });
 
-      // Initialize volume sliders
-      initVolumeSlider('droneVolume', 60, value => {
-        droneGain = value / 100;
-        droneVolValue.textContent = value + '%';
-        droneVolSliderValue.textContent = value + '%';
-        droneVolSlider.value = value; // Sync with HTML range input
-        updateDroneVolume(); // Apply to active drone's gain nodes
+      // Wire the vertical fader widgets to their channel apply() functions, then
+      // paint every surface from a single initial value so the gain vars, faders,
+      // pills and range sliders all agree at load (previously drumGain defaulted
+      // to 100% while the UI read 70%, so the first touch jumped the level).
+      initVolumeSlider('droneVolume', applyDroneVolume);
+      initVolumeSlider('drumVolume', applyDrumVolume);
+      applyDroneVolume(60);
+      applyDrumVolume(70);
+
+      // Orientation can flip between vertical (desktop) and horizontal (mobile)
+      // on resize/rotate — repaint the faders from their current values.
+      window.addEventListener('resize', () => {
+        paintVolumeWidget('droneVolume', parseInt(droneVolSlider.value, 10) || 0);
+        paintVolumeWidget('drumVolume', parseInt(drumVolSlider.value, 10) || 0);
       });
-      
-      initVolumeSlider('drumVolume', 70, value => {
-        drumGain = value / 100;
-        drumVolValue.textContent = value + '%';
-        drumVolSliderValue.textContent = value + '%';
-        drumVolSlider.value = value; // Sync with HTML range input
-        // Drums don't need updateDrumVolume() - they're synthesized on-demand
-        // and use current drumGain value at playback time (see playKick/playSnare/playHihat)
-      });
-      
+
       // Step buttons are now created in rebuildSequencer()
       
       // Play button — click for desktop, touchend for instant mobile response
@@ -6211,37 +6278,23 @@
           }
       });
       
-      // Volume controls
-      droneVolSlider.addEventListener('input', e => {
-        const value = parseInt(e.target.value);
-        droneGain = value / 100;
-        droneVolValue.textContent = `${value}%`;
-        droneVolSliderValue.textContent = `${value}%`;
-        
-        // Sync custom volume slider visuals
-        droneVolumeFill.style.height = value + '%';
-        droneVolumeThumb.style.bottom = value + '%';
-        droneVolumeValue.textContent = value + '%';
-        
-        updateDroneVolume();
-      });
-      
+      // Volume controls — the Advanced range sliders route through the same
+      // apply() functions, which repaint the fader widget (respecting its current
+      // orientation) and keep every surface in sync.
+      droneVolSlider.addEventListener('input', e => applyDroneVolume(parseInt(e.target.value, 10)));
+
       $('droneVolControl').addEventListener('click', () => {
         advancedContent.classList.add('show');
         advancedToggle.classList.add('open');
         droneVolSlider.focus();
       });
-      
-      drumVolSlider.addEventListener('input', e => {
-        const value = parseInt(e.target.value);
-        drumGain = value / 100;
-        drumVolValue.textContent = `${value}%`;
-        drumVolSliderValue.textContent = `${value}%`;
-        
-        // Sync custom volume slider visuals
-        drumVolumeFill.style.height = value + '%';
-        drumVolumeThumb.style.bottom = value + '%';
-        drumVolumeValue.textContent = value + '%';
+
+      drumVolSlider.addEventListener('input', e => applyDrumVolume(parseInt(e.target.value, 10)));
+
+      $('drumVolControl').addEventListener('click', () => {
+        advancedContent.classList.add('show');
+        advancedToggle.classList.add('open');
+        drumVolSlider.focus();
       });
       
       $('drumVolControl').addEventListener('click', () => {
@@ -6548,7 +6601,7 @@
     
     // Battery optimization for mobile
     function optimizeForBattery() {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isMobile = IS_MOBILE;
       
       if (isMobile) {
         // Reduce visual updates when not playing
@@ -6575,7 +6628,7 @@
     
     // Auto-detect and adjust performance settings
     function autoOptimizePerformance() {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isMobile = IS_MOBILE;
       const isLowEnd = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
       
       if (isMobile || isLowEnd) {
