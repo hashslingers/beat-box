@@ -803,6 +803,18 @@
       text-transform: uppercase;
     }
 
+    /* Inline note under the drone-sound selector (shown only when the page is
+       opened via file://, where the recorded drone can't pass through Web Audio) */
+    .drone-source-note {
+      margin-top: 8px;
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--text-muted);
+      border-left: 2px solid var(--border);
+      padding-left: 8px;
+    }
+    .drone-source-note[hidden] { display: none; }
+
     .slider {
       -webkit-appearance: none;
       appearance: none;
@@ -3140,6 +3152,7 @@
                   <option value="pump_organ_classic">Pump Organ (Synth)</option>
                   <option value="warm_pad">Warm Pad (Synth)</option>
               </select>
+              <div class="drone-source-note" id="droneSourceNote" hidden></div>
           </div>
        </div>
 
@@ -6265,13 +6278,38 @@
         }
       });
 
-      // Drone sound selection
-      // Sync the engine's drone sound to what the dropdown actually shows on load
-      // (the <select> defaults to custom_audio while the JS var inits to 'tanpura').
-      // Without this, a cold-start play would run the wrong voice + wrong trim.
-      droneSound = $('droneSoundSelect').value;
-      $('droneSoundSelect').addEventListener('change', e => {
+      // Drone sound selection.
+      // On file:// the Recorded Drone is a media file routed through Web Audio,
+      // which Chrome mutes under its cross-origin rule — it plays but is silent.
+      // So when opened as a local file we relabel that option, default to a synth
+      // voice (which works everywhere), and explain how to get the recording back.
+      // Served over http(s) (local server or the live site) it behaves normally.
+      const droneSelect = $('droneSoundSelect');
+      const droneSourceNote = $('droneSourceNote');
+      const isFileProtocol = location.protocol === 'file:';
+
+      function updateDroneSourceNote() {
+        if (!isFileProtocol) { droneSourceNote.hidden = true; return; }
+        droneSourceNote.textContent = (droneSelect.value === 'custom_audio')
+          ? 'Recorded Drone is silent when opened as a local file (file://). Run it over http — a local server or the live site — or pick a synth drone above.'
+          : 'Synth drone works locally. The Recorded Drone needs http (a local server or the live site).';
+        droneSourceNote.hidden = false;
+      }
+
+      if (isFileProtocol) {
+        const recordedOpt = droneSelect.querySelector('option[value="custom_audio"]');
+        if (recordedOpt) recordedOpt.textContent = 'Recorded Drone (needs http)';
+        droneSelect.value = 'tanpura'; // audible default when run from disk
+      }
+
+      // Sync the engine's drone voice to whatever the dropdown now shows, so a
+      // cold-start play runs the right voice + trim.
+      droneSound = droneSelect.value;
+      updateDroneSourceNote();
+
+      droneSelect.addEventListener('change', e => {
           droneSound = e.target.value;
+          updateDroneSourceNote();
           if (isPlaying) {
               stopDrone();
               startDrone();
