@@ -5240,14 +5240,20 @@
              g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
            }
            
-           // Pause after fade
+           // Pause after fade — but ONLY if nothing has restarted playback on the
+           // same shared <audio> element in the meantime. Changing key does
+           // stopDrone(); startDrone() on the SAME element, so without this guard
+           // the old stop's timer would pause the freshly-started new key ~500ms
+           // later (the recorded drone appeared to "not change" on key switch).
+           // The gain-node disconnect still runs either way (cleanup, no leak).
            setTimeout(() => {
-             drone.audioElement.pause();
+             const reclaimed = activeDrone && activeDrone.audioElement === drone.audioElement;
+             if (!reclaimed) drone.audioElement.pause();
              // Don't disconnect the MediaElementSource as it can only be connected once
-             // Just disconnect the gain node
+             // Just disconnect the (old) gain node
              if (drone.nodes) drone.nodes.forEach(n => n.disconnect());
            }, 500);
-           
+
            activeDrone = null;
            return;
         }
