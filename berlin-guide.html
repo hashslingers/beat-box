@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en" data-theme="day">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Berlin Desk · A Living Local Guide — for the New Yorker Moving Over</title>
+<meta name="description" content="A living, interactive Berlin reference for a New Yorker relocating: live event & news feeds, curated eating, live jazz, family days, the bureaucracy move-kit, and a jazz-guitar corner pointing at Germany's Kleinanzeigen + Reverb." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#f4efe6; --paper-2:#ece5d8; --ink:#1c1a17; --ink-soft:#4a463f;
+    --line:#1c1a17; --hair:rgba(28,26,23,.18);
+    --accent:#c8452f; --accent-2:#2f6f4f; --live:#c8452f;
+    --highlight:rgba(200,69,47,.16);
+    --card:#fbf8f1; --shadow:rgba(28,26,23,.10);
+    --maxw:1180px;
+  }
+  html[data-theme="night"]{
+    --paper:#16140f; --paper-2:#1e1b15; --ink:#f0e9da; --ink-soft:#b6ad9b;
+    --line:#f0e9da; --hair:rgba(240,233,218,.18);
+    --accent:#ff6a4d; --accent-2:#6fcf97; --live:#ff6a4d;
+    --highlight:rgba(255,106,77,.18);
+    --card:#211d16; --shadow:rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,Helvetica,Arial,sans-serif;line-height:1.62;-webkit-font-smoothing:antialiased;transition:background .35s ease,color .35s ease}
+  a{color:inherit}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--accent);z-index:60;transition:width .1s linear}
+
+  header.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem clamp(1rem,4vw,2.4rem);background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1.5px solid var(--line)}
+  .brand{display:flex;align-items:baseline;gap:.6rem;font-family:'Fraunces',serif;font-weight:600;letter-spacing:.2px}
+  .brand b{font-weight:900}
+  .clock{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);border:1.5px solid var(--hair);border-radius:999px;padding:.18rem .55rem;white-space:nowrap}
+  .clock b{color:var(--accent);font-weight:600}
+  .controls{display:flex;gap:.5rem;align-items:center}
+  .btn{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;background:transparent;color:var(--ink);border:1.5px solid var(--line);border-radius:999px;padding:.4rem .7rem;cursor:pointer;transition:transform .12s ease,background .2s;text-decoration:none}
+  .btn:hover{transform:translateY(-1px);background:var(--paper-2)}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1rem,4vw,2.4rem)}
+  .layout{display:grid;grid-template-columns:240px 1fr;gap:clamp(1.5rem,4vw,3.5rem);align-items:start}
+  nav.toc{position:sticky;top:84px;align-self:start;font-size:.84rem;padding-top:1.5rem}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  nav.toc a{display:block;text-decoration:none;color:var(--ink-soft);padding:.3rem 0 .3rem .9rem;border-left:2px solid var(--hair);counter-increment:s;transition:color .15s,border-color .15s}
+  nav.toc a::before{content:counter(s,decimal-leading-zero) "  ";font-family:'JetBrains Mono',monospace;font-size:.7rem;opacity:.6}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:600}
+  nav.toc .meta{margin-top:1.4rem;font-family:'JetBrains Mono',monospace;font-size:.62rem;line-height:1.7;color:var(--ink-soft);letter-spacing:.04em}
+
+  .hero{padding:clamp(2.2rem,7vw,4.6rem) 0 clamp(1.4rem,4vw,2.4rem);border-bottom:1.5px solid var(--line)}
+  .kicker{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.26em;text-transform:uppercase;color:var(--accent);margin:0 0 1rem}
+  .hero h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2.4rem,7.5vw,5rem);line-height:.97;margin:0 0 1.1rem;letter-spacing:-.5px}
+  .hero h1 em{font-style:italic;font-weight:500}
+  .hero .lede{font-size:clamp(1.02rem,2.2vw,1.28rem);max-width:50ch;color:var(--ink-soft)}
+  .hero .lede mark{background:linear-gradient(transparent 55%,var(--highlight) 55%);padding:0 .1em}
+  .stamp{display:inline-flex;gap:.6rem;align-items:center;margin-top:1.6rem;font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.1em;color:var(--ink-soft);text-transform:uppercase}
+  .stamp .dot{width:8px;height:8px;border-radius:50%;background:var(--accent-2)}
+
+  main{padding-bottom:5rem}
+  section{padding:clamp(2rem,5vw,3.2rem) 0;border-bottom:1.5px solid var(--hair)}
+  .sec-head{display:flex;align-items:baseline;gap:1rem;margin:0 0 1.3rem}
+  .sec-head .no{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);letter-spacing:.1em;padding-top:.4rem}
+  .sec-head h2{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.6rem,4vw,2.4rem);margin:0;line-height:1.05;letter-spacing:-.3px}
+  .sec-head .sub{color:var(--ink-soft);font-size:.95rem;margin-top:.2rem}
+  p{margin:0 0 1rem;max-width:68ch}
+  .lead-p{font-size:1.06rem}
+  mark{background:linear-gradient(transparent 58%,var(--highlight) 58%);padding:0 .08em}
+
+  .grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));margin:1.2rem 0}
+  .card{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:1.05rem 1.15rem;box-shadow:4px 4px 0 var(--shadow);transition:transform .14s ease,box-shadow .14s ease;display:flex;flex-direction:column}
+  .card:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--shadow)}
+  .card h4{font-family:'Fraunces',serif;font-size:1.12rem;margin:0 0 .25rem}
+  .card .tag{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-2);display:inline-block;margin-bottom:.45rem}
+  .card p{font-size:.88rem;color:var(--ink-soft);margin:0 0 .6rem}
+  .card .ny{font-size:.78rem;border-top:1px dashed var(--hair);padding-top:.5rem;margin-top:auto}
+  .card .ny b{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em}
+  a.src{font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.06em;color:var(--accent);text-decoration:none;border-bottom:1.5px solid var(--highlight);white-space:nowrap}
+  a.src:hover{border-bottom-color:var(--accent)}
+  a.src::after{content:" ↗";opacity:.6}
+
+  /* LIVE feed cards */
+  .live-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));margin:1.2rem 0}
+  a.feed{display:flex;flex-direction:column;text-decoration:none;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:1rem 1.1rem;box-shadow:4px 4px 0 var(--shadow);transition:transform .14s ease,box-shadow .14s ease}
+  a.feed:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--shadow)}
+  .livebadge{display:inline-flex;align-items:center;gap:.4rem;font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--live);margin-bottom:.55rem}
+  .livebadge .pulse{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 var(--live);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--live) 60%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  a.feed h4{font-family:'Fraunces',serif;font-size:1.08rem;margin:0 0 .2rem;color:var(--ink)}
+  a.feed p{font-size:.82rem;color:var(--ink-soft);margin:0 0 .6rem}
+  a.feed .go{margin-top:auto;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+  a.feed .go::after{content:" →"}
+  .deck-note{font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.05em;color:var(--ink-soft);margin-top:.4rem}
+  .deck-label{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-2);margin:1.6rem 0 .2rem}
+
+  /* X / Twitter integration */
+  .xwrap{display:grid;grid-template-columns:1.05fr .95fr;gap:1.2rem;margin:1rem 0;align-items:start}
+  @media(max-width:760px){.xwrap{grid-template-columns:1fr}}
+  .xboard{display:flex;flex-direction:column;gap:1rem}
+  .xlist{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:.9rem 1rem;box-shadow:4px 4px 0 var(--shadow)}
+  .xlist h5{margin:0 0 .55rem;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-2)}
+  .chips{display:flex;flex-wrap:wrap;gap:.45rem}
+  a.chip{display:inline-flex;align-items:center;gap:.35rem;text-decoration:none;font-size:.8rem;font-weight:500;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:.3rem .65rem;transition:transform .12s ease,background .2s}
+  a.chip:hover{transform:translateY(-1px);background:var(--paper-2)}
+  a.chip .x{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--accent)}
+  a.chip.search .x{color:var(--accent-2)}
+  .xembed{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:.6rem;box-shadow:4px 4px 0 var(--shadow);min-height:240px;position:relative}
+  .xembed .fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6rem;text-align:center;padding:1.4rem;color:var(--ink-soft);font-size:.85rem}
+  .xembed.loaded .fallback{display:none}
+  .xembed .switch{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center;margin-bottom:.5rem;padding:.3rem .2rem 0}
+  .xpick{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--ink);border:1.5px solid var(--line);border-radius:999px;padding:.28rem .55rem;cursor:pointer}
+  .xpick.active{background:var(--ink);color:var(--paper)}
+
+  .pull{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:clamp(1.25rem,3.5vw,1.9rem);line-height:1.25;margin:1.8rem 0;padding-left:1.2rem;border-left:4px solid var(--accent);max-width:26ch}
+
+  table.tr{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.92rem}
+  table.tr th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);padding:.5rem .8rem;border-bottom:1.5px solid var(--line)}
+  table.tr td{padding:.65rem .8rem;border-bottom:1px solid var(--hair);vertical-align:top}
+  table.tr tr:hover td{background:var(--paper-2)}
+  table.tr td:first-child{font-weight:600;width:34%}
+  table.tr td .b{color:var(--accent)}
+
+  .checklist{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:1.3rem 1.4rem;box-shadow:4px 4px 0 var(--shadow);margin:1.2rem 0}
+  .checklist .bar{height:8px;background:var(--paper-2);border-radius:999px;overflow:hidden;margin:.2rem 0 1.1rem;border:1px solid var(--hair)}
+  .checklist .bar i{display:block;height:100%;width:0;background:var(--accent-2);transition:width .3s ease}
+  .checklist label{display:flex;gap:.7rem;align-items:flex-start;padding:.5rem 0;cursor:pointer;border-bottom:1px dashed var(--hair);font-size:.92rem}
+  .checklist label:last-child{border-bottom:0}
+  .checklist input{appearance:none;-webkit-appearance:none;min-width:20px;height:20px;margin-top:.16rem;border:1.5px solid var(--line);border-radius:5px;cursor:pointer;position:relative;background:var(--paper)}
+  .checklist input:checked{background:var(--accent-2);border-color:var(--accent-2)}
+  .checklist input:checked::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:700}
+  .checklist input:checked + span{opacity:.5;text-decoration:line-through}
+  .checklist span small{display:block;color:var(--ink-soft);font-size:.78rem;margin-top:.1rem}
+  .reset{margin-top:.8rem;font-size:.64rem}
+
+  details.deep{background:var(--paper-2);border:1.5px solid var(--hair);border-radius:12px;padding:.3rem 1rem;margin:1rem 0}
+  details.deep summary{cursor:pointer;font-family:'Fraunces',serif;font-weight:600;font-size:1.02rem;padding:.7rem 0;list-style:none}
+  details.deep summary::-webkit-details-marker{display:none}
+  details.deep summary::before{content:"＋ ";color:var(--accent);font-family:'JetBrains Mono',monospace}
+  details.deep[open] summary::before{content:"− "}
+  details.deep .body{padding:.2rem 0 1rem}
+  .warn{color:var(--accent);font-weight:600}
+
+  ul.clean{padding-left:1.1rem;max-width:68ch}
+  ul.clean li{margin:.4rem 0}
+
+  #sources .grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  .srcblock h4{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-2);margin:0 0 .4rem}
+  .srcblock a{display:block;font-size:.82rem;color:var(--ink-soft);text-decoration:none;padding:.22rem 0;border-bottom:1px solid var(--hair)}
+  .srcblock a:hover{color:var(--accent)}
+  .srcblock a::after{content:" ↗";opacity:.5;font-size:.7em}
+
+  footer.foot{padding:3rem 0 4rem;text-align:center;color:var(--ink-soft);font-size:.82rem}
+  footer.foot .big{font-family:'Fraunces',serif;font-style:italic;font-size:1.3rem;color:var(--ink);margin-bottom:.6rem;display:block}
+
+  #totop{position:fixed;right:1.2rem;bottom:1.2rem;z-index:40;opacity:0;pointer-events:none;transition:opacity .25s;background:var(--ink);color:var(--paper);border:none;border-radius:50%;width:46px;height:46px;font-size:1.1rem;cursor:pointer;box-shadow:3px 3px 0 var(--shadow)}
+  #totop.show{opacity:1;pointer-events:auto}
+
+  @media(max-width:860px){.layout{grid-template-columns:1fr}nav.toc{display:none}.clock{display:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="brand"><b>BERLIN</b><span>desk</span></div>
+  <div class="controls">
+    <span class="clock" id="clock">— · Berlin</span>
+    <button class="btn" id="themeBtn">◐ Night</button>
+    <a class="btn" href="#live">Live</a>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="layout">
+
+  <nav class="toc" aria-label="Contents">
+    <ol>
+      <li><a href="#start">The brief</a></li>
+      <li><a href="#live">The live desk</a></li>
+      <li><a href="#xfeed">The X timeline</a></li>
+      <li><a href="#translate">NYC → Berlin translator</a></li>
+      <li><a href="#kiez">Where to live</a></li>
+      <li><a href="#move">The bureaucracy move-kit</a></li>
+      <li><a href="#eat">Eat &amp; drink</a></li>
+      <li><a href="#jazz">Live jazz &amp; music</a></li>
+      <li><a href="#family">With the family</a></li>
+      <li><a href="#guitar">The jazz-guitar corner</a></li>
+      <li><a href="#sunday">Sundays &amp; secondhand</a></li>
+      <li><a href="#rules">Unspoken rules</a></li>
+      <li><a href="#sources">Sources</a></li>
+    </ol>
+    <div class="meta" id="tocmeta">EDITION · LIVE<br/>FOR · NYC → BER<br/>MODE · PERSONAL REFERENCE</div>
+  </nav>
+
+  <main>
+    <div class="hero" id="start">
+      <p class="kicker">A living digital guide · personal reference, built to share</p>
+      <h1>Berlin, <em>as a desk you check</em> — not a guide you read once.</h1>
+      <p class="lede">This is the digital, <mark>self-refreshing</mark> version: a personal reference for the move from
+        New York, tuned so anyone landing here could use it. Up top, <strong>live feeds</strong> that update on their own —
+        tonight's gigs, this morning's news, what just got listed on Germany's eBay. Below, <strong>curated &amp; collated</strong>
+        lists for eating, live jazz, family days, and a corner just for hunting archtops. Every claim links out.</p>
+      <span class="stamp"><span class="dot"></span> <span id="datestamp">Live edition</span> · feeds open current results in a new tab</span>
+    </div>
+
+    <!-- 01 LIVE DESK -->
+    <section id="live">
+      <div class="sec-head"><span class="no">01</span><div><h2>The live desk</h2><div class="sub">Bookmark this section. These tiles open current, self-updating results — no stale listings.</div></div></div>
+
+      <div class="deck-label">▦ Tonight &amp; this week — events</div>
+      <div class="live-grid">
+        <a class="feed" href="https://ra.co/events/de/berlin" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Live listings</span><h4>Resident Advisor · Berlin</h4><p>The authoritative club &amp; electronic calendar, updated continuously. Filter by tonight, this weekend, venue.</p><span class="go">Open tonight's list</span></a>
+        <a class="feed" href="https://jazzity.net/prog.php" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Daily programme</span><h4>Jazzity · Berlin jazz</h4><p>The city's running jazz programme — who's playing which club, night by night.</p><span class="go">See tonight's jazz</span></a>
+        <a class="feed" href="https://dice.fm/browse/berlin" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Live tickets</span><h4>DICE · Berlin</h4><p>Live gigs &amp; club tickets across genres, sortable by date — great for grabbing same-week shows.</p><span class="go">Browse shows</span></a>
+        <a class="feed" href="https://www.visitberlin.de/en/events" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Official feed</span><h4>visitBerlin events</h4><p>The official rolling what's-on: festivals, markets, exhibitions, family days.</p><span class="go">What's on now</span></a>
+      </div>
+
+      <div class="deck-label">▦ Morning read — news to watch</div>
+      <div class="live-grid">
+        <a class="feed" href="https://berlindaily.org/" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Daily, 5-min</span><h4>Berlin News Daily</h4><p>Free morning briefing in English — 100+ articles &amp; events distilled to a 5-minute read.</p><span class="go">Today's briefing</span></a>
+        <a class="feed" href="https://www.the-berliner.com/english-news-berlin/" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Updated daily</span><h4>The Berliner</h4><p>Germany's largest English publication (ex-Exberliner): politics, transport, culture, events.</p><span class="go">Latest in English</span></a>
+        <a class="feed" href="https://www.rbb24.de/" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Regional wire</span><h4>rbb24</h4><p>The Berlin–Brandenburg public broadcaster. German, but the fastest local breaking-news source.</p><span class="go">Local headlines</span></a>
+        <a class="feed" href="http://exberliner.com/" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Culture desk</span><h4>Exberliner</h4><p>Readings, film, nightlife and culture coverage — good for the long-form scene reads.</p><span class="go">Culture &amp; events</span></a>
+      </div>
+
+      <div class="deck-label">▦ The hunt — Germany's "eBay for guitars," live searches</div>
+      <div class="live-grid">
+        <a class="feed" href="https://www.kleinanzeigen.de/s-berlin/jazzgitarre/k0l3331" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Live local listings</span><h4>Kleinanzeigen · "Jazzgitarre" · Berlin</h4><p>The German Craigslist/eBay-classifieds (ex-eBay Kleinanzeigen). This opens a live Berlin search for jazz guitars.</p><span class="go">See what's listed now</span></a>
+        <a class="feed" href="https://reverb.com/marketplace?query=archtop%20jazz%20guitar&item_region=DE" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Live marketplace</span><h4>Reverb · archtops in Germany</h4><p>Live archtop/jazz listings shipping from Germany — Klira, Höfner, Framus, Artur Lang turn up here.</p><span class="go">Browse archtops</span></a>
+        <a class="feed" href="https://reverb.com/shop/vintageguitarsberlin" target="_blank" rel="noopener"><span class="livebadge"><span class="pulse"></span>Local dealer</span><h4>Vintage Guitars Berlin</h4><p>A Berlin Reverb storefront worth a standing watch for vintage German archtops.</p><span class="go">See the shop</span></a>
+      </div>
+      <p class="deck-note">Tip: in Kleinanzeigen, save the search and turn on the email alert — that's the closest thing to a live RSS for the secondhand market here.</p>
+
+      <div class="deck-label" id="xfeed">▦ The timeline — curated X / Twitter</div>
+      <p class="deck-note" style="margin-bottom:.6rem">Curated follow-board on the left; a live embedded X timeline on the right. Tap a source to swap the feed. (Point it at your own X List by editing the handle in the markup — that's the cleanest way to run a private curated stream.)</p>
+      <div class="xwrap">
+        <div class="xboard">
+          <div class="xlist"><h5>News &amp; the city</h5><div class="chips">
+            <a class="chip" href="https://x.com/rbb24" target="_blank" rel="noopener"><span class="x">@</span>rbb24</a>
+            <a class="chip" href="https://x.com/visitberlin" target="_blank" rel="noopener"><span class="x">@</span>visitberlin</a>
+            <a class="chip search" href="https://x.com/search?q=Berlin%20news&f=live" target="_blank" rel="noopener"><span class="x">#</span>Berlin · live</a>
+          </div></div>
+          <div class="xlist"><h5>Nightlife &amp; events</h5><div class="chips">
+            <a class="chip" href="https://x.com/residentadvisor" target="_blank" rel="noopener"><span class="x">@</span>residentadvisor</a>
+            <a class="chip search" href="https://x.com/search?q=Berlin%20techno&f=live" target="_blank" rel="noopener"><span class="x">#</span>Berlin techno</a>
+            <a class="chip search" href="https://x.com/search?q=Berlin%20rave%20tonight&f=live" target="_blank" rel="noopener"><span class="x">#</span>tonight</a>
+          </div></div>
+          <div class="xlist"><h5>Jazz &amp; live music</h5><div class="chips">
+            <a class="chip search" href="https://x.com/search?q=Berlin%20jazz&f=live" target="_blank" rel="noopener"><span class="x">#</span>Berlin jazz</a>
+            <a class="chip search" href="https://x.com/search?q=Jazzwoche%20Berlin&f=live" target="_blank" rel="noopener"><span class="x">#</span>Jazzwoche</a>
+            <a class="chip search" href="https://x.com/search?q=%23jazzguitar&f=live" target="_blank" rel="noopener"><span class="x">#</span>jazzguitar</a>
+          </div></div>
+          <div class="xlist"><h5>Guitar &amp; gear (the hunt)</h5><div class="chips">
+            <a class="chip" href="https://x.com/reverb" target="_blank" rel="noopener"><span class="x">@</span>reverb</a>
+            <a class="chip search" href="https://x.com/search?q=archtop%20guitar&f=live" target="_blank" rel="noopener"><span class="x">#</span>archtop</a>
+            <a class="chip search" href="https://x.com/search?q=%22jazz%20guitar%22%20for%20sale&f=live" target="_blank" rel="noopener"><span class="x">#</span>for sale</a>
+          </div></div>
+          <div class="xlist"><h5>Expat &amp; family</h5><div class="chips">
+            <a class="chip search" href="https://x.com/search?q=Berlin%20expat&f=live" target="_blank" rel="noopener"><span class="x">#</span>Berlin expat</a>
+            <a class="chip search" href="https://x.com/search?q=Berlin%20with%20kids&f=live" target="_blank" rel="noopener"><span class="x">#</span>with kids</a>
+          </div></div>
+        </div>
+        <div class="xembed" id="xembed">
+          <div class="switch">
+            <button class="xpick active" data-handle="visitberlin">@visitberlin</button>
+            <button class="xpick" data-handle="rbb24">@rbb24</button>
+            <button class="xpick" data-handle="residentadvisor">@residentadvisor</button>
+          </div>
+          <div id="xtimeline"></div>
+          <div class="fallback">
+            <strong style="font-family:'Fraunces',serif;font-size:1.05rem;color:var(--ink)">Live X timeline</strong>
+            <span>If the embed is blocked (ad-blockers / X login walls often do), open the feed directly:</span>
+            <a class="btn" id="xfallback" href="https://x.com/visitberlin" target="_blank" rel="noopener" style="text-decoration:none">Open on X ↗</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 TRANSLATOR -->
+    <section id="translate">
+      <div class="sec-head"><span class="no">02</span><div><h2>The NYC → Berlin translator</h2><div class="sub">Recalibrate your instincts before you land.</div></div></div>
+      <p class="lead-p">Your New York reflexes are mostly wrong here. A conversion table so you stop making the obvious newcomer mistakes in week one.</p>
+      <table class="tr">
+        <thead><tr><th>In New York…</th><th>In Berlin…</th></tr></thead>
+        <tbody>
+          <tr><td>Tap-to-pay everything</td><td><span class="b">Cash is still king.</span> Spätis, many bars, some clubs and even doctors are card-shy. Carry euros.</td></tr>
+          <tr><td>Bodega</td><td>The <span class="b">Späti</span> — corner shop + social club. Buy a beer, they crack it open, you drink it on the curb. That's a night.</td></tr>
+          <tr><td>Broker fee + bidding war</td><td>Rent is ~40–50% under London/Paris, but you'll apply to <span class="b">20–40 flats</span> to land one viewing.</td></tr>
+          <tr><td>SSN / credit score</td><td><span class="b">SCHUFA</span> (credit) + <span class="b">Anmeldung</span> (address registration). You arrive with neither.</td></tr>
+          <tr><td>24/7 city</td><td><span class="b">Sundays are closed.</span> Supermarkets shut. Spätis, bakeries and brunch save you.</td></tr>
+          <tr><td>Craigslist / eBay</td><td><span class="b">Kleinanzeigen</span> — where the city buys &amp; sells everything, guitars included (see §08).</td></tr>
+          <tr><td>Tip 20% or you're a monster</td><td>Round up ~5–10%, said out loud as you pay. But tip <span class="b">bar &amp; door staff in cash</span> — thin margins.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 03 KIEZ -->
+    <section id="kiez">
+      <div class="sec-head"><span class="no">03</span><div><h2>Where to actually live</h2><div class="sub">Pick a Kiez the way you'd pick between Bushwick and the LES.</div></div></div>
+      <p class="lead-p">The real question is where a New Yorker on a normal salary should aim in 2026, and where the energy leaks next. <a class="src" href="https://investropa.com/blogs/news/berlin-which-area">Investropa 2025</a></p>
+      <div class="grid">
+        <div class="card"><span class="tag">The value play</span><h4>Wedding</h4><p>"Still has room to breathe." New cafés, galleries, co-working, cheaper rent. <strong>Sprengelkiez</strong> near Nordufer is the pocket.</p><div class="ny"><b>NYC ≈</b> Bed-Stuy before everyone agreed it was Bed-Stuy.</div></div>
+        <div class="card"><span class="tag">The frontier</span><h4>Lichtenberg · Alt-Treptow · Moabit</h4><p>Rents climbing <strong>15–20%/yr</strong> — the tell the artists already arrived. Get in before the listicles.</p><div class="ny"><b>NYC ≈</b> Ridgewood / deep Bushwick.</div></div>
+        <div class="card"><span class="tag">The classic</span><h4>Neukölln (Schillerkiez)</h4><p>Still the engine room of cool, grittier edge, brunch-and-bars density, with <strong>Tempelhofer Feld</strong> on your doorstep.</p><div class="ny"><b>NYC ≈</b> The LES: "over" for a decade, still where it happens.</div></div>
+        <div class="card"><span class="tag">Family-quiet</span><h4>Rixdorf · Friedenau</h4><p>Rixdorf: an 18th-c. cobblestoned village inside Neukölln. Friedenau: leafy, calm, near Zig Zag jazz club — a real family pick.</p><div class="ny"><b>NYC ≈</b> The pocket of the West Village that forgets it's in a city.</div></div>
+      </div>
+      <p class="pull">If it's all over your feed, the locals already left. Aim one Kiez further out.</p>
+    </section>
+
+    <!-- 04 MOVE-KIT -->
+    <section id="move">
+      <div class="sec-head"><span class="no">04</span><div><h2>The bureaucracy move-kit</h2><div class="sub">The part that ambushes every American. Work it like a project.</div></div></div>
+      <p class="lead-p">Germany runs on a chicken-and-egg loop: you need an address to register (<strong>Anmeldung</strong>), registration to get a bank account and credit file (<strong>SCHUFA</strong>), and often a SCHUFA to rent the address. The way through: land in a <strong>furnished short-term flat / WG</strong> that lets you register, get the Anmeldung, build a SCHUFA, then hunt the real place from inside the city. <a class="src" href="https://living-in-germany.org/guides/moving-to-germany/berlin/">Living in Germany 2026</a></p>
+      <div class="checklist" id="cl">
+        <strong style="font-family:'Fraunces',serif">Your first-90-days checklist</strong>
+        <div class="bar"><i id="clbar"></i></div>
+        <label><input type="checkbox" data-k="visa"><span>Enter visa-free (US passport = 90 days) and book a <b>furnished rental / WG</b> that explicitly allows Anmeldung<small>HousingAnywhere / Spotahome / Wunderflats don't ask for SCHUFA</small></span></label>
+        <label><input type="checkbox" data-k="anmeld"><span>Book a <b>Bürgeramt</b> slot and do your <b>Anmeldung within 14 days</b> of moving in<small>Unlocks bank, tax ID, contracts, utilities</small></span></label>
+        <label><input type="checkbox" data-k="bank"><span>Open a German bank account (N26 / DKB / Sparkasse)<small>You need a local IBAN for rent &amp; SEPA</small></span></label>
+        <label><input type="checkbox" data-k="schufa"><span>Order your <b>SCHUFA Bonitätsauskunft</b><small>Free annual report or ~€29.95 instant at meineschufa.de — starts blank, build it</small></span></label>
+        <label><input type="checkbox" data-k="pack"><span>Assemble the packet: 3 payslips/contract, passport, permit, <b>Mietschuldenfreiheits&shy;bescheinigung</b> + Selbstauskunft<small>One PDF, ready to fire within the hour of viewing</small></span></label>
+        <label><input type="checkbox" data-k="apply"><span>Apply to <b>20–40 flats</b>; reply within the first hour, short bilingual note<small>1–3 months search; net income should be ≥3× rent</small></span></label>
+        <label><input type="checkbox" data-k="budget"><span>Bank <b>€5,000–8,000</b> for landing: deposit (≈3 months' cold rent) + first rent + furniture + buffer<small>The Kaution deposit is held, not a fee</small></span></label>
+        <label><input type="checkbox" data-k="health"><span>Sort health insurance + register for your tax ID (Steuer-ID by post)<small>Mandatory; employer needs the Steuer-ID</small></span></label>
+        <button class="btn reset" id="clreset">Reset checklist</button>
+      </div>
+      <details class="deep"><summary>Why your blank SCHUFA is the whole problem</summary><div class="body">Your credit file starts empty, and many landlords want a SCHUFA before they'll rent. Furnished platforms skip it — which is exactly why you start there, register, open a bank account, season a couple of months of paid rent, then compete for unfurnished. Income rule: <span class="warn">net pay ≥ 3× monthly rent</span> (≈€2,900 net → ~€900–950). <a class="src" href="https://housinganywhere.com/Berlin--Germany/rent-in-berlin">HousingAnywhere</a></div></details>
+    </section>
+
+    <!-- 05 EAT -->
+    <section id="eat">
+      <div class="sec-head"><span class="no">05</span><div><h2>Eat &amp; drink — what just opened</h2><div class="sub">The fastest-dating list, so here's the fresh layer.</div></div></div>
+      <div class="grid">
+        <div class="card"><span class="tag">Opened Jan 2026</span><h4>Boii Boii</h4><p>The beloved <em>Thai Noods</em> pop-up gone permanent (Kreuzberg, Lausitzer Str. 25): bright Thai, casual, natural wine. <a class="src" href="https://www.berlinfoodstories.com/editorials/the-most-anticipated-restaurant-openings-of-2026">Berlin Food Stories</a></p></div>
+        <div class="card"><span class="tag">Opening 2026</span><h4>Breda</h4><p>Wine-led Piedmont/Lombardy trattoria on the Paul-Lincke-Ufer. <a class="src" href="https://www.berlinfoodstories.com/editorials/the-most-anticipated-restaurant-openings-of-2026">Berlin Food Stories</a></p></div>
+        <div class="card"><span class="tag">Carbs that matter</span><h4>Zeit für Brot · Frea</h4><p>ZfB's 6th branch opened in Schöneberg (Feb 2026) — get the cinnamon <em>Schnecke</em>. Frea (Mitte) is fully zero-waste. <a class="src" href="https://www.visitberlin.de/en/blog/new-openings">visitBerlin</a></p></div>
+        <div class="card"><span class="tag">Coffee canon</span><h4>The Barn · Bonanza · Five Elephant</h4><p>The Barn = Roaster of the Year 2025; Bonanza = the 2006 OG; Five Elephant = the cheesecake. New darling: <strong>Kolo</strong>. <a class="src" href="https://thebarn.de/blogs/the-barn-blog/coffee-roaster-of-the-year">The Barn</a></p></div>
+        <div class="card"><span class="tag">Kreuzberg drinks</span><h4>Stück · ORA · Luzia</h4><p>Stück: women-owned FLINTA* cocktail bar. ORA: cocktails in an old <em>Apotheke</em>. Luzia: café-to-DJ-bar on Oranienstraße. <a class="src" href="https://www.theinfatuation.com/berlin/guides/best-bars-in-berlin">The Infatuation</a></p></div>
+        <div class="card"><span class="tag">The everyday default</span><h4>Your Späti</h4><p>~1,000 corner shops doubling as the city's third space. A curb beer here isn't pre-gaming — it's the plan. <a class="src" href="https://www.berlin.de/en/shopping/4971123-2947095-spaeti-meeting-point-and-supermarket.en.html">Berlin.de</a></p></div>
+      </div>
+    </section>
+
+    <!-- 06 JAZZ -->
+    <section id="jazz">
+      <div class="sec-head"><span class="no">06</span><div><h2>Live jazz &amp; music</h2><div class="sub">For a guitarist, this is the real reason to move. Curated rooms + the live calendar up top.</div></div></div>
+      <p class="lead-p">Berlin is a genuine jazz capital with a room for every night of the week. Pair these venues with the
+        <a href="#live">live Jazzity programme</a> in §01 to see who's actually on tonight. And block out
+        <strong>Jazzwoche Berlin 2026 (Jun 20–26)</strong> — 30+ clubs, jams, a free opening at Gretchen.
+        <a class="src" href="https://www.ig-jazz-berlin.de/jazzwoche-berlin">IG Jazz Berlin</a></p>
+      <div class="grid">
+        <div class="card"><span class="tag">The legend</span><h4>A-Trane</h4><p>Charlottenburg institution named for Coltrane; Marsalis, Hancock, Mehldau, Diana Krall have all played it. Late-night Saturday jam is the move. <a class="src" href="https://www.visitberlin.de/en/blog/11-jazz-bars-berlin">visitBerlin</a></p></div>
+        <div class="card"><span class="tag">Nightly</span><h4>b-flat</h4><p>Live music almost every night since the late '90s — jazz, soul, swing, bebop, funk. The dependable weeknight bet. <a class="src" href="https://www.visitberlin.de/en/blog/11-jazz-bars-berlin">visitBerlin</a></p></div>
+        <div class="card"><span class="tag">Experimental</span><h4>Donau115</h4><p>Neukölln room with a reputation for new ideas and improvisation — where the city's adventurous players test material.</p></div>
+        <div class="card"><span class="tag">Emerging talent</span><h4>Zig Zag (Friedenau)</h4><p>Founded 2015; local up-and-comers share the stage with international acts. Near the family-friendly Friedenau Kiez. <a class="src" href="https://www.zigzag-jazzclub.berlin/programmneu">Programme</a></p></div>
+        <div class="card"><span class="tag">Old-school</span><h4>Yorckschlösschen · Schlot · Kühlspot</h4><p>The Kneipen-and-cellar circuit — cheaper, looser, where jam sessions run late. All on the Jazzwoche roster.</p></div>
+        <div class="card"><span class="tag">Plan the week</span><h4>Jazzwoche · Jun 20–26 2026</h4><p>30+ clubs, discourse sessions, jam nights, free opening at Gretchen. The one festival to anchor your calendar around. <a class="src" href="https://berlinmagazine.de/jazzwoche-berlin-2026-programm-clubs-opening">Berlin Magazine</a></p></div>
+      </div>
+    </section>
+
+    <!-- 07 FAMILY -->
+    <section id="family">
+      <div class="sec-head"><span class="no">07</span><div><h2>With the family</h2><div class="sub">Berlin is unusually kid-friendly — playgrounds on every corner, green everywhere. Here's the collated shortlist.</div></div></div>
+      <p class="lead-p">A weekend rotation that keeps everyone happy, leaning on what locals actually use rather than the tour-bus stops. <a class="src" href="https://www.visitberlin.de/en/berlin-children">visitBerlin · with children</a></p>
+      <div class="grid">
+        <div class="card"><span class="tag">Free · all-ages</span><h4>Tempelhofer Feld</h4><p>A decommissioned airport turned giant open field: bikes, kites, skating, BBQ, community gardens. The city's best free Sunday with kids.</p></div>
+        <div class="card"><span class="tag">Hands-on museum</span><h4>ANOHA &amp; Labyrinth</h4><p>ANOHA (Jewish Museum's children's world) and the Labyrinth Kindermuseum — playground-meets-classroom interactive spaces for rainy days.</p></div>
+        <div class="card"><span class="tag">Animals</span><h4>Zoo Berlin &amp; Tierpark</h4><p>Zoo Berlin is the most species-rich in the world (20,000+ animals); the eastern Tierpark is vast and far less crowded. <a class="src" href="https://www.visitberlin.de/en/highlights-kids-berlin-2025-2026">visitBerlin kids</a></p></div>
+        <div class="card"><span class="tag">Green &amp; water</span><h4>Tiergarten + the lakes</h4><p>Picnic and kick a ball in Tiergarten; in summer swap to the lakes (Schlachtensee, Weißensee) — Berlin's family default once it's warm.</p></div>
+        <div class="card"><span class="tag">Build it</span><h4>LEGOLAND &amp; children's farms</h4><p>Indoor LEGOLAND Discovery at Potsdamer Platz, plus free <em>Kinderbauernhöfe</em> (children's farms) dotted across the city.</p></div>
+        <div class="card"><span class="tag">Summer Saturdays</span><h4>Potsdamer Platz open studio</h4><p>Free street-art, live murals, DIY workshops &amp; a creative market every Saturday Jun 27–Sep 5 2026. <a class="src" href="https://www.visitberlin.de/en/events-children-Berlin">Events for children</a></p></div>
+      </div>
+    </section>
+
+    <!-- 08 GUITAR -->
+    <section id="guitar">
+      <div class="sec-head"><span class="no">08</span><div><h2>The jazz-guitar corner</h2><div class="sub">Germany's "eBay for guitars," plus the great minds behind the archtops.</div></div></div>
+      <p class="lead-p">Good news for a guitarist: Germany is archtop country, and the secondhand market is deep. The live searches sit in
+        <a href="#live">§01</a>; here's how to read the scene and who the names are.</p>
+      <div class="grid">
+        <div class="card"><span class="tag">The marketplace</span><h4>Kleinanzeigen</h4><p>The German eBay-classifieds (ex-eBay Kleinanzeigen) — local, cash, collection-in-person. Search "<em>Jazzgitarre</em>" / "<em>Archtop</em>", save the search, enable the alert. This is where deals actually live.</p><div class="ny"><b>NYC ≈</b> Craigslist + FB Marketplace, but everyone uses it.</div></div>
+        <div class="card"><span class="tag">Curated &amp; shipped</span><h4>Reverb &amp; Vintage&amp;Rare</h4><p>For graded vintage with photos and return policies. Berlin storefronts like <strong>Vintage Guitars Berlin</strong> and <strong>Golden Age Guitars</strong> regularly list German archtops here.</p><div class="ny"><b>NYC ≈</b> Reverb is the same Reverb — just filter region to Germany.</div></div>
+        <div class="card"><span class="tag">The great minds</span><h4>German archtop luthiers</h4><p>The heritage to hunt: <strong>Artur Lang</strong>, <strong>Roger</strong> (Wenzel Rossmeisl), <strong>Höfner</strong>, <strong>Framus</strong>, <strong>Klira</strong> — the Bubenreuth / Markneukirchen lutherie tradition. Hand-built jazz boxes at a fraction of a Gibson.</p><div class="ny"><b>NYC ≈</b> Your D'Angelico/D'Aquisto lineage — but local and findable.</div></div>
+        <div class="card"><span class="tag">The brain trust</span><h4>Forums &amp; communities</h4><p>For ID, valuation &amp; setup wisdom: the <strong>JazzGuitar.be</strong> forum, German <strong>Gitarre &amp; Bass</strong> and <strong>Bonedo</strong>. Post a Kleinanzeigen link there before you buy.</p><div class="ny"><b>NYC ≈</b> The Gear Page, but with German archtop obsessives.</div></div>
+      </div>
+      <details class="deep"><summary>How to actually buy off Kleinanzeigen without getting burned</summary><div class="body">Meet in person, bring cash, play it unplugged first (archtop = acoustic tells you everything), check the neck angle and binding, and lowball politely — <em>"Ist der Preis verhandelbar?"</em> goes a long way. For anything shipped, insist on PayPal Goods &amp; Services, never a bank transfer to a stranger. Reverb listings: <a class="src" href="https://reverb.com/shop/vintageguitarsberlin">Vintage Guitars Berlin</a>.</div></details>
+    </section>
+
+    <!-- 09 SUNDAY -->
+    <section id="sunday">
+      <div class="sec-head"><span class="no">09</span><div><h2>Sundays &amp; secondhand</h2><div class="sub">The shops are shut. The locals are at the Flohmarkt.</div></div></div>
+      <p class="lead-p">Furnishing a flat from scratch? The Sunday flea market is your IKEA-avoidance plan and your social life at once. <a class="src" href="https://www.visitberlin.de/en/blog/top-11-berlin-flea-markets">visitBerlin</a></p>
+      <ul class="clean">
+        <li><strong>Arkonaplatz</strong> — mid-century furniture, <mark>GDR-era design</mark>, the connoisseur's pick for outfitting a flat.</li>
+        <li><strong>Boxhagener Platz</strong> (Friedrichshain, Sun 10–6) — cheaper than Mauerpark; vinyl, books, furniture.</li>
+        <li><strong>Mauerpark</strong> — touristy in the centre, but the outer ring and the open-air Bearpit Karaoke still earn it.</li>
+        <li><strong>Kranoldplatz</strong> (Neukölln) &amp; the new-format <strong>Leopoldplatz</strong> market (since Jan 2026). <a class="src" href="https://www.travel2berlin.com/post/berlin-flea-markets-vintage-shopping">Travel2Berlin</a></li>
+      </ul>
+    </section>
+
+    <!-- 10 RULES -->
+    <section id="rules">
+      <div class="sec-head"><span class="no">10</span><div><h2>The unspoken rules</h2><div class="sub">Do these and you'll read as a local, not a transplant.</div></div></div>
+      <ul class="clean">
+        <li><strong>Pfand belongs beside the bin, not in it.</strong> Bottles carry a deposit; leave them out for collectors.</li>
+        <li><strong>Cross on green.</strong> Berliners wait at empty red pedestrian lights. Jaywalking marks you instantly.</li>
+        <li><strong>Quiet hours are real.</strong> Sundays + after 22:00, noise rules are enforced by neighbours. Respect the Hausordnung — doubly so with a kid's drum kit.</li>
+        <li><strong>Cash, and say the tip out loud</strong> when you pay; don't leave coins and bolt.</li>
+        <li><strong>Learn ten words of German anyway.</strong> <em>Tschüss</em>, <em>Genau</em>, <em>Alles gut</em> buy grace even though everyone speaks English.</li>
+      </ul>
+      <p class="pull">Use this as the current state of play — then go disappear into your own Kiez.</p>
+    </section>
+
+    <!-- SOURCES -->
+    <section id="sources">
+      <div class="sec-head"><span class="no">11</span><div><h2>Sources &amp; live feeds</h2><div class="sub">Recent reporting, local blogs, and the running feeds this desk is built on.</div></div></div>
+      <div class="grid">
+        <div class="srcblock"><h4>Live feeds (self-updating)</h4>
+          <a href="https://ra.co/events/de/berlin">Resident Advisor — Berlin events</a>
+          <a href="https://jazzity.net/prog.php">Jazzity — Berlin jazz programme</a>
+          <a href="https://dice.fm/browse/berlin">DICE — Berlin gigs &amp; tickets</a>
+          <a href="https://berlindaily.org/">Berlin News Daily</a>
+          <a href="https://www.the-berliner.com/english-news-berlin/">The Berliner — English news</a>
+          <a href="https://www.rbb24.de/">rbb24 — regional news</a>
+          <a href="https://www.kleinanzeigen.de/s-berlin/jazzgitarre/k0l3331">Kleinanzeigen — Jazzgitarre Berlin</a>
+          <a href="https://reverb.com/marketplace?query=archtop%20jazz%20guitar&item_region=DE">Reverb — archtops in Germany</a>
+        </div>
+        <div class="srcblock"><h4>Relocation, food &amp; coffee</h4>
+          <a href="https://living-in-germany.org/guides/moving-to-germany/berlin/">Moving to Berlin 2026 — Living in Germany</a>
+          <a href="https://housinganywhere.com/Berlin--Germany/rent-in-berlin">Renting in Berlin — HousingAnywhere</a>
+          <a href="https://investropa.com/blogs/news/berlin-which-area">Hottest areas 2025 — Investropa</a>
+          <a href="https://www.berlinfoodstories.com/editorials/the-most-anticipated-restaurant-openings-of-2026">Openings 2026 — Berlin Food Stories</a>
+          <a href="https://www.visitberlin.de/en/blog/new-openings">New openings — visitBerlin</a>
+          <a href="https://thebarn.de/blogs/the-barn-blog/coffee-roaster-of-the-year">The Barn — Roaster of the Year 2025</a>
+          <a href="https://www.theinfatuation.com/berlin/guides/best-bars-in-berlin">Best bars — The Infatuation</a>
+        </div>
+        <div class="srcblock"><h4>Jazz, family &amp; markets</h4>
+          <a href="https://www.visitberlin.de/en/blog/11-jazz-bars-berlin">11 jazz bars in Berlin — visitBerlin</a>
+          <a href="https://www.ig-jazz-berlin.de/jazzwoche-berlin">Jazzwoche Berlin 2026 — IG Jazz</a>
+          <a href="https://traube.club/p/berlin-jazz/news/jazz-in-berlin-the-complete-2026-guide">Jazz in Berlin: complete 2026 guide — Traube</a>
+          <a href="https://www.visitberlin.de/en/berlin-children">Berlin with children — visitBerlin</a>
+          <a href="https://www.visitberlin.de/en/highlights-kids-berlin-2025-2026">Highlights for kids 2025/26 — visitBerlin</a>
+          <a href="https://www.visitberlin.de/en/blog/top-11-berlin-flea-markets">Top 11 flea markets — visitBerlin</a>
+          <a href="https://www.travel2berlin.com/post/berlin-flea-markets-vintage-shopping">Flea markets &amp; vintage 2026 — Travel2Berlin</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span class="big">Willkommen. Now go get your Anmeldung — and watch that Kleinanzeigen alert.</span>
+      A living digital guide · compiled June 2026 from recent news &amp; local feeds · live tiles open current results · openings, listings and door policies change weekly.
+    </footer>
+  </main>
+</div>
+</div>
+
+<button id="totop" aria-label="Back to top">↑</button>
+
+<script>
+(function(){
+  var root=document.documentElement, tb=document.getElementById('themeBtn');
+  var saved=localStorage.getItem('bg-theme'); if(saved) root.setAttribute('data-theme',saved);
+  function syncBtn(){tb.textContent=root.getAttribute('data-theme')==='night'?'◑ Day':'◐ Night';}
+  syncBtn();
+  tb.addEventListener('click',function(){var t=root.getAttribute('data-theme')==='night'?'day':'night';root.setAttribute('data-theme',t);localStorage.setItem('bg-theme',t);syncBtn();});
+
+  // live Berlin clock + datestamp
+  var clock=document.getElementById('clock'), datestamp=document.getElementById('datestamp');
+  function tick(){
+    try{
+      var now=new Date();
+      var t=now.toLocaleTimeString('en-GB',{timeZone:'Europe/Berlin',hour:'2-digit',minute:'2-digit'});
+      var d=now.toLocaleDateString('en-GB',{timeZone:'Europe/Berlin',weekday:'short',day:'numeric',month:'short'});
+      clock.innerHTML='<b>'+t+'</b> · Berlin';
+      if(datestamp) datestamp.textContent='Live as of '+d+', '+t+' Berlin time';
+    }catch(e){ clock.textContent='Berlin'; }
+  }
+  tick(); setInterval(tick,1000*30);
+
+  var bar=document.getElementById('progress'), top=document.getElementById('totop');
+  function onScroll(){var h=document.documentElement,max=h.scrollHeight-h.clientHeight;var p=max>0?(h.scrollTop/max)*100:0;bar.style.width=p+'%';top.classList.toggle('show',h.scrollTop>600);}
+  document.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+  top.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+
+  var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+  var map={}; links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});var a=map[e.target.id];if(a)a.classList.add('active');}});},{rootMargin:'-30% 0px -60% 0px'});
+  document.querySelectorAll('main section, #start').forEach(function(s){if(map[s.id])obs.observe(s);});
+
+  var boxes=[].slice.call(document.querySelectorAll('#cl input[type=checkbox]'));
+  var clbar=document.getElementById('clbar');
+  var store=JSON.parse(localStorage.getItem('bg-checklist')||'{}');
+  function paint(){var done=boxes.filter(function(b){return b.checked;}).length;clbar.style.width=(done/boxes.length*100)+'%';}
+  boxes.forEach(function(b){if(store[b.dataset.k])b.checked=true;b.addEventListener('change',function(){store[b.dataset.k]=b.checked;localStorage.setItem('bg-checklist',JSON.stringify(store));paint();});});
+  paint();
+  document.getElementById('clreset').addEventListener('click',function(){boxes.forEach(function(b){b.checked=false;});store={};localStorage.removeItem('bg-checklist');paint();});
+
+  // X / Twitter embedded timeline
+  var embed=document.getElementById('xembed'), holder=document.getElementById('xtimeline'),
+      fb=document.getElementById('xfallback'), picks=[].slice.call(document.querySelectorAll('.xpick'));
+  var xLoaded=false;
+  function loadWidgets(cb){
+    if(window.twttr&&window.twttr.widgets){cb();return;}
+    var s=document.createElement('script');
+    s.src='https://platform.twitter.com/widgets.js'; s.async=true; s.charset='utf-8';
+    s.onload=cb; s.onerror=function(){/* leave fallback visible */};
+    document.head.appendChild(s);
+  }
+  function renderX(handle){
+    if(fb) fb.href='https://x.com/'+handle;
+    embed.classList.remove('loaded');
+    holder.innerHTML='';
+    loadWidgets(function(){
+      if(!(window.twttr&&window.twttr.widgets&&window.twttr.widgets.createTimeline))return;
+      var night=document.documentElement.getAttribute('data-theme')==='night';
+      window.twttr.widgets.createTimeline(
+        {sourceType:'profile',screenName:handle},
+        holder,
+        {height:460,theme:night?'dark':'light',chrome:'noheader nofooter transparent',dnt:true}
+      ).then(function(el){ if(el){embed.classList.add('loaded');xLoaded=true;} });
+    });
+  }
+  picks.forEach(function(p){p.addEventListener('click',function(){
+    picks.forEach(function(q){q.classList.remove('active');});
+    p.classList.add('active'); renderX(p.dataset.handle);
+  });});
+  // lazy-load the timeline only when it scrolls into view (keeps page fast)
+  var xObs=new IntersectionObserver(function(en){en.forEach(function(e){
+    if(e.isIntersecting&&!xLoaded){renderX('visitberlin');xObs.disconnect();}
+  });},{rootMargin:'200px'});
+  xObs.observe(embed);
+})();
+</script>
+</body>
+</html>
