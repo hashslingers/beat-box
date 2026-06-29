@@ -2882,6 +2882,26 @@
   #stepToggle{ background:var(--bg) !important; }
   #stepToggle.active{ background:var(--hi-p) !important; }
 
+  /* ---- RICH DRONE (texture generator) ---- */
+  .texture-btn{
+    display:flex !important; flex-direction:column; align-items:center; gap:3px;
+    width:100% !important; margin-top:14px;
+    border:var(--hair) !important; border-radius:0 !important;
+    background:var(--bg) !important; color:var(--text) !important;
+    box-shadow:none !important; padding:13px 14px !important; cursor:pointer;
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important;
+    min-height:44px;
+  }
+  .texture-btn .tx-main{
+    font-weight:900; font-size:15px; letter-spacing:.02em; text-transform:uppercase; color:#000;
+    background:linear-gradient(transparent 12%,var(--hi-p) 12%,var(--hi-p) 86%,transparent 86%);
+    -webkit-box-decoration-break:clone; box-decoration-break:clone; padding:0 6px;
+  }
+  .texture-btn .tx-sub{ font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--note) !important; }
+  .texture-btn:hover{ background:var(--hi-y) !important; }
+  .texture-btn:active{ background:var(--hi-g) !important; }
+  html[data-theme="night"] .texture-btn .tx-sub{ color:#9b958a !important; }
+
   /* ---- SEQUENCER ---- */
   .sequencer{ padding-top:22px !important; }
   .step-numbers,.track{ grid-template-columns:54px 1fr !important; gap:10px !important; min-width:0; }
@@ -3154,6 +3174,11 @@
               </select>
               <div class="drone-source-note" id="droneSourceNote" hidden></div>
           </div>
+
+          <button class="texture-btn" id="textureBtn" type="button">
+            <span class="tx-main">Rich Drone</span>
+            <span class="tx-sub">tap for a fresh bed to solo over</span>
+          </button>
        </div>
 
         <!-- Presets -->
@@ -6184,6 +6209,52 @@
       };
     }
 
+    // ---- "Rich Drone" texture generator --------------------------------------
+    // Stacks an open, third-less voicing (root + fifth + octaves, sometimes a 9th
+    // or 4th) on a lush synth voice, in the current wheel key — a modal-neutral
+    // bed you can solo over in major OR minor. Each press picks a fresh voice +
+    // voicing for variety ("play something cool"). Notes fold into the engine's
+    // C2..C4 range; polyphony rides the synth chord path (auto gain-reduced).
+    const TEXTURE_CHROMA = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const TEXTURE_VOICINGS = [
+      [0, 7, 12],       // open 5th + octave
+      [0, 7, 12, 19],   // stacked 5ths
+      [0, 7, 12, 14],   // add9 shimmer
+      [0, 5, 12],       // quartal (sus4 colour)
+      [0, 7, 12, 24],   // wide octaves
+    ];
+    const TEXTURE_VOICES = ['warm_pad', 'tanpura', 'pump_organ_classic'];
+    let lastTextureVoicing = -1, lastTextureVoice = -1;
+    function pickFresh(len, last) {
+      if (len <= 1) return 0;
+      let i; do { i = Math.floor(Math.random() * len); } while (i === last);
+      return i;
+    }
+    function textureVoiceNote(root, semis) {
+      const LO = 24, HI = 48; // C2..C4 as octave*12 + pitch-class
+      let abs = 2 * 12 + TEXTURE_CHROMA.indexOf(root) + semis; // root at octave 2
+      while (abs > HI) abs -= 12;
+      while (abs < LO) abs += 12;
+      return TEXTURE_CHROMA[((abs % 12) + 12) % 12] + Math.floor(abs / 12);
+    }
+    function playRichTexture() {
+      if (navigator.vibrate) navigator.vibrate(20);
+      // Fresh each press: never the same voicing or voice as the previous tap.
+      const vi = pickFresh(TEXTURE_VOICINGS.length, lastTextureVoicing); lastTextureVoicing = vi;
+      const ai = pickFresh(TEXTURE_VOICES.length, lastTextureVoice); lastTextureVoice = ai;
+      const voicing = TEXTURE_VOICINGS[vi];
+      const voice = TEXTURE_VOICES[ai];
+      droneNotes.clear();
+      voicing.forEach(s => droneNotes.add(textureVoiceNote(selectedWheelNote, s)));
+      updatePianoDisplay();
+      // Route the voice change through the <select> so droneSound + the file://
+      // note stay in sync and a playing drone restarts on the new chord.
+      const sel = $('droneSoundSelect');
+      sel.value = voice;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      if (!isPlaying) start();
+    }
+
     // Initialize UI
     function initUI() {
       initKeySelector();
@@ -6362,6 +6433,9 @@
         });
       });
       
+      // Rich Drone — generate a fresh open voicing/voice to solo over
+      $('textureBtn').addEventListener('click', playRichTexture);
+
       // Adaptive preset patterns
       $('presetMetro').addEventListener('click', () => {
         // Simple metronome: Kick on every beat, nothing else
