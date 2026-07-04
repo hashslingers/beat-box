@@ -3073,6 +3073,49 @@
   .fretboard-footer span{ color:var(--text) !important; }
   .rotate-hint{ border:var(--hair) !important; background:var(--bg) !important; color:var(--text) !important; }
 
+  /* ===== Fretboard v2 — dual-view position visualizer (Checkerboard / Neck) ===== */
+  #fretboard-view{
+    --fb-root:#e34a2c; --fb-chord:#141310; --fb-color:#a49e93; --fb-ghost:#c9c4ba;
+    --fb-line:#141310; --fb-board:#efece4; --fb-ink:#141310; --fb-string:#8a857c; --fb-fret:#b7b2a8; --fb-inlay:#d8d3c8;
+  }
+  html[data-theme="night"] #fretboard-view{
+    --fb-root:#ff7a52; --fb-chord:#f2efe9; --fb-color:#8a857a; --fb-ghost:#4a463d;
+    --fb-line:#cfcabf; --fb-board:#17150f; --fb-ink:#f2efe9; --fb-string:#6a655c; --fb-fret:#4a463d; --fb-inlay:#33302a;
+  }
+  .fb2-device{ padding:2px 0 6px; }
+  .fb2-head{ display:flex; align-items:center; gap:10px; padding:0 2px 10px; }
+  .fb2-title{ font-weight:900; font-size:15px; letter-spacing:.02em; text-transform:uppercase; color:var(--text); }
+  .fb2-title small{ display:block; font-size:8px; letter-spacing:.22em; color:var(--text-muted); font-weight:700; margin-top:2px; }
+  .fb2-seg{ display:inline-flex; border:var(--hair); }
+  .fb2-head .fb2-seg{ margin-left:auto; }
+  .fb2-seg button{ font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:900; font-size:10px; letter-spacing:.05em; text-transform:uppercase; padding:6px 9px; border:0; background:var(--bg); color:var(--text); cursor:pointer; }
+  .fb2-seg button.on{ background:var(--text); color:var(--bg); }
+  .fb2-controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:0 2px 10px; }
+  .fb2-step{ display:flex; align-items:center; gap:7px; margin-left:auto; }
+  .fb2-step button{ font-family:inherit; font-weight:900; font-size:14px; width:30px; height:30px; border:var(--hair); background:var(--bg); color:var(--text); cursor:pointer; }
+  .fb2-step span{ font-weight:900; font-size:12px; min-width:58px; text-align:center; color:var(--text); }
+  .fb2-keys{ display:grid; grid-template-columns:repeat(12,1fr); gap:3px; padding:0 2px 10px; }
+  .fb2-keys button{ font-family:inherit; font-weight:900; font-size:10.5px; padding:6px 0; border:var(--hair); background:var(--bg); color:var(--text); cursor:pointer; }
+  .fb2-keys button.on{ background:var(--pen); color:#fff; border-color:var(--pen); }
+  .fb2-stage{ overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; padding:8px; background:var(--fb-board); border:var(--hair); }
+  .fb2-legend{ display:flex; gap:12px; flex-wrap:wrap; padding:9px 2px 0; }
+  .fb2-legend i{ display:inline-flex; align-items:center; gap:6px; font-size:9px; letter-spacing:.06em; text-transform:uppercase; font-weight:700; color:var(--text-muted); }
+  .fb2-legend b{ width:14px; height:14px; display:inline-block; border:1px solid var(--fb-line); }
+  .fb2-legend b.ghost{ background:transparent !important; border:1.5px solid var(--fb-ghost); }
+  .fb2-grid{ display:grid; grid-auto-rows:38px; width:max-content; border-top:2px solid var(--fb-line); border-left:2px solid var(--fb-line); }
+  .fb2-lbl{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:11px; color:var(--fb-ink); border-right:2px solid var(--fb-line); border-bottom:1px solid var(--fb-line); }
+  .fb2-cell{ position:relative; border-right:1px solid var(--fb-line); border-bottom:1px solid var(--fb-line); }
+  .fb2-cell.nut{ border-right:3px solid var(--fb-line); }
+  .fb2-cell.chk{ background:rgba(128,128,128,.10); }
+  .fb2-fill{ position:absolute; inset:4px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; }
+  .fb2-cell.chord .fb2-fill{ background:var(--fb-chord); color:var(--fb-board); }
+  .fb2-cell.color .fb2-fill{ background:var(--fb-color); color:var(--fb-ink); }
+  .fb2-cell.root .fb2-fill{ background:var(--fb-root); color:#fff; }
+  .fb2-cell.ghost .fb2-fill{ inset:9px; background:transparent; border:1.5px solid var(--fb-ghost); }
+  .fb2-cell.bridge .fb2-fill{ outline:2px dashed var(--fb-root); outline-offset:2px; }
+  .fb2-ruler{ display:grid; width:max-content; margin-top:4px; }
+  .fb2-ruler span{ text-align:center; font-size:9px; font-weight:700; color:var(--text-muted); }
+
   /* night: keep highlighter chips' text black (they pop on dark) */
   html[data-theme="night"] .nav-tab.active,
   html[data-theme="night"] .preset-btn.active,
@@ -7070,6 +7113,170 @@
       fbUpdatePatternDisplay();
     }
 
+    // ========== FRETBOARD v2 — dual-view position visualizer ==========
+    // Replaces the old all-notes fretboard with a position-at-a-time map that
+    // isolates one CAGED/3NPS shape, ghosts the neighbours, and marks the shared
+    // "bridge" notes — a companion for soloing over the drone. Two views
+    // (Checkerboard grid / Realistic neck), a label toggle (Off/Deg/Note), and a
+    // key selector seeded from the drone key. Themed via #fretboard-view CSS vars.
+    const FB2_NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const FB2_OPEN  = [40,45,50,55,59,64];      // low E .. high e (MIDI)
+    const FB2_MAJOR = [0,2,4,5,7,9,11];
+    const FB2_MAX   = 17;
+    const FB2_ROWLBL = ['E','A','D','G','B','e']; // by string index 0..5
+    let fb2Root = 7, fb2Sys = 'caged', fb2Pos = 0, fb2Label = 'off', fb2View = 'board';
+
+    const fb2Count = () => fb2Sys === 'caged' ? 5 : 7;
+    const fb2InW = (f, w) => f >= w.lo && f <= w.hi;
+    function fb2Cells(){
+      const inS = new Set(FB2_MAJOR.map(s => (fb2Root + s) % 12));
+      const out = [];
+      FB2_OPEN.forEach((open, si) => {
+        for (let f = 0; f <= FB2_MAX; f++){
+          const midi = open + f, pc = midi % 12;
+          if (inS.has(pc)){
+            const degree = FB2_MAJOR.indexOf(((pc - fb2Root) % 12 + 12) % 12) + 1;
+            out.push({ s: si, f, pc, degree });
+          }
+        }
+      });
+      return out;
+    }
+    function fb2Window(sys, idx){
+      const rootFretLowE = ((fb2Root - 4) % 12 + 12) % 12; // fret of root on low E
+      if (sys === 'caged'){ const lo = rootFretLowE + idx * 3; return { lo, hi: lo + 4 }; }
+      const lo = rootFretLowE - 1 + idx * 2; return { lo, hi: lo + 5 };
+    }
+    function fb2LabelFor(c){
+      if (fb2Label === 'deg')  return c.degree === 1 ? 'R' : String(c.degree);
+      if (fb2Label === 'note') return FB2_NOTES[c.pc];
+      return '';
+    }
+    function fb2Frames(){
+      const aw = fb2Window(fb2Sys, fb2Pos);
+      const pw = fb2Pos > 0 ? fb2Window(fb2Sys, fb2Pos - 1) : null;
+      const nw = fb2Pos < fb2Count() - 1 ? fb2Window(fb2Sys, fb2Pos + 1) : null;
+      const hi = Math.min(FB2_MAX, Math.max(12, aw.hi, nw ? nw.hi : 0, pw ? pw.hi : 0));
+      return { aw, pw, nw, hi };
+    }
+
+    function fb2RenderBoard(stage){
+      const cells = fb2Cells(); const { aw, pw, nw, hi } = fb2Frames();
+      const cols = `30px repeat(${hi + 1}, 40px)`;
+      let h = `<div class="fb2-grid" style="grid-template-columns:${cols}">`;
+      [5,4,3,2,1,0].forEach(si => {
+        h += `<div class="fb2-lbl">${FB2_ROWLBL[si]}</div>`;
+        for (let f = 0; f <= hi; f++){
+          let cls = 'fb2-cell' + (f === 0 ? ' nut' : '') + (((si + f) % 2) ? ' chk' : '');
+          const n = cells.find(c => c.s === si && c.f === f);
+          let inner = '';
+          if (n){
+            const act = fb2InW(f, aw), nb = (pw && fb2InW(f, pw)) || (nw && fb2InW(f, nw));
+            if (act){ const role = n.degree === 1 ? 'root' : ([1,3,5,7].includes(n.degree) ? 'chord' : 'color');
+              cls += ' ' + role + (nb ? ' bridge' : ''); inner = `<div class="fb2-fill">${fb2LabelFor(n)}</div>`; }
+            else if (nb){ cls += ' ghost'; inner = '<div class="fb2-fill"></div>'; }
+          }
+          h += `<div class="${cls}">${inner}</div>`;
+        }
+      });
+      h += `</div><div class="fb2-ruler" style="grid-template-columns:${cols}"><span></span>`;
+      for (let f = 0; f <= hi; f++) h += `<span${[3,5,7,9,12,15].includes(f) ? ' style="color:var(--text)"' : ''}>${f}</span>`;
+      stage.innerHTML = h + '</div>';
+    }
+
+    function fb2RenderNeck(stage){
+      const cells = fb2Cells(); const { aw, pw, nw, hi } = fb2Frames();
+      const NUTX = 46, S = 1636, TOP = 24, SS = 34, NS = 'http://www.w3.org/2000/svg';
+      const fretX = n => NUTX + S * (1 - Math.pow(2, -n / 12));
+      const spaceX = f => f === 0 ? NUTX - 20 : (fretX(f - 1) + fretX(f)) / 2;
+      const yOf = si => TOP + (5 - si) * SS;
+      const W = Math.round(fretX(hi) + 26), H = TOP + SS * 5 + 34;
+      const el = (t, a, txt) => { const e = `<${t} ${Object.entries(a).map(([k,v]) => `${k}="${v}"`).join(' ')}` + (txt != null ? `>${txt}</${t}>` : '/>'); return e; };
+      let s = `<svg xmlns="${NS}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+      s += el('rect', { x: NUTX - 24, y: TOP - 12, width: fretX(hi) - NUTX + 40, height: SS * 5 + 24, fill: 'var(--fb-board)' });
+      [3,5,7,9,15].forEach(f => { if (f <= hi) s += el('circle', { cx: spaceX(f), cy: TOP + SS * 2.5, r: 5, fill: 'var(--fb-inlay)' }); });
+      if (hi >= 12) [-0.5,0.5].forEach(o => s += el('circle', { cx: spaceX(12), cy: TOP + SS * (2.5 + o * 2), r: 5, fill: 'var(--fb-inlay)' }));
+      for (let n = 0; n <= hi; n++) s += el('line', { x1: fretX(n), y1: TOP - 6, x2: fretX(n), y2: TOP + SS * 5 + 6, stroke: n === 0 ? 'var(--fb-line)' : 'var(--fb-fret)', 'stroke-width': n === 0 ? 4 : 1.4 });
+      for (let si = 0; si < 6; si++) s += el('line', { x1: NUTX - 22, y1: yOf(si), x2: fretX(hi) + 6, y2: yOf(si), stroke: 'var(--fb-string)', 'stroke-width': (0.8 + (5 - si) * 0.4).toFixed(2) });
+      for (let f = 1; f <= hi; f++) s += el('text', { x: spaceX(f), y: TOP + SS * 5 + 24, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: 'var(--text-muted)', 'font-family': 'Helvetica Neue,Helvetica,Arial,sans-serif' }, f);
+      cells.forEach(c => {
+        if (c.f > hi) return;
+        const act = fb2InW(c.f, aw), nb = (pw && fb2InW(c.f, pw)) || (nw && fb2InW(c.f, nw));
+        if (!act && !nb) return;
+        const cx = spaceX(c.f), cy = yOf(c.s), r = c.degree === 1 ? 14 : 12;
+        if (act){
+          if (nb) s += el('circle', { cx, cy, r: r + 4, fill: 'none', stroke: 'var(--fb-root)', 'stroke-width': 2, 'stroke-dasharray': '3 3' });
+          const fill = c.degree === 1 ? 'var(--fb-root)' : ([1,3,5,7].includes(c.degree) ? 'var(--fb-chord)' : 'var(--fb-color)');
+          s += el('circle', { cx, cy, r, fill, stroke: 'var(--fb-board)', 'stroke-width': 2 });
+          const lt = fb2LabelFor(c);
+          if (lt) { const ink = c.degree === 1 ? '#fff' : ([1,3,5,7].includes(c.degree) ? 'var(--fb-board)' : 'var(--fb-ink)');
+            s += el('text', { x: cx, y: cy + 0.5, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': c.degree === 1 ? 14 : 12, 'font-weight': 900, fill: ink, 'font-family': 'Helvetica Neue,Helvetica,Arial,sans-serif' }, lt);
+          } else if (c.degree === 1) { s += el('circle', { cx, cy, r: 4, fill: '#fff' }); }
+        } else {
+          s += el('circle', { cx, cy, r: 9, fill: 'none', stroke: 'var(--fb-ghost)', 'stroke-width': 1.6 });
+        }
+      });
+      stage.innerHTML = s + '</svg>';
+    }
+
+    function fb2Render(){
+      const stage = document.getElementById('fb2-stage'); if (!stage) return;
+      (fb2View === 'neck' ? fb2RenderNeck : fb2RenderBoard)(stage);
+      const sub = document.getElementById('fb2-sub'); if (sub) sub.textContent = `${FB2_NOTES[fb2Root]} MAJOR`;
+      const pos = document.getElementById('fb2-pos'); if (pos) pos.textContent = `POS ${fb2Pos + 1}/${fb2Count()}`;
+      document.querySelectorAll('#fb2-keys button').forEach(b => b.classList.toggle('on', +b.dataset.pc === fb2Root));
+      // scroll the wide neck so the active position is in view
+      const aw = fb2Window(fb2Sys, fb2Pos);
+      stage.scrollLeft = fb2View === 'board'
+        ? Math.max(0, 30 + aw.lo * 40 - 50)
+        : Math.max(0, (46 + 1636 * (1 - Math.pow(2, -aw.lo / 12))) - 55);
+    }
+
+    function initFretboardV2(){
+      const view = document.getElementById('fretboard-view');
+      if (!view) return;
+      // seed the fretboard key from the drone wheel key
+      const seed = FB2_NOTES.indexOf(selectedWheelNote);
+      if (seed >= 0) fb2Root = seed;
+      view.innerHTML =
+        '<div class="fb2-device">' +
+          '<div class="fb2-head">' +
+            '<div class="fb2-title">FRETBOARD <small id="fb2-sub">G MAJOR</small></div>' +
+            '<div class="fb2-seg" id="fb2-view"><button data-view="board" class="on">CHECKER</button><button data-view="neck">NECK</button></div>' +
+          '</div>' +
+          '<div class="fb2-keys" id="fb2-keys"></div>' +
+          '<div class="fb2-controls">' +
+            '<div class="fb2-seg" id="fb2-sys"><button data-sys="caged" class="on">CAGED</button><button data-sys="nps">3 NPS</button></div>' +
+            '<div class="fb2-seg" id="fb2-lab"><button data-l="off" class="on">OFF</button><button data-l="deg">DEG</button><button data-l="note">NOTE</button></div>' +
+            '<div class="fb2-step"><button id="fb2-prev">&larr;</button><span id="fb2-pos">POS 1/5</span><button id="fb2-next">&rarr;</button></div>' +
+          '</div>' +
+          '<div class="fb2-stage" id="fb2-stage"></div>' +
+          '<div class="fb2-legend">' +
+            '<i><b style="background:var(--fb-root)"></b>Root</i>' +
+            '<i><b style="background:var(--fb-chord)"></b>Chord tone</i>' +
+            '<i><b style="background:var(--fb-color)"></b>Color tone</i>' +
+            '<i><b class="ghost"></b>Neighbour</i>' +
+            '<i><span style="color:var(--fb-root);font-weight:900">◌</span>Bridge</i>' +
+          '</div>' +
+        '</div>';
+      // key selector
+      const keys = document.getElementById('fb2-keys');
+      keys.innerHTML = FB2_NOTES.map((n, pc) => `<button data-pc="${pc}">${n}</button>`).join('');
+      keys.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; fb2Root = +b.dataset.pc; fb2Render(); });
+      // segmented toggles
+      const seg = (id, key, cb) => document.getElementById(id).addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        document.querySelectorAll('#' + id + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+        cb(b.dataset[key]); fb2Render();
+      });
+      seg('fb2-view', 'view', v => fb2View = v);
+      seg('fb2-sys', 'sys', v => { fb2Sys = v; fb2Pos = Math.min(fb2Pos, fb2Count() - 1); });
+      seg('fb2-lab', 'l', v => fb2Label = v);
+      document.getElementById('fb2-prev').onclick = () => { fb2Pos = (fb2Pos - 1 + fb2Count()) % fb2Count(); fb2Render(); };
+      document.getElementById('fb2-next').onclick = () => { fb2Pos = (fb2Pos + 1) % fb2Count(); fb2Render(); };
+      fb2Render();
+    }
+
     // ========== END FRETBOARD LOGIC ==========
 
     // Initialize everything
@@ -7078,7 +7285,7 @@
     optimizeForBattery();
     autoOptimizePerformance();
     initUI();
-    initFretboard();
+    initFretboardV2();
     
     // Development performance logging
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
