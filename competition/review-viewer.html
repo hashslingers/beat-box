@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fretboard — Design Review</title>
+<style>
+  :root{
+    --paper:#F4F2ED; --ink:#141310; --line:#D8D4CC; --note:#6B6864;
+    --salmon:#FA8763; --keep:#0E9F6E; --kill:#D64545; --iter:#C98A00;
+    --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;height:100vh;display:grid;grid-template-columns:250px 1fr;font-family:var(--sans);
+       color:var(--ink);background:#2a2824;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+  /* sidebar */
+  aside{background:var(--paper);border-right:2px solid var(--ink);display:flex;flex-direction:column;min-height:0}
+  .brand{padding:14px 16px;border-bottom:2px solid var(--ink)}
+  .brand h1{margin:0;font-size:15px;font-weight:900;letter-spacing:.02em;text-transform:uppercase}
+  .brand p{margin:3px 0 0;font-size:9px;letter-spacing:.24em;color:var(--note);font-weight:700;text-transform:uppercase}
+  nav{flex:1;overflow:auto;padding:8px 0}
+  .grp{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--note);font-weight:800;padding:12px 16px 5px}
+  .item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;font-size:13px;font-weight:700}
+  .item:hover{background:#EAE7E0}
+  .item.on{background:#EAE7E0;border-left-color:var(--salmon)}
+  .item .dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+  .item .dot.keep{background:var(--keep)} .item .dot.iter{background:var(--iter)} .item .dot.kill{background:var(--kill)}
+  .item .n{flex:1}
+  .exportbar{border-top:2px solid var(--ink);padding:10px 12px;display:flex;gap:8px}
+  .exportbar button{flex:1;font:inherit;font-weight:900;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+                    padding:9px;border:2px solid var(--ink);background:var(--paper);cursor:pointer}
+  .exportbar button.primary{background:var(--ink);color:var(--paper)}
+
+  /* main */
+  main{display:flex;flex-direction:column;min-width:0;min-height:0}
+  .bar{display:flex;align-items:center;gap:14px;padding:12px 18px;background:var(--paper);border-bottom:2px solid var(--ink)}
+  .bar .title{font-weight:900;font-size:16px;text-transform:uppercase}
+  .bar .sub{font-size:10px;letter-spacing:.18em;color:var(--note);font-weight:700;text-transform:uppercase}
+  .bar .sp{flex:1}
+  .nvbtn{font:inherit;font-weight:900;font-size:15px;width:36px;height:36px;border:2px solid var(--ink);background:var(--paper);cursor:pointer}
+  .frame{flex:1;min-height:0;background:#2a2824;display:flex;align-items:center;justify-content:center;overflow:auto;padding:14px}
+  iframe{border:0;background:#111;width:1000px;height:540px;max-width:100%;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+
+  /* feedback */
+  .fb{background:var(--paper);border-top:2px solid var(--ink);padding:12px 18px;display:flex;gap:16px;align-items:flex-start}
+  .rate{display:flex;gap:8px;flex:none}
+  .rate button{font:inherit;font-weight:900;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+               padding:9px 13px;border:2px solid var(--ink);background:var(--paper);cursor:pointer}
+  .rate button.keep.on{background:var(--keep);color:#fff;border-color:var(--keep)}
+  .rate button.iter.on{background:var(--iter);color:#fff;border-color:var(--iter)}
+  .rate button.kill.on{background:var(--kill);color:#fff;border-color:var(--kill)}
+  textarea{flex:1;font:inherit;font-size:13px;min-height:64px;max-height:120px;resize:vertical;
+           border:2px solid var(--ink);background:#fff;padding:8px 10px;color:var(--ink)}
+  .hint{font-size:10px;color:var(--note);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-top:6px}
+
+  dialog{border:2px solid var(--ink);padding:0;max-width:640px;width:90%}
+  dialog .dh{padding:12px 16px;border-bottom:2px solid var(--ink);font-weight:900;text-transform:uppercase;font-size:13px;display:flex}
+  dialog textarea{width:100%;min-height:340px;border:0;padding:14px 16px}
+  dialog .df{padding:10px 16px;border-top:2px solid var(--ink);display:flex;gap:8px;justify-content:flex-end}
+  dialog button{font:inherit;font-weight:900;font-size:11px;text-transform:uppercase;padding:9px 14px;border:2px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<aside>
+  <div class="brand"><h1>Fretboard Review</h1><p>rate · note · export</p></div>
+  <nav id="nav"></nav>
+  <div class="exportbar">
+    <button id="clearBtn">Reset</button>
+    <button id="exportBtn" class="primary">Copy notes</button>
+  </div>
+</aside>
+<main>
+  <div class="bar">
+    <button class="nvbtn" id="prev">&larr;</button>
+    <div><div class="title" id="dTitle">—</div><div class="sub" id="dSub"></div></div>
+    <div class="sp"></div>
+    <button class="nvbtn" id="next">&rarr;</button>
+  </div>
+  <div class="frame"><iframe id="frame" title="design"></iframe></div>
+  <div class="fb">
+    <div>
+      <div class="rate">
+        <button class="keep" data-r="keep">Keep</button>
+        <button class="iter" data-r="iter">Iterate</button>
+        <button class="kill" data-r="kill">Kill</button>
+      </div>
+      <div class="hint">← / → to move · notes auto-save</div>
+    </div>
+    <textarea id="notes" placeholder="What works, what to change on this design…"></textarea>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <div class="dh">Your review — copy &amp; paste back to me</div>
+  <textarea id="dump" readonly></textarea>
+  <div class="df"><button id="copyBtn">Copy to clipboard</button><button id="closeBtn">Close</button></div>
+</dialog>
+
+<script>
+const DESIGNS = [
+  { group:'v5 · latest (labels + extended neck)', id:'bd-5', label:'v5 · Checkerboard+', src:'board-v5.html', sub:'your favorite (Shade Ramp) + label toggle + extends past 12' },
+  { group:'v5 · latest (labels + extended neck)', id:'nk-A', label:'v4 · Ink Shade',  src:'neck-v4.html?v=A', sub:'realistic neck + label toggle + extends past 12' },
+  { group:'v5 · latest (labels + extended neck)', id:'nk-B', label:'v4 · Warm / Cool', src:'neck-v4.html?v=B', sub:'realistic neck · root red · chord amber · color slate' },
+  { group:'Checkerboard variants', id:'ck-A', label:'A · Hatch',        src:'checkerboard-v3.html?v=A', sub:'chord solid · color hatched' },
+  { group:'Checkerboard variants', id:'ck-B', label:'B · Solid Blocks',  src:'checkerboard-v3.html?v=B', sub:'full-bleed · reads as one shape' },
+  { group:'Checkerboard variants', id:'ck-C', label:'C · Shade Ramp',    src:'checkerboard-v3.html?v=C', sub:'color = gray · brightness = role' },
+  { group:'Checkerboard variants', id:'ck-D', label:'D · Dark Neck',     src:'checkerboard-v3.html?v=D', sub:'lit cells glow on black' },
+  { group:'Competition concepts',  id:'cellular', label:'Cellular (winner)', src:'cellular-1.html', sub:'punch-card grid · 8.43' },
+  { group:'Competition concepts',  id:'flow',      label:'Flow',            src:'flow-1.html',      sub:'motion-trails to next shift · 7.70' },
+  { group:'Competition concepts',  id:'constellation', label:'Constellation', src:'constellation-1.html', sub:'star-map · 7.23' },
+  { group:'Competition concepts',  id:'contour',   label:'Contour',         src:'contour-1.html',   sub:'topographic · 6.47' },
+  { group:'Competition concepts',  id:'thermal',   label:'Thermal',         src:'thermal-1.html',   sub:'heat-field · 5.73' },
+  { group:'Competition concepts',  id:'spectral',  label:'Spectral',        src:'spectral-1.html',  sub:'pitch-class hue · 4.80' },
+];
+const KEY='fb-review-v1';
+const store = JSON.parse(localStorage.getItem(KEY) || '{}');
+let cur = 0;
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(store)); renderNav(); }
+function renderNav(){
+  const nav=document.getElementById('nav'); nav.innerHTML='';
+  let g=null;
+  DESIGNS.forEach((d,i)=>{
+    if(d.group!==g){ g=d.group; const h=document.createElement('div'); h.className='grp'; h.textContent=g; nav.appendChild(h); }
+    const el=document.createElement('div'); el.className='item'+(i===cur?' on':'');
+    const r=(store[d.id]&&store[d.id].rate)||'';
+    el.innerHTML=`<span class="dot ${r}"></span><span class="n">${d.label}</span>`;
+    el.onclick=()=>select(i); nav.appendChild(el);
+  });
+}
+function select(i){
+  cur=(i+DESIGNS.length)%DESIGNS.length; const d=DESIGNS[cur];
+  document.getElementById('frame').src=d.src;
+  document.getElementById('dTitle').textContent=d.label;
+  document.getElementById('dSub').textContent=d.sub;
+  const rec=store[d.id]||{};
+  document.getElementById('notes').value=rec.notes||'';
+  document.querySelectorAll('.rate button').forEach(b=>b.classList.toggle('on', b.dataset.r===rec.rate));
+  renderNav();
+}
+document.querySelectorAll('.rate button').forEach(b=>b.onclick=()=>{
+  const d=DESIGNS[cur]; store[d.id]=store[d.id]||{};
+  store[d.id].rate = store[d.id].rate===b.dataset.r ? '' : b.dataset.r;
+  document.querySelectorAll('.rate button').forEach(x=>x.classList.toggle('on', x.dataset.r===store[d.id].rate));
+  save();
+});
+document.getElementById('notes').addEventListener('input', e=>{
+  const d=DESIGNS[cur]; store[d.id]=store[d.id]||{}; store[d.id].notes=e.target.value; save();
+});
+document.getElementById('prev').onclick=()=>select(cur-1);
+document.getElementById('next').onclick=()=>select(cur+1);
+window.addEventListener('keydown',e=>{
+  if(e.target.tagName==='TEXTAREA')return;
+  if(e.key==='ArrowLeft')select(cur-1); if(e.key==='ArrowRight')select(cur+1);
+});
+document.getElementById('exportBtn').onclick=()=>{
+  const lines=['FRETBOARD DESIGN REVIEW',''];
+  DESIGNS.forEach(d=>{const r=store[d.id]||{}; if(r.rate||r.notes){
+    lines.push(`[${(r.rate||'—').toUpperCase()}] ${d.label}`); if(r.notes)lines.push('   '+r.notes.replace(/\n/g,'\n   ')); lines.push('');
+  }});
+  if(lines.length===2)lines.push('(no ratings yet)');
+  document.getElementById('dump').value=lines.join('\n');
+  document.getElementById('dlg').showModal();
+};
+document.getElementById('copyBtn').onclick=async()=>{
+  const t=document.getElementById('dump'); t.select();
+  try{ await navigator.clipboard.writeText(t.value); }catch(_){ document.execCommand('copy'); }
+  document.getElementById('copyBtn').textContent='Copied ✓';
+  setTimeout(()=>document.getElementById('copyBtn').textContent='Copy to clipboard',1500);
+};
+document.getElementById('closeBtn').onclick=()=>document.getElementById('dlg').close();
+document.getElementById('clearBtn').onclick=()=>{ if(confirm('Clear all your ratings & notes?')){ for(const k in store)delete store[k]; save(); select(cur);} };
+renderNav(); select(0);
+</script>
+</body>
+</html>

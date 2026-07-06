@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=844, initial-scale=1">
+<title>Fretboard Topo — Contour Solo Map</title>
+<style>
+  :root{
+    --ink:#0d1411;
+    --paper:#0b100e;
+    --backdrop:#05080a;
+    --hair:rgba(120,150,140,.22);
+    --label:#9fb4ab;
+    --label-dim:#5d6f68;
+    --warm:#f2a23c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(120% 120% at 50% -10%,#0a1116 0%,var(--backdrop) 60%);
+    color:var(--label);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .stage{
+    width:844px;height:390px;position:relative;
+    background:linear-gradient(180deg,#0e1512 0%,#0a0f0d 100%);
+    border:1px solid var(--hair);
+    border-radius:10px;overflow:hidden;
+    box-shadow:0 22px 60px rgba(0,0,0,.55);
+  }
+  /* top control bar */
+  .bar{
+    position:absolute;top:0;left:0;right:0;height:44px;
+    display:flex;align-items:center;gap:14px;
+    padding:0 16px;z-index:5;
+    border-bottom:1px solid var(--hair);
+    background:linear-gradient(180deg,rgba(14,22,18,.9),rgba(14,22,18,.5));
+  }
+  .brand{font-size:11px;letter-spacing:.32em;color:var(--label-dim);text-transform:uppercase;white-space:nowrap}
+  .brand b{color:var(--warm);font-weight:600}
+  .spacer{flex:1}
+  .toggle{display:flex;border:1px solid var(--hair);border-radius:20px;overflow:hidden}
+  .toggle button{
+    background:transparent;border:0;color:var(--label-dim);
+    font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    padding:6px 13px;cursor:pointer;transition:.18s;
+  }
+  .toggle button.on{background:var(--warm);color:#1a1206;font-weight:600}
+  .stepper{display:flex;align-items:center;gap:8px}
+  .stepper button{
+    width:26px;height:26px;border-radius:50%;
+    border:1px solid var(--hair);background:transparent;color:var(--label);
+    font-size:14px;line-height:1;cursor:pointer;transition:.16s;
+  }
+  .stepper button:hover{border-color:var(--warm);color:var(--warm)}
+  .posname{font-size:11px;letter-spacing:.12em;min-width:118px;text-align:center;text-transform:uppercase}
+  .posname b{color:#e9efe9;font-weight:600}
+  /* legend — own strip at the very bottom */
+  .legend{
+    position:absolute;left:0;right:0;bottom:0;height:26px;z-index:5;
+    display:flex;gap:20px;align-items:center;justify-content:center;
+    padding:0 16px;
+    border-top:1px solid var(--hair);
+    background:rgba(10,15,13,.6);
+    font-size:9px;letter-spacing:.06em;color:var(--label-dim);
+  }
+  .legend .row{display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .swatch{width:22px;height:11px;display:inline-block;flex:none}
+  svg{display:block;position:absolute;top:44px;left:0}
+  text{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="bar">
+    <div class="brand">FRETBOARD&nbsp;<b>TOPO</b>&nbsp;· G MAJOR</div>
+    <div class="spacer"></div>
+    <div class="stepper">
+      <button id="prev" title="Lower position">‹</button>
+      <div class="posname"><b id="posLabel">Box 1</b><br><span id="posSub">frets 3–7</span></div>
+      <button id="next" title="Higher position">›</button>
+    </div>
+    <div class="toggle" id="sysToggle">
+      <button data-sys="caged" class="on">CAGED</button>
+      <button data-sys="3nps">3&#8209;NPS</button>
+    </div>
+  </div>
+
+  <svg id="board" width="844" height="320" viewBox="0 0 844 320"></svg>
+
+  <div class="legend">
+    <div class="row"><span class="swatch" style="background:radial-gradient(circle at 50% 50%,#fff 0%,#fbd87a 30%,#f2a23c 60%,#7a4d18 100%)"></span>summit = tonic</div>
+    <div class="row"><span class="swatch" style="background:linear-gradient(90deg,#7a4d18,#caa24a,#f4c873)"></span>high ground = chord tones · lowlands = color tones</div>
+    <div class="row"><span class="swatch" style="border:1.4px dashed #cfe6da;background:transparent;height:10px;border-radius:6px"></span>shared ridge = link to next box</div>
+  </div>
+</div>
+
+<script>
+/* ===== SHARED FRETBOARD DATA — verbatim ===== */
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+// standard tuning low->high: E A D G B e ; open-string MIDI
+const OPEN=[{n:'E',midi:40},{n:'A',midi:45},{n:'D',midi:50},{n:'G',midi:55},{n:'B',midi:59},{n:'e',midi:64}];
+const MAJOR=[0,2,4,5,7,9,11]; const FRETS=12; const ROOT_PC=7; /* G major; 0=C */
+const midiFreq=m=>440*Math.pow(2,(m-69)/12);
+function scaleCells(){const inS=new Set(MAJOR.map(s=>(ROOT_PC+s)%12));const out=[];OPEN.forEach((st,si)=>{for(let f=0;f<=FRETS;f++){const midi=st.midi+f,pc=midi%12;if(inS.has(pc)){const degree=MAJOR.indexOf(((pc-ROOT_PC)%12+12)%12)+1;out.push({s:si,f,midi,pc,degree,oct:Math.floor(midi/12)-1,freq:midiFreq(midi)});}}});return out;}
+function positionWindow(system,idx){const rootFretLowE=((ROOT_PC-40)%12+12)%12; /* G=3 */ if(system==='caged'){const lo=rootFretLowE+idx*3;return{lo,hi:lo+4};} const lo=rootFretLowE-1+idx*2;return{lo,hi:lo+5};}
+function cellsInWindow(cells,w){return cells.filter(c=>c.f>=w.lo&&c.f<=w.hi);}
+// s = string index 0(lowE)..5(high e); f = fret 0..12; degree 1..7 (1=root)
+/* ===== END SHARED DATA ===== */
+
+/* ---------- geometry ---------- */
+const W=844,H=320;
+const PAD_L=58,PAD_R=26,PAD_T=20,PAD_B=26;
+const neckW=W-PAD_L-PAD_R;
+const neckH=H-PAD_T-PAD_B;
+const wireX = f => PAD_L + (f/FRETS)*neckW;              // fret wire position 0..12
+const noteX = f => f===0 ? PAD_L : PAD_L + ((f-0.5)/FRETS)*neckW; // fretted note sits in the space
+const stringY = s => PAD_T + ((5-s)/5)*neckH;            // low E (0) at bottom, high e (5) at top
+
+/* elevation per scale degree — topographic harmonic role.
+   tonic is the summit; chord tones are high ground; color tones are lowlands.
+   (encoded purely as terrain height/brightness — never as a number/letter) */
+const ELEV = {1:5, 5:4, 3:4, 2:2, 6:2, 4:1, 7:1};
+// warm single-hue palette, dark lowland -> bright highland
+const TERRAIN = {
+  1:'#fff2c4', 2:'#9c6a2c', 3:'#e9b85a', 4:'#7a521f', 5:'#fff2c4', 6:'#9c6a2c', 7:'#6f4a1c'
+};
+const RINGCOL = '#caa24a';
+
+const ALL = scaleCells();
+
+/* ---------- state ---------- */
+let system='caged';
+let idx=0;
+const countFor = sys => sys==='caged' ? 5 : 7;
+
+function clampWin(w){return {lo:Math.max(0,Math.min(FRETS,w.lo)), hi:Math.max(0,Math.min(FRETS,w.hi))};}
+
+/* convex hull (monotone chain) for the island fill */
+function hull(pts){
+  if(pts.length<3) return pts.slice();
+  const p=pts.slice().sort((a,b)=>a.x-b.x||a.y-b.y);
+  const cross=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);
+  const lo=[],up=[];
+  for(const pt of p){while(lo.length>=2&&cross(lo[lo.length-2],lo[lo.length-1],pt)<=0)lo.pop();lo.push(pt);}
+  for(let i=p.length-1;i>=0;i--){const pt=p[i];while(up.length>=2&&cross(up[up.length-2],up[up.length-1],pt)<=0)up.pop();up.push(pt);}
+  lo.pop();up.pop();return lo.concat(up);
+}
+function expandHull(pts,k){
+  if(pts.length<2) return pts;
+  const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  return pts.map(p=>({x:cx+(p.x-cx)*k, y:cy+(p.y-cy)*k}));
+}
+function roundedPath(pts){
+  if(pts.length<3){ // fallback: simple closed
+    return pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ')+(pts.length?' Z':'');
+  }
+  // Catmull-Rom -> smooth closed path
+  let d='';const n=pts.length;
+  for(let i=0;i<n;i++){
+    const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+    if(i===0)d+='M'+p1.x.toFixed(1)+' '+p1.y.toFixed(1)+' ';
+    const c1x=p1.x+(p2.x-p0.x)/6, c1y=p1.y+(p2.y-p0.y)/6;
+    const c2x=p2.x-(p3.x-p1.x)/6, c2y=p2.y-(p3.y-p1.y)/6;
+    d+='C'+c1x.toFixed(1)+' '+c1y.toFixed(1)+' '+c2x.toFixed(1)+' '+c2y.toFixed(1)+' '+p2.x.toFixed(1)+' '+p2.y.toFixed(1)+' ';
+  }
+  return d+'Z';
+}
+
+function cellKey(c){return c.s+'_'+c.f;}
+
+/* ---------- render ---------- */
+function render(){
+  const N=countFor(system);
+  if(idx>=N)idx=N-1; if(idx<0)idx=0;
+
+  const win   = clampWin(positionWindow(system,idx));
+  const active= cellsInWindow(ALL,win);
+
+  // neighbour windows (residual traces)
+  const nbrWins=[];
+  if(idx-1>=0) nbrWins.push(clampWin(positionWindow(system,idx-1)));
+  if(idx+1<N)  nbrWins.push(clampWin(positionWindow(system,idx+1)));
+  const ghosts=[];
+  const ghostSet=new Set();
+  nbrWins.forEach(w=>cellsInWindow(ALL,w).forEach(c=>{const k=cellKey(c);if(!ghostSet.has(k)){ghostSet.add(k);ghosts.push(c);}}));
+
+  // shared notes = active cells that also belong to a neighbour window (the bridges)
+  const activeKeys=new Set(active.map(cellKey));
+  const sharedKeys=new Set();
+  active.forEach(c=>{ if(ghostSet.has(cellKey(c))) sharedKeys.add(cellKey(c)); });
+
+  let svg='';
+
+  /* ---- defs ---- */
+  svg+=`<defs>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="3.4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>`;
+
+  /* ---- fret wires + numbers + position markers (neck base) ---- */
+  // inlay markers at 3,5,7,9,12
+  [3,5,7,9].forEach(f=>{
+    const x=(noteX(f)+noteX(f+1))/2; // mid-ish; simpler: center of space
+    svg+=`<circle cx="${noteX(f).toFixed(1)}" cy="${(PAD_T+neckH/2).toFixed(1)}" r="3" fill="rgba(120,150,140,.10)"/>`;
+  });
+  svg+=`<circle cx="${noteX(12).toFixed(1)}" cy="${(PAD_T+neckH*0.30).toFixed(1)}" r="3" fill="rgba(120,150,140,.10)"/>`;
+  svg+=`<circle cx="${noteX(12).toFixed(1)}" cy="${(PAD_T+neckH*0.70).toFixed(1)}" r="3" fill="rgba(120,150,140,.10)"/>`;
+
+  for(let f=0;f<=FRETS;f++){
+    const x=wireX(f);
+    const nut = f===0;
+    svg+=`<line x1="${x.toFixed(1)}" y1="${PAD_T}" x2="${x.toFixed(1)}" y2="${PAD_T+neckH}"
+      stroke="${nut?'rgba(180,200,190,.5)':'rgba(120,150,140,.16)'}" stroke-width="${nut?3:1}"/>`;
+    svg+=`<text x="${x.toFixed(1)}" y="${PAD_T+neckH+16}" fill="#5d6f68" font-size="9" text-anchor="middle" letter-spacing="1">${f}</text>`;
+  }
+  // strings
+  OPEN.forEach((st,s)=>{
+    const y=stringY(s);
+    svg+=`<line x1="${PAD_L}" y1="${y.toFixed(1)}" x2="${PAD_L+neckW}" y2="${y.toFixed(1)}"
+      stroke="rgba(120,150,140,.20)" stroke-width="${1+ (5-s)*0.16}"/>`;
+    svg+=`<text x="${(PAD_L-12).toFixed(1)}" y="${(y+3.4).toFixed(1)}" fill="#9fb4ab" font-size="11" text-anchor="end" letter-spacing="1">${st.n}</text>`;
+  });
+
+  /* ---- highlight active fret span band (subtle) ---- */
+  const bx0=noteX(Math.max(win.lo,0))-22, bx1=noteX(win.hi)+18;
+  svg+=`<rect x="${Math.max(PAD_L-6,bx0).toFixed(1)}" y="${PAD_T-2}" width="${(bx1-Math.max(PAD_L-6,bx0)).toFixed(1)}" height="${neckH+4}"
+     fill="rgba(242,162,60,.045)" rx="8"/>`;
+
+  /* ---- ghost / residual neighbour contour islands ---- */
+  nbrWins.forEach(w=>{
+    const gc=cellsInWindow(ALL,w);
+    const pts=gc.map(c=>({x:noteX(c.f),y:stringY(c.s)}));
+    const hp=expandHull(hull(pts),1.16);
+    if(hp.length>=2){
+      svg+=`<path d="${roundedPath(hp)}" fill="rgba(120,150,140,.035)" stroke="rgba(150,180,168,.28)"
+        stroke-width="1" stroke-dasharray="2 4"/>`;
+    }
+  });
+  // ghost note marks (faint outer contour ring only)
+  ghosts.forEach(c=>{
+    if(activeKeys.has(cellKey(c))) return; // belongs to active, drawn later
+    const x=noteX(c.f),y=stringY(c.s);
+    const isRoot=c.degree===1;
+    svg+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isRoot?7:5}" fill="none"
+      stroke="rgba(170,195,185,.30)" stroke-width="1"/>`;
+    if(isRoot)
+      svg+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="none" stroke="rgba(170,195,185,.32)" stroke-width="1"/>`;
+  });
+
+  /* ---- ACTIVE island fill ---- */
+  const apts=active.map(c=>({x:noteX(c.f),y:stringY(c.s)}));
+  const ahull=expandHull(hull(apts),1.22);
+  if(ahull.length>=2){
+    svg+=`<path d="${roundedPath(ahull)}" fill="rgba(242,162,60,.10)" filter="url(#soft)"/>`;
+    svg+=`<path d="${roundedPath(ahull)}" fill="rgba(242,162,60,.07)" stroke="rgba(242,162,60,.45)" stroke-width="1.4"/>`;
+    // a second inner contour line for terrain feel
+    const inner=expandHull(hull(apts),0.96);
+    svg+=`<path d="${roundedPath(inner)}" fill="none" stroke="rgba(242,162,60,.22)" stroke-width="1" stroke-dasharray="1 5"/>`;
+  }
+
+  /* ---- ACTIVE notes as contour peaks ---- */
+  // draw lowlands first, summits last
+  const ordered=active.slice().sort((a,b)=>ELEV[a.degree]-ELEV[b.degree]);
+  ordered.forEach(c=>{
+    const x=noteX(c.f),y=stringY(c.s);
+    const e=ELEV[c.degree];
+    const baseR=3.6, step=2.9;
+    const isRoot=c.degree===1;
+    const shared=sharedKeys.has(cellKey(c));
+    // concentric contour rings (outer = lower contour line)
+    let rings='';
+    for(let i=e-1;i>=1;i--){
+      const r=baseR+i*step;
+      rings+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="none"
+        stroke="${RINGCOL}" stroke-opacity="${(0.22+0.10*(e-i)).toFixed(2)}" stroke-width="1"/>`;
+    }
+    // filled summit cap
+    const capR=baseR+0.4;
+    const fill=TERRAIN[c.degree];
+    let cap=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${capR.toFixed(1)}" fill="${fill}"
+        ${isRoot?'filter="url(#glow)"':''}/>`;
+    svg+=`<g>${rings}${cap}`;
+    if(isRoot){
+      // summit marker: bright pinnacle dot
+      svg+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.7" fill="#fffdf3"/>`;
+    }
+    if(shared){
+      // bridge ridge: dashed cool ring linking to the neighbouring box
+      const br=baseR+e*step+2.4;
+      svg+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${br.toFixed(1)}" fill="none"
+        stroke="#cfe6da" stroke-opacity=".8" stroke-width="1.3" stroke-dasharray="2.4 3"/>`;
+    }
+    svg+=`</g>`;
+  });
+
+  document.getElementById('board').innerHTML=svg;
+
+  // labels
+  const win0=clampWin(positionWindow(system,idx));
+  document.getElementById('posLabel').textContent =
+     (system==='caged'?'Box ':'Shape ')+(idx+1);
+  document.getElementById('posSub').textContent = `frets ${win0.lo}–${win0.hi}`;
+}
+
+/* ---------- controls ---------- */
+document.getElementById('prev').onclick=()=>{idx--;render();};
+document.getElementById('next').onclick=()=>{idx++;render();};
+document.getElementById('sysToggle').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{
+    system=b.dataset.sys;
+    document.querySelectorAll('#sysToggle button').forEach(x=>x.classList.toggle('on',x===b));
+    idx=0;render();
+  };
+});
+render();
+</script>
+</body>
+</html>

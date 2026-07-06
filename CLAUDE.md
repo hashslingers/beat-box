@@ -24,6 +24,7 @@ BEAT-BOX is a minimalist web-based beat maker with an interactive piano keyboard
   - Presets: Metronome, Rock, Funk, Jazz
   - Haptic feedback and touch-optimized gestures
   - **Day/Night themes**: header toggle (persisted to `localStorage` as `bb-theme`); URL params `?theme=day|night` and `?view=beatbox|fretboard`
+  - **Fretboard view**: dual-view guitar position visualizer (toggled via header or `?view=fretboard`). **Mobile is landscape-only** — in portrait the fretboard (`.fretboard-container`) is hidden and a "Rotate your phone for fretboard view" hint (`.rotate-hint`) shows instead; the landscape layout lives in `@media (max-width: 900px) and (orientation: landscape)` and sizes the neck to `min-width: 700px` (narrower-than-700px landscape viewports scroll horizontally rather than shrink).
   - **"No Frills Studio" visual language** (adapted from the agent-factory design system): pure white paper / inverted ink, hairline borders, Helvetica, semantic highlighter swipes encoding state (green = armed step, coral = playhead), coral-pen play ring
 
 ## Development Guidelines
@@ -39,6 +40,7 @@ open "https://hashslingers.github.io/beat-box/initial/BeatBox_Pro_Minimal.html"
 
 ### Key Files
 - `initial/BeatBox_Pro_Minimal.html` - Current working application (single file)
+- `competition/` - Standalone fretboard/visualization design-exploration prototypes (e.g. `board-v5.html`, `neck-v4.html`, `review-viewer.html`) that fed the shipped Fretboard view. Reference-only; not loaded by the app.
 - `CLAUDE.md` - This file - Claude Code instructions
 - `README.md` - Project overview and quick start guide
 - `.github/workflows/claude.yml` - Claude Code integration for GitHub issues/PRs

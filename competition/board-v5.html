@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkerboard v5 — labels + extended neck</title>
+<style>
+  :root{
+    --paper:#F4F2ED; --ink:#141310; --line:#141310; --tint:#EAE7E0;
+    --salmon:#FA8763; --ghost:#B9B5AC; --note:#6B6864;
+    --chord:#16150F; --color:#9C988F;
+    --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    --cellW:60px; --cellH:56px; --labelW:42px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#26241f;font-family:var(--sans);-webkit-font-smoothing:antialiased;
+       display:flex;align-items:center;justify-content:center;min-height:100vh;padding:18px}
+  .stage{background:var(--paper);color:var(--ink);border:2px solid var(--ink);width:max-content;max-width:100%}
+  .top{display:flex;align-items:center;gap:11px;padding:11px 15px;border-bottom:2px solid var(--ink);flex-wrap:wrap}
+  .title{font-weight:900;font-size:16px;letter-spacing:.02em;text-transform:uppercase}
+  .title small{display:block;font-size:8.5px;letter-spacing:.24em;color:var(--note);font-weight:700;margin-top:2px}
+  .sp{flex:1}
+  .seg{display:inline-flex;border:2px solid var(--ink)}
+  .seg button{font:inherit;font-weight:900;font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:6px 10px;border:0;background:var(--paper);color:var(--ink);cursor:pointer}
+  .seg button.on{background:var(--ink);color:var(--paper)}
+  .lab{font-size:8.5px;letter-spacing:.18em;color:var(--note);font-weight:800;text-transform:uppercase;margin-right:-4px}
+  .step{display:flex;align-items:center;gap:8px}
+  .step button{font:inherit;font-weight:900;font-size:15px;width:32px;height:32px;border:2px solid var(--ink);background:var(--paper);cursor:pointer}
+  .posn{font-weight:900;font-size:13px;min-width:70px;text-align:center} .posn small{color:var(--note);font-size:9px}
+  .board{padding:9px 15px 3px;overflow-x:auto}
+  .grid{display:grid;grid-auto-rows:var(--cellH);border-top:2px solid var(--ink);border-left:2px solid var(--ink);width:max-content}
+  .lbl{display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;border-right:2px solid var(--ink);border-bottom:1px solid var(--line)}
+  .cell{position:relative;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .cell.fret0{border-right:3px solid var(--ink)} .cell.checker{background:var(--tint)}
+  .cell .fill{position:absolute;inset:5px;display:flex;align-items:center;justify-content:center;
+              font-weight:900;font-size:17px;letter-spacing:-.01em}
+  .cell.chord .fill{background:var(--chord);color:#F4F2ED}
+  .cell.color .fill{background:var(--color);color:#141310}
+  .cell.root  .fill{background:var(--salmon);color:#141310;border:2px solid var(--ink)}
+  .cell.ghost .fill{background:transparent;border:1.5px solid var(--ghost);inset:12px}
+  .cell.bridge .fill{outline:2.5px dashed var(--salmon);outline-offset:2px}
+  .ruler{display:grid;margin-top:5px;width:max-content}
+  .ruler span{text-align:center;font-size:10.5px;font-weight:700;color:var(--note)}
+  .ruler span.dot{color:var(--ink)}
+  .legend{display:flex;gap:15px;align-items:center;padding:9px 15px 12px;flex-wrap:wrap}
+  .legend i{display:inline-flex;align-items:center;gap:6px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--note)}
+  .legend b{width:16px;height:16px;border:1.5px solid var(--ink);display:inline-block}
+  .legend b.r{background:var(--salmon)} .legend b.c{background:var(--chord)} .legend b.t{background:var(--color)}
+  .legend b.g{border:1.5px solid var(--ghost);background:transparent}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="top">
+    <div class="title">Checkerboard v5<small>G MAJOR · SHADE RAMP</small></div>
+    <div class="sp"></div>
+    <span class="lab">Labels</span>
+    <div class="seg" id="labSeg"><button data-l="off" class="on">Off</button><button data-l="deg">Deg</button><button data-l="note">Note</button></div>
+    <div class="seg" id="seg"><button data-sys="caged" class="on">CAGED</button><button data-sys="nps">3 NPS</button></div>
+    <div class="step"><button id="prev">&larr;</button><div class="posn" id="posn">POS 1 <small>/5</small></div><button id="next">&rarr;</button></div>
+  </div>
+  <div class="board"><div class="grid" id="grid"></div><div class="ruler" id="ruler"></div></div>
+  <div class="legend">
+    <i><b class="r"></b>Root</i><i><b class="c"></b>Chord tone</i><i><b class="t"></b>Color tone</i>
+    <i><b class="g"></b>Neighbour</i><i><span style="color:var(--salmon);font-weight:900">▟▙</span>Bridge</i>
+  </div>
+</div>
+<script>
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const OPEN=[{n:'E',midi:40},{n:'A',midi:45},{n:'D',midi:50},{n:'G',midi:55},{n:'B',midi:59},{n:'e',midi:64}];
+const MAJOR=[0,2,4,5,7,9,11]; const MAXNECK=17; const ROOT_PC=7;
+function scaleCells(){const inS=new Set(MAJOR.map(s=>(ROOT_PC+s)%12));const out=[];OPEN.forEach((st,si)=>{for(let f=0;f<=MAXNECK;f++){const midi=st.midi+f,pc=midi%12;if(inS.has(pc)){const degree=MAJOR.indexOf(((pc-ROOT_PC)%12+12)%12)+1;out.push({s:si,f,pc,degree});}}});return out;}
+function positionWindow(sys,idx){const root=((ROOT_PC-40)%12+12)%12;if(sys==='caged'){const lo=root+idx*3;return{lo,hi:lo+4};}const lo=root-1+idx*2;return{lo,hi:lo+5};}
+const CELLS=scaleCells(), ROWS=[5,4,3,2,1,0], LBL={5:'e',4:'B',3:'G',2:'D',1:'A',0:'E'};
+let sys='caged', pos=0, labelMode='off';
+const count=()=>sys==='caged'?5:7;
+const inW=(f,w)=>f>=w.lo&&f<=w.hi;
+function labelFor(c){ if(labelMode==='deg') return c.degree===1?'R':String(c.degree);
+  if(labelMode==='note') return NOTES[c.pc]; return ''; }
+
+function build(){
+  const aw=positionWindow(sys,pos),pw=pos>0?positionWindow(sys,pos-1):null,nw=pos<count()-1?positionWindow(sys,pos+1):null;
+  // extend the neck when the active/neighbour position runs past fret 12
+  const hiFret=Math.min(MAXNECK, Math.max(12, aw.hi, nw?nw.hi:0, pw?pw.hi:0));
+  const cols=`var(--labelW) repeat(${hiFret+1}, var(--cellW))`;
+  const g=document.getElementById('grid'); g.style.gridTemplateColumns=cols; g.innerHTML='';
+  ROWS.forEach(si=>{
+    const l=document.createElement('div');l.className='lbl';l.textContent=LBL[si];g.appendChild(l);
+    for(let f=0;f<=hiFret;f++){
+      const cell=document.createElement('div');
+      cell.className='cell'+(f===0?' fret0':'')+(((si+f)%2)?' checker':'');
+      const n=CELLS.find(x=>x.s===si&&x.f===f);
+      if(n){const act=inW(f,aw),nb=(pw&&inW(f,pw))||(nw&&inW(f,nw));
+        if(act){const fl=document.createElement('div');fl.className='fill';fl.textContent=labelFor(n);
+          cell.classList.add(n.degree===1?'root':([1,3,5,7].includes(n.degree)?'chord':'color'));
+          if(nb)cell.classList.add('bridge');cell.appendChild(fl);}
+        else if(nb){cell.classList.add('ghost');cell.appendChild(Object.assign(document.createElement('div'),{className:'fill'}));}}
+      g.appendChild(cell);
+    }
+  });
+  const r=document.getElementById('ruler');r.style.gridTemplateColumns=cols;r.innerHTML='<span></span>';
+  const d=new Set([3,5,7,9,12,15]);
+  for(let f=0;f<=hiFret;f++){const s=document.createElement('span');s.textContent=f;if(d.has(f))s.className='dot';r.appendChild(s);}
+  document.getElementById('posn').innerHTML=`POS ${pos+1} <small>/${count()}</small>`;
+}
+document.getElementById('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');sys=b.dataset.sys;pos=Math.min(pos,count()-1);build();});
+document.getElementById('labSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#labSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');labelMode=b.dataset.l;build();});
+document.getElementById('prev').onclick=()=>{pos=(pos-1+count())%count();build();};
+document.getElementById('next').onclick=()=>{pos=(pos+1)%count();build();};
+build();
+</script>
+</body>
+</html>

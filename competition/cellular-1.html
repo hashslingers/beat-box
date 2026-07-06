@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=844, initial-scale=1, viewport-fit=cover">
+<title>Punch-Card Neck — Cellular Fretboard</title>
+<style>
+  :root{
+    --paper:#f4f2ec;
+    --ink:#141414;
+    --ink-soft:#3a3a3a;
+    --hair:#b9b4a8;
+    --ghost:#cfc9bb;
+    --accent:#0f5c52;     /* single hue used only to anchor the root */
+    --line:#8a8478;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#22211d;height:100%;width:100%;
+    font-family:Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  body{display:flex;align-items:center;justify-content:center;}
+  /* landscape phone stage */
+  .stage{
+    width:844px;height:390px;background:var(--paper);color:var(--ink);
+    position:relative;overflow:hidden;
+    box-shadow:0 0 0 1px #000, 0 18px 50px rgba(0,0,0,.5);
+  }
+  .hdr{position:absolute;top:0;left:0;right:0;height:58px;
+    display:flex;align-items:center;gap:14px;padding:0 16px;
+    border-bottom:1.5px solid var(--ink);}
+  .title{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;}
+  .title small{display:block;font-weight:400;letter-spacing:.06em;font-size:9px;color:var(--ink-soft);margin-top:2px;}
+  .spacer{flex:1}
+  .toggle{display:flex;border:1.5px solid var(--ink);}
+  .toggle button{font:inherit;font-size:11px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;padding:7px 12px;background:var(--paper);color:var(--ink);
+    border:none;cursor:pointer;}
+  .toggle button.on{background:var(--ink);color:var(--paper);}
+  .step{display:flex;align-items:center;gap:8px;}
+  .step button{font:inherit;font-size:15px;font-weight:700;width:30px;height:30px;
+    border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;line-height:1;}
+  .step button:active{background:var(--ink);color:var(--paper);}
+  .posname{font-size:11px;font-weight:700;letter-spacing:.06em;min-width:128px;text-align:center;}
+  .posname b{font-size:13px}
+  .posname span{display:block;font-weight:400;color:var(--ink-soft);font-size:9px;margin-top:1px;letter-spacing:.04em;}
+  svg{position:absolute;top:58px;left:0}
+  /* legend */
+  .legend{position:absolute;right:14px;bottom:8px;display:flex;gap:14px;align-items:center;
+    font-size:8.5px;letter-spacing:.05em;color:var(--ink-soft);text-transform:uppercase;}
+  .legend .it{display:flex;align-items:center;gap:5px;}
+  .legend svg{position:static}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="hdr">
+    <div class="title">Punch-Card Neck<small>G major · cellular position map</small></div>
+    <div class="spacer"></div>
+    <div class="toggle" id="sys">
+      <button data-sys="caged" class="on">CAGED</button>
+      <button data-sys="3nps">3 NPS</button>
+    </div>
+    <div class="step">
+      <button id="prev">&#8592;</button>
+      <div class="posname" id="posname"></div>
+      <button id="next">&#8594;</button>
+    </div>
+  </div>
+
+  <svg id="board" width="844" height="332" viewBox="0 0 844 332" aria-label="fretboard"></svg>
+
+  <div class="legend">
+    <div class="it"><svg width="16" height="16"><rect x="2" y="2" width="12" height="12" fill="#141414"/><circle cx="8" cy="8" r="2.4" fill="#f4f2ec"/></svg>ROOT</div>
+    <div class="it"><svg width="16" height="16"><rect x="2" y="2" width="12" height="12" fill="#141414"/></svg>CHORD TONE</div>
+    <div class="it"><svg width="16" height="16"><rect x="2" y="2" width="12" height="12" fill="#141414" opacity=".4"/></svg>COLOR TONE</div>
+    <div class="it"><svg width="16" height="16"><rect x="2.5" y="2.5" width="11" height="11" fill="none" stroke="#8a8478" stroke-width="1"/></svg>NEIGHBOUR</div>
+  </div>
+</div>
+
+<script>
+/* ===== SHARED FRETBOARD DATA — verbatim ===== */
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+// standard tuning low->high: E A D G B e ; open-string MIDI
+const OPEN=[{n:'E',midi:40},{n:'A',midi:45},{n:'D',midi:50},{n:'G',midi:55},{n:'B',midi:59},{n:'e',midi:64}];
+const MAJOR=[0,2,4,5,7,9,11]; const FRETS=12; const ROOT_PC=7; /* G major; 0=C */
+const midiFreq=m=>440*Math.pow(2,(m-69)/12);
+function scaleCells(){const inS=new Set(MAJOR.map(s=>(ROOT_PC+s)%12));const out=[];OPEN.forEach((st,si)=>{for(let f=0;f<=FRETS;f++){const midi=st.midi+f,pc=midi%12;if(inS.has(pc)){const degree=MAJOR.indexOf(((pc-ROOT_PC)%12+12)%12)+1;out.push({s:si,f,midi,pc,degree,oct:Math.floor(midi/12)-1,freq:midiFreq(midi)});}}});return out;}
+function positionWindow(system,idx){const rootFretLowE=((ROOT_PC-40)%12+12)%12; /* G=3 */ if(system==='caged'){const lo=rootFretLowE+idx*3;return{lo,hi:lo+4};} const lo=rootFretLowE-1+idx*2;return{lo,hi:lo+5};}
+function cellsInWindow(cells,w){return cells.filter(c=>c.f>=w.lo&&c.f<=w.hi);}
+// s = string index 0(lowE)..5(high e); f = fret 0..12; degree 1..7 (1=root)
+/* ===== END SHARED DATA ===== */
+
+const SVGNS='http://www.w3.org/2000/svg';
+const board=document.getElementById('board');
+const ALL=scaleCells();
+
+// layout
+const W=844,H=332;
+const boardLeft=44,boardRight=812,slotW=(boardRight-boardLeft)/13;
+const boardTop=30,boardBottom=250,rowGap=(boardBottom-boardTop)/5;
+const CELL=30;
+const fretX=f=>boardLeft+(f+0.5)*slotW;          // centre of fret slot
+const wireX=f=>boardLeft+f*slotW;                 // fret wire (left boundary)
+const stringY=si=>boardTop+(5-si)*rowGap;         // high e (si 5) on top, low E (si 0) bottom
+
+// CAGED has 5 positions, 3NPS has 7
+const COUNT={caged:5,'3nps':7};
+let state={sys:'caged',idx:1};
+
+function clampWin(w){return {lo:Math.max(0,w.lo),hi:Math.min(FRETS,w.hi)};}
+
+// density tier for a scale degree: root solid (special), 3/5 chord tones dense, rest color tones light
+function degreeStyle(d){
+  if(d===1) return {kind:'root'};
+  if(d===3||d===5) return {kind:'chord'};
+  return {kind:'color'};
+}
+
+function el(tag,attrs){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+function render(){
+  board.innerHTML='';
+  const w=clampWin(positionWindow(state.sys,state.idx));
+  const wPrev=state.idx>0?clampWin(positionWindow(state.sys,state.idx-1)):null;
+  const wNext=state.idx<COUNT[state.sys]-1?clampWin(positionWindow(state.sys,state.idx+1)):null;
+
+  const inWin=(c,win)=>win&&c.f>=win.lo&&c.f<=win.hi;
+
+  // ---- defs: halftone patterns (density encodes harmonic role) ----
+  const defs=el('defs',{});
+  function halftone(id,r,op){
+    const p=el('pattern',{id,patternUnits:'userSpaceOnUse',width:6,height:6});
+    p.appendChild(el('circle',{cx:3,cy:3,r,fill:'#141414','fill-opacity':op}));
+    defs.appendChild(p);
+  }
+  halftone('htChord',2.0,1);   // chord tones: dense
+  halftone('htColor',1.15,.95);// color tones: sparse
+  board.appendChild(defs);
+
+  // ---- fretboard base ----
+  // string lines
+  for(let si=0;si<6;si++){
+    board.appendChild(el('line',{x1:boardLeft,y1:stringY(si),x2:boardRight,y2:stringY(si),
+      stroke:'var(--line)','stroke-width': si<2?1.6:1}));
+  }
+  // fret wires
+  for(let f=0;f<=13;f++){
+    board.appendChild(el('line',{x1:wireX(f),y1:boardTop-2,x2:wireX(f),y2:boardBottom+2,
+      stroke:'var(--ink)','stroke-width': f===0?3:1}));
+  }
+  // inlay markers (neck dots) at 3,5,7,9,12
+  [3,5,7,9].forEach(f=>board.appendChild(el('circle',{cx:fretX(f),cy:boardBottom+22,r:2.4,fill:'var(--hair)'})));
+  board.appendChild(el('circle',{cx:fretX(12)-5,cy:boardBottom+22,r:2.4,fill:'var(--hair)'}));
+  board.appendChild(el('circle',{cx:fretX(12)+5,cy:boardBottom+22,r:2.4,fill:'var(--hair)'}));
+
+  // string labels (left)
+  const LBL=['E','A','D','G','B','e'];
+  for(let si=0;si<6;si++){
+    const t=el('text',{x:boardLeft-14,y:stringY(si)+4,'text-anchor':'middle',
+      'font-size':12,'font-weight':700,fill:'var(--ink)'});
+    t.textContent=LBL[si];board.appendChild(t);
+  }
+  // fret numbers (bottom)
+  for(let f=0;f<=12;f++){
+    const t=el('text',{x:fretX(f),y:boardBottom+38,'text-anchor':'middle',
+      'font-size':9.5,fill:'var(--ink-soft)','font-weight':(f%2?400:700)});
+    t.textContent=f;board.appendChild(t);
+  }
+
+  // ---- ghost neighbour cells (drawn first, behind) ----
+  function drawGhost(cells,win){
+    cells.forEach(c=>{
+      // skip ghosts that fall inside the active window (active draws them solid)
+      if(c.f>=w.lo&&c.f<=w.hi) return;
+      const x=fretX(c.f)-CELL/2, y=stringY(c.s)-CELL/2;
+      board.appendChild(el('rect',{x,y,width:CELL,height:CELL,rx:2,
+        fill:'none',stroke:'var(--ghost)','stroke-width':1}));
+      // faint role hint inside ghost: tiny centre mark for root
+      if(c.degree===1)
+        board.appendChild(el('circle',{cx:fretX(c.f),cy:stringY(c.s),r:3,fill:'none',
+          stroke:'var(--ghost)','stroke-width':1.4}));
+    });
+  }
+  if(wPrev) drawGhost(cellsInWindow(ALL,wPrev),wPrev);
+  if(wNext) drawGhost(cellsInWindow(ALL,wNext),wNext);
+
+  // ---- active cells (solid punch-card) ----
+  const active=cellsInWindow(ALL,w);
+  active.forEach(c=>{
+    const cx=fretX(c.f), cy=stringY(c.s);
+    const x=cx-CELL/2, y=cy-CELL/2;
+    const st=degreeStyle(c.degree);
+
+    // bridge: a cell shared with an adjacent position window = the connector between positions
+    const isBridge=inWin(c,wPrev)||inWin(c,wNext);
+    if(isBridge){
+      board.appendChild(el('rect',{x:x-4,y:y-4,width:CELL+8,height:CELL+8,rx:3,
+        fill:'none',stroke:'var(--accent)','stroke-width':1.2,'stroke-dasharray':'3 3'}));
+    }
+
+    if(st.kind==='root'){
+      // solid square + accent ring + punched centre hole = unmistakable anchor
+      board.appendChild(el('rect',{x,y,width:CELL,height:CELL,rx:2,fill:'var(--ink)'}));
+      board.appendChild(el('rect',{x:x-3,y:y-3,width:CELL+6,height:CELL+6,rx:3,
+        fill:'none',stroke:'var(--accent)','stroke-width':2}));
+      board.appendChild(el('circle',{cx,cy,r:4.2,fill:'var(--paper)'}));
+    } else if(st.kind==='chord'){
+      // dense halftone fill, full square — strong stable tone
+      board.appendChild(el('rect',{x,y,width:CELL,height:CELL,rx:2,fill:'var(--paper)',
+        stroke:'var(--ink)','stroke-width':1.4}));
+      board.appendChild(el('rect',{x,y,width:CELL,height:CELL,rx:2,fill:'url(#htChord)'}));
+    } else {
+      // sparse halftone fill, smaller inner square — light color tone
+      const m=4;
+      board.appendChild(el('rect',{x,y,width:CELL,height:CELL,rx:2,fill:'none',
+        stroke:'var(--hair)','stroke-width':1}));
+      board.appendChild(el('rect',{x:x+m,y:y+m,width:CELL-2*m,height:CELL-2*m,rx:2,fill:'url(#htColor)'}));
+    }
+  });
+
+  // active-window frame strip (top) so the eye locks onto the isolated zone
+  const fx1=wireX(Math.max(0,w.lo)), fx2=wireX(Math.min(13,w.hi+1));
+  board.appendChild(el('line',{x1:fx1,y1:boardTop-9,x2:fx2,y2:boardTop-9,
+    stroke:'var(--ink)','stroke-width':3}));
+
+  // position name
+  const pn=document.getElementById('posname');
+  const total=COUNT[state.sys];
+  pn.innerHTML='<b>POS '+(state.idx+1)+' / '+total+'</b><span>frets '+w.lo+'–'+w.hi+'</span>';
+}
+
+// ---- controls ----
+document.querySelectorAll('#sys button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    state.sys=b.dataset.sys;
+    document.querySelectorAll('#sys button').forEach(x=>x.classList.toggle('on',x===b));
+    state.idx=Math.min(state.idx,COUNT[state.sys]-1);
+    render();
+  });
+});
+document.getElementById('prev').addEventListener('click',()=>{state.idx=Math.max(0,state.idx-1);render();});
+document.getElementById('next').addEventListener('click',()=>{state.idx=Math.min(COUNT[state.sys]-1,state.idx+1);render();});
+
+render();
+</script>
+</body>
+</html>

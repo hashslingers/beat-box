@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=844, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Slipstream — Fretboard Flow Visualizer</title>
+<style>
+  :root{
+    --bg:#070809;
+    --stage:#0b0d10;
+    --neck:#15181d;
+    --string:#3a4048;
+    --fret:#23282f;
+    --ink:#e8eef2;
+    --dim:#6b7682;
+    /* single hue: warm long-exposure amber */
+    --h:34;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(120% 120% at 50% -10%,#101418,#040506 70%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:Helvetica,Arial,sans-serif;color:var(--ink);
+    min-height:100vh;
+  }
+  .stage{
+    position:relative;width:844px;height:390px;
+    background:linear-gradient(180deg,#0c0f13,#070809);
+    border:1px solid #1c2127;border-radius:14px;overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.6);
+  }
+  /* top bar */
+  .bar{
+    position:absolute;top:0;left:0;right:0;height:46px;
+    display:flex;align-items:center;gap:14px;padding:0 16px;
+    border-bottom:1px solid #171b21;
+    background:linear-gradient(180deg,rgba(20,24,29,.9),rgba(10,12,15,.4));
+    z-index:5;
+  }
+  .brand{display:flex;flex-direction:column;line-height:1}
+  .brand b{font-size:15px;letter-spacing:.16em;font-weight:700}
+  .brand span{font-size:9px;letter-spacing:.34em;color:var(--dim);margin-top:3px}
+  .spacer{flex:1}
+  .keytag{
+    font-size:11px;letter-spacing:.18em;color:var(--dim);
+    border:1px solid #262c34;border-radius:20px;padding:5px 12px;
+  }
+  .keytag b{color:hsl(var(--h) 90% 62%);font-weight:700}
+  /* segmented toggle */
+  .seg{display:flex;border:1px solid #2a313a;border-radius:9px;overflow:hidden}
+  .seg button{
+    background:transparent;color:var(--dim);border:0;cursor:pointer;
+    font:600 11px/1 Helvetica,Arial,sans-serif;letter-spacing:.12em;
+    padding:8px 14px;transition:.18s;
+  }
+  .seg button.on{background:hsl(var(--h) 85% 55%);color:#1a1206}
+  /* stepper */
+  .step{display:flex;align-items:center;gap:9px}
+  .step button{
+    width:30px;height:30px;border-radius:8px;cursor:pointer;
+    background:#12161b;border:1px solid #2a313a;color:var(--ink);
+    font-size:14px;display:flex;align-items:center;justify-content:center;
+    transition:.15s;
+  }
+  .step button:active{transform:scale(.9)}
+  .dots{display:flex;gap:6px;align-items:center}
+  .dots i{width:7px;height:7px;border-radius:50%;background:#2c333c;transition:.25s}
+  .dots i.on{background:hsl(var(--h) 90% 60%);box-shadow:0 0 10px hsl(var(--h) 90% 55%/.8);transform:scale(1.25)}
+  /* svg board */
+  svg{position:absolute;left:0;top:46px;display:block}
+  /* legend */
+  .legend{
+    position:absolute;left:16px;bottom:10px;z-index:5;
+    display:flex;align-items:center;gap:9px;font-size:9.5px;
+    letter-spacing:.14em;color:var(--dim);
+  }
+  .legend .grad{
+    width:96px;height:7px;border-radius:6px;
+    background:linear-gradient(90deg,
+      hsl(var(--h) 95% 65%),
+      hsl(var(--h) 60% 45%),
+      hsl(var(--h) 30% 30%));
+  }
+  .legend .anchor{
+    width:10px;height:10px;transform:rotate(45deg);
+    background:hsl(var(--h) 95% 65%);box-shadow:0 0 9px hsl(var(--h) 95% 60%);
+  }
+  .hint{
+    position:absolute;right:16px;bottom:10px;z-index:5;
+    font-size:9.5px;letter-spacing:.14em;color:var(--dim);text-align:right;
+  }
+  .hint b{color:hsl(var(--h) 85% 62%)}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="bar">
+    <div class="brand"><b>SLIPSTREAM</b><span>FRETBOARD FLOW</span></div>
+    <div class="seg" id="seg">
+      <button data-sys="caged" class="on">CAGED</button>
+      <button data-sys="3nps">3&middot;NPS</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="step">
+      <button id="prev">&#9664;</button>
+      <div class="dots" id="dots"></div>
+      <button id="next">&#9654;</button>
+    </div>
+    <div class="keytag">KEY&nbsp;&nbsp;<b>G</b>&nbsp;MAJOR</div>
+  </div>
+
+  <svg id="board" width="844" height="344" viewBox="0 0 844 344"></svg>
+
+  <div class="legend">
+    <span class="anchor"></span>
+    <span>ROOT ANCHOR</span>
+    <span class="grad"></span>
+    <span>HEAVIER&nbsp;TRAIL = MORE STABLE</span>
+  </div>
+  <div class="hint">crisp = active position &middot; <b>streaks point to the shift ahead</b><br>faint rings = neighbouring position (the bridge)</div>
+</div>
+
+<script>
+/* ===== SHARED FRETBOARD DATA — verbatim ===== */
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+// standard tuning low->high: E A D G B e ; open-string MIDI
+const OPEN=[{n:'E',midi:40},{n:'A',midi:45},{n:'D',midi:50},{n:'G',midi:55},{n:'B',midi:59},{n:'e',midi:64}];
+const MAJOR=[0,2,4,5,7,9,11]; const FRETS=12; const ROOT_PC=7; /* G major; 0=C */
+const midiFreq=m=>440*Math.pow(2,(m-69)/12);
+function scaleCells(){const inS=new Set(MAJOR.map(s=>(ROOT_PC+s)%12));const out=[];OPEN.forEach((st,si)=>{for(let f=0;f<=FRETS;f++){const midi=st.midi+f,pc=midi%12;if(inS.has(pc)){const degree=MAJOR.indexOf(((pc-ROOT_PC)%12+12)%12)+1;out.push({s:si,f,midi,pc,degree,oct:Math.floor(midi/12)-1,freq:midiFreq(midi)});}}});return out;}
+function positionWindow(system,idx){const rootFretLowE=((ROOT_PC-40)%12+12)%12; /* G=3 */ if(system==='caged'){const lo=rootFretLowE+idx*3;return{lo,hi:lo+4};} const lo=rootFretLowE-1+idx*2;return{lo,hi:lo+5};}
+function cellsInWindow(cells,w){return cells.filter(c=>c.f>=w.lo&&c.f<=w.hi);}
+// s = string index 0(lowE)..5(high e); f = fret 0..12; degree 1..7 (1=root)
+/* ===== END SHARED DATA ===== */
+
+const SVGNS='http://www.w3.org/2000/svg';
+const CELLS=scaleCells();
+
+/* ---- geometry ---- */
+const W=844,H=344;
+const FB_L=60,FB_R=812,FB_T=34,FB_B=300;
+const nStr=6,nFret=12;
+function wireX(f){return FB_L+(f/nFret)*(FB_R-FB_L);}      // fret wire f
+function noteX(f){return f===0?FB_L+8:(wireX(f-1)+wireX(f))/2;} // note centre
+function strY(si){return FB_T+((nStr-1-si)/(nStr-1))*(FB_B-FB_T);} // si0=lowE bottom
+
+/* ---- degree -> motion strength (harmonic stability within ONE hue) ---- */
+const STR={1:1.00, 5:0.80, 3:0.66, 2:0.50, 6:0.48, 4:0.46, 7:0.40};
+function lum(st){return 28+st*42;}        // 28..70 lightness
+function sat(st){return 30+st*65;}        // 30..95 saturation
+function rad(st){return 5+st*6.5;}        // node radius
+
+/* ---- valid positions for current system (clamp to neck) ---- */
+function positions(system){
+  const n=system==='caged'?5:7;const arr=[];
+  for(let i=0;i<n;i++){
+    let w=positionWindow(system,i);
+    const cw={lo:Math.max(0,w.lo),hi:Math.min(FRETS,w.hi)};
+    if(cw.lo>FRETS) continue;
+    const cells=cellsInWindow(CELLS,cw);
+    if(cells.length>=5) arr.push({idx:i,win:cw,cells});
+  }
+  return arr;
+}
+
+let state={sys:'caged',pos:0};
+
+/* ---- builders ---- */
+function el(tag,attrs){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+function buildBoard(){
+  const svg=document.getElementById('board');
+  svg.innerHTML='';
+
+  // defs: glow + comet gradient
+  const defs=el('defs',{});
+  defs.innerHTML=`
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>`;
+  svg.appendChild(defs);
+
+  // neck panel
+  svg.appendChild(el('rect',{x:FB_L-2,y:FB_T-10,width:(FB_R-FB_L)+4,height:(FB_B-FB_T)+20,rx:6,fill:'var(--neck)',opacity:.55}));
+
+  // fret wires + numbers (fret numbers are NOT degrees — allowed)
+  for(let f=0;f<=nFret;f++){
+    const x=wireX(f);
+    svg.appendChild(el('line',{x1:x,y1:FB_T-8,x2:x,y2:FB_B+8,stroke:f===0?'#5a626c':'var(--fret)','stroke-width':f===0?3:1}));
+  }
+  // position inlay dots (3,5,7,9,12) — neutral neck markers
+  [3,5,7,9].forEach(f=>{const x=(wireX(f-1)+wireX(f))/2;svg.appendChild(el('circle',{cx:x,cy:(FB_T+FB_B)/2,r:3,fill:'#2b323b'}));});
+  const x12=(wireX(11)+wireX(12))/2;
+  svg.appendChild(el('circle',{cx:x12,cy:strY(4),r:3,fill:'#2b323b'}));
+  svg.appendChild(el('circle',{cx:x12,cy:strY(1),r:3,fill:'#2b323b'}));
+
+  // strings + labels
+  for(let si=0;si<nStr;si++){
+    const y=strY(si);
+    svg.appendChild(el('line',{x1:FB_L,y1:y,x2:FB_R,y2:y,stroke:'var(--string)','stroke-width':0.6+si*0.18,opacity:.7}));
+    const lab=el('text',{x:FB_L-16,y:y+4,'text-anchor':'middle',fill:'var(--dim)','font-size':12,'font-family':'Helvetica','font-weight':700});
+    lab.textContent=OPEN[si].n;
+    svg.appendChild(lab);
+  }
+  // fret number strip
+  for(let f=0;f<=nFret;f++){
+    if(f%2===1||f===12||f===0){
+      const t=el('text',{x:f===0?FB_L+8:noteX(f),y:FB_B+24,'text-anchor':'middle',fill:'#4a525c','font-size':9,'font-family':'Helvetica','letter-spacing':'1'});
+      t.textContent=f;svg.appendChild(t);
+    }
+  }
+
+  // layers
+  const gGhost=el('g',{});svg.appendChild(gGhost);
+  const gFlow=el('g',{});svg.appendChild(gFlow);
+  const gActive=el('g',{});svg.appendChild(gActive);
+
+  const list=positions(state.sys);
+  if(state.pos>=list.length)state.pos=list.length-1;
+  const cur=list[state.pos];
+  const nxt=list[(state.pos+1)%list.length];
+  const prv=list[(state.pos-1+list.length)%list.length];
+
+  const key=c=>c.s+'_'+c.f;
+  const curSet=new Set(cur.cells.map(key));
+  const nxtSet=new Set(nxt?nxt.cells.map(key):[]);
+
+  /* --- GHOST neighbours: faint hollow rings so chaining is visible --- */
+  function ghost(p,op){
+    if(!p||p===cur)return;
+    p.cells.forEach(c=>{
+      if(curSet.has(key(c)))return; // shared notes drawn as bridge later
+      const st=STR[c.degree],x=noteX(c.f),y=strY(c.s);
+      gGhost.appendChild(el('circle',{cx:x,cy:y,r:rad(st)*0.82,fill:'none',
+        stroke:`hsl(var(--h) ${sat(st)*0.5}% ${lum(st)}% / ${op})`,'stroke-width':1.2}));
+    });
+  }
+  ghost(prv,0.20);
+  ghost(nxt,0.30);
+
+  /* --- FLOW STREAKS: comet tails from each active note toward its shift target --- */
+  // target = nearest note in NEXT position on the SAME string
+  if(nxt && nxt!==cur){
+    cur.cells.forEach(c=>{
+      const st=STR[c.degree];
+      const cand=nxt.cells.filter(t=>t.s===c.s);
+      if(!cand.length)return;
+      cand.sort((a,b)=>Math.abs(a.f-c.f)-Math.abs(b.f-c.f));
+      const t=cand[0];
+      const x1=noteX(c.f),x2=noteX(t.f),y=strY(c.s);
+      if(Math.abs(x2-x1)<2)return; // shared/bridge note -> no slide
+      const w=2+st*7;                       // stroke weight ∝ stability
+      const gid='cg'+c.s+'_'+c.f;
+      // per-streak gradient: opaque at source, fades toward target
+      const grad=el('linearGradient',{id:gid,x1:x1,y1:0,x2:x2,y2:0,gradientUnits:'userSpaceOnUse'});
+      grad.innerHTML=
+        `<stop offset="0" stop-color="hsl(var(--h) ${sat(st)}% ${lum(st)+8}%)" stop-opacity="${0.20+st*0.55}"/>
+         <stop offset="1" stop-color="hsl(var(--h) ${sat(st)}% ${lum(st)}%)" stop-opacity="0"/>`;
+      defs.appendChild(grad);
+      // tapering comet: wide at source, point at target
+      const poly=el('polygon',{points:`${x1},${y-w/2} ${x1},${y+w/2} ${x2},${y}`,fill:`url(#${gid})`});
+      gFlow.appendChild(poly);
+      // animated flow ticks along the line to read as motion
+      const dash=el('line',{x1:x1,y1:y,x2:x2,y2:y,stroke:`hsl(var(--h) ${sat(st)}% ${lum(st)+14}%)`,
+        'stroke-width':Math.max(1,w*0.32),'stroke-linecap':'round',
+        'stroke-dasharray':'1 13','opacity':(0.25+st*0.45)});
+      const an=el('animate',{attributeName:'stroke-dashoffset',from:'0',to:'-28',dur:(1.1-st*0.5)+'s',repeatCount:'indefinite'});
+      dash.appendChild(an);
+      gFlow.appendChild(dash);
+      // arrowhead nub at target
+      gFlow.appendChild(el('circle',{cx:x2,cy:y,r:1.6+st*1.4,fill:`hsl(var(--h) ${sat(st)}% ${lum(st)+6}% / ${0.3+st*0.4})`}));
+    });
+  }
+
+  /* --- ACTIVE notes: crisp. root = glowing diamond anchor --- */
+  cur.cells.forEach(c=>{
+    const st=STR[c.degree],x=noteX(c.f),y=strY(c.s);
+    const bridge=nxtSet.has(key(c)); // shared with next position = the bridge
+    if(c.degree===1){
+      // ROOT anchor — diamond + halo glow
+      gActive.appendChild(el('circle',{cx:x,cy:y,r:rad(st)+6,fill:`hsl(var(--h) 95% 60% / .22)`,filter:'url(#soft)'}));
+      const d=rad(st)+1;
+      gActive.appendChild(el('rect',{x:x-d/2,y:y-d/2,width:d,height:d,
+        fill:`hsl(var(--h) 95% 64%)`,transform:`rotate(45 ${x} ${y})`,filter:'url(#glow)',stroke:'#fff7e6','stroke-width':1}));
+    }else{
+      gActive.appendChild(el('circle',{cx:x,cy:y,r:rad(st),
+        fill:`hsl(var(--h) ${sat(st)}% ${lum(st)+6}%)`,filter:'url(#glow)',
+        stroke:`hsl(var(--h) ${sat(st)}% ${Math.min(85,lum(st)+22)}%)`,'stroke-width':1}));
+    }
+    if(bridge){
+      // bridge halo: shared with the next position -> the connection point
+      gActive.appendChild(el('circle',{cx:x,cy:y,r:rad(st)+4.5,fill:'none',
+        stroke:'#e8eef2','stroke-width':1.2,'stroke-dasharray':'2 3',opacity:.85}));
+    }
+  });
+
+  // active window frame (subtle bracket showing the isolated zone)
+  const fl=wireX(cur.win.lo>0?cur.win.lo-1:0), fr=wireX(cur.win.hi);
+  svg.appendChild(el('rect',{x:fl,y:FB_T-12,width:fr-fl,height:(FB_B-FB_T)+24,rx:7,
+    fill:'hsl(var(--h) 90% 55% / .05)',stroke:'hsl(var(--h) 85% 55% / .35)','stroke-width':1.2}));
+  // move frame behind notes
+  svg.insertBefore(svg.lastChild,gGhost);
+}
+
+/* ---- controls ---- */
+function buildDots(){
+  const list=positions(state.sys);
+  const d=document.getElementById('dots');d.innerHTML='';
+  list.forEach((_,i)=>{const s=document.createElement('i');if(i===state.pos)s.className='on';d.appendChild(s);});
+}
+function step(dir){
+  const n=positions(state.sys).length;
+  state.pos=(state.pos+dir+n)%n;
+  render();
+}
+function setSys(sys){
+  if(state.sys===sys)return;
+  state.sys=sys;state.pos=0;
+  document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.sys===sys));
+  render();
+}
+function render(){buildBoard();buildDots();}
+
+document.getElementById('prev').onclick=()=>step(-1);
+document.getElementById('next').onclick=()=>step(1);
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>setSys(b.dataset.sys));
+
+render();
+</script>
+</body>
+</html>

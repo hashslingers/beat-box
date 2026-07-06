@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Spectral Neck — Pitch-Class Hue</title>
+<style>
+  :root{
+    --ink:#0c0d10; --paper:#14161c; --line:#2c2f3a; --faint:#22252e;
+    --txt:#aeb4c2; --txtdim:#5c616e;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:#05060a;color:var(--txt);
+    font-family:Helvetica,Arial,sans-serif;}
+  .wrap{display:flex;align-items:center;justify-content:center;min-height:100%;}
+  /* landscape phone stage */
+  .stage{position:relative;width:844px;height:390px;background:
+    radial-gradient(120% 140% at 18% -10%, #16181f 0%, #0a0b10 55%, #06070b 100%);
+    overflow:hidden;}
+
+  /* top control bar */
+  .bar{position:absolute;top:0;left:0;right:0;height:48px;display:flex;
+    align-items:center;gap:14px;padding:0 16px;
+    border-bottom:1px solid var(--line);background:rgba(8,9,13,.6);z-index:5;}
+  .brand{font-size:12px;letter-spacing:.32em;color:var(--txtdim);text-transform:uppercase;}
+  .brand b{color:#e7c46b;font-weight:700;letter-spacing:.30em;}
+  .spacer{flex:1;}
+
+  .toggle{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;}
+  .toggle button{appearance:none;border:0;background:transparent;color:var(--txtdim);
+    font:600 11px/1 Helvetica,Arial,sans-serif;letter-spacing:.14em;padding:8px 14px;cursor:pointer;}
+  .toggle button.on{background:#e7c46b;color:#161208;}
+
+  .stepper{display:flex;align-items:center;gap:10px;}
+  .stepper button{appearance:none;width:30px;height:30px;border-radius:50%;
+    border:1px solid var(--line);background:#10121a;color:var(--txt);font-size:15px;
+    cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .stepper button:active{background:#1c1f29;}
+  .poslabel{min-width:118px;text-align:center;font-size:11px;letter-spacing:.10em;color:var(--txt);}
+  .poslabel small{display:block;color:var(--txtdim);letter-spacing:.18em;font-size:9px;margin-top:2px;}
+
+  /* board */
+  #board{position:absolute;top:48px;left:0;width:844px;height:300px;}
+  .gridline{position:absolute;background:var(--faint);}
+  .string{height:1px;left:34px;right:14px;}
+  .string.heavy{height:1.5px;background:#34384400;}
+  .fret{width:1px;top:18px;bottom:30px;}
+  .nut{width:3px;background:var(--line);}
+  .slabel{position:absolute;left:6px;width:22px;text-align:center;font-size:11px;
+    color:var(--txtdim);transform:translateY(-50%);letter-spacing:.04em;}
+  .flabel{position:absolute;bottom:6px;font-size:9px;color:#4a4e5a;transform:translateX(-50%);
+    letter-spacing:.08em;}
+  .inlay{position:absolute;width:5px;height:5px;border-radius:50%;background:#2a2d38;
+    transform:translate(-50%,-50%);}
+
+  /* notes */
+  .note{position:absolute;border-radius:50%;transform:translate(-50%,-50%);
+    transition:opacity .45s ease, transform .45s ease, box-shadow .45s ease;}
+  .note .core{position:absolute;inset:0;border-radius:50%;}
+  .ghost{opacity:.30;}
+  .bridge{box-shadow:0 0 0 2px rgba(255,255,255,.55), 0 0 0 4px rgba(255,255,255,.10);}
+  .root .halo{position:absolute;border-radius:50%;left:50%;top:50%;
+    transform:translate(-50%,-50%);pointer-events:none;}
+
+  /* legend */
+  .legend{position:absolute;bottom:8px;left:16px;right:16px;height:30px;display:flex;
+    align-items:center;gap:18px;font-size:9.5px;color:var(--txtdim);letter-spacing:.06em;}
+  .grad{height:9px;width:150px;border-radius:5px;
+    background:linear-gradient(90deg,
+      hsl(21,80%,52%), hsl(45,82%,55%), hsl(93,55%,48%), hsl(141,48%,46%), hsl(165,52%,44%));
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);}
+  .legitem{display:flex;align-items:center;gap:7px;}
+  .swatch{width:11px;height:11px;border-radius:50%;}
+  .sw-root{background:hsl(45,85%,58%);box-shadow:0 0 7px 2px hsla(45,90%,60%,.8),0 0 0 1px #fff6;}
+  .sw-bright{background:hsl(110,55%,68%);}
+  .sw-dark{background:hsl(110,45%,34%);}
+  .sw-ghost{background:hsl(110,12%,40%);opacity:.4;}
+  .spacer2{flex:1;}
+  .tip{font-size:9px;color:#42454f;letter-spacing:.04em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage">
+    <div class="bar">
+      <div class="brand"><b>SPECTRAL</b> NECK · G MAJOR</div>
+      <div class="spacer"></div>
+      <div class="toggle" id="sysToggle">
+        <button data-sys="caged" class="on">CAGED</button>
+        <button data-sys="3nps">3&middot;NPS</button>
+      </div>
+      <div class="stepper">
+        <button id="prev" aria-label="previous position">&#8592;</button>
+        <div class="poslabel" id="posLabel">Position 1<small>OF 5</small></div>
+        <button id="next" aria-label="next position">&#8594;</button>
+      </div>
+    </div>
+
+    <div id="board"></div>
+
+    <div class="legend">
+      <div class="legitem"><span class="grad"></span><span>hue = pitch&nbsp;class (circle of 5ths) · root anchors gold</span></div>
+      <div class="legitem"><span class="swatch sw-dark"></span><span class="swatch sw-bright"></span>brightness = octave</div>
+      <div class="legitem"><span class="swatch sw-root"></span>root&nbsp;glow</div>
+      <div class="legitem"><span class="swatch sw-ghost"></span>adjacent&nbsp;trace</div>
+      <div class="spacer2"></div>
+      <div class="tip">white ring = shared bridge note</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== SHARED FRETBOARD DATA — verbatim ===== */
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+// standard tuning low->high: E A D G B e ; open-string MIDI
+const OPEN=[{n:'E',midi:40},{n:'A',midi:45},{n:'D',midi:50},{n:'G',midi:55},{n:'B',midi:59},{n:'e',midi:64}];
+const MAJOR=[0,2,4,5,7,9,11]; const FRETS=12; const ROOT_PC=7; /* G major; 0=C */
+const midiFreq=m=>440*Math.pow(2,(m-69)/12);
+function scaleCells(){const inS=new Set(MAJOR.map(s=>(ROOT_PC+s)%12));const out=[];OPEN.forEach((st,si)=>{for(let f=0;f<=FRETS;f++){const midi=st.midi+f,pc=midi%12;if(inS.has(pc)){const degree=MAJOR.indexOf(((pc-ROOT_PC)%12+12)%12)+1;out.push({s:si,f,midi,pc,degree,oct:Math.floor(midi/12)-1,freq:midiFreq(midi)});}}});return out;}
+function positionWindow(system,idx){const rootFretLowE=((ROOT_PC-40)%12+12)%12; /* G=3 */ if(system==='caged'){const lo=rootFretLowE+idx*3;return{lo,hi:lo+4};} const lo=rootFretLowE-1+idx*2;return{lo,hi:lo+5};}
+function cellsInWindow(cells,w){return cells.filter(c=>c.f>=w.lo&&c.f<=w.hi);}
+// s = string index 0(lowE)..5(high e); f = fret 0..12; degree 1..7 (1=root)
+/* ===== END SHARED DATA ===== */
+
+const CELLS = scaleCells();
+
+/* ---- geometry ---- */
+const BW = 844, BH = 300;
+const GL = 34, GR = 14;          // left gutter (labels), right pad
+const usableW = BW - GL - GR;
+const topPad = 18, botPad = 30;
+const span = BH - topPad - botPad;
+const fretX = f => GL + (f / FRETS) * usableW;     // fret line x (0 = nut)
+const strY  = s => topPad + ((5 - s) / 5) * span;  // s0 lowE -> bottom
+
+/* ---- pitch-class hue (circle of fifths, root anchored) ---- */
+const cofOf = pc => (pc * 7) % 12;
+const rootCof = cofOf(ROOT_PC);
+function hueFor(pc){
+  // signed circle-of-fifths distance from root, nearest -5..6
+  let d = ((cofOf(pc) - rootCof + 18) % 12) - 6;
+  return 45 + d * 24;            // diatonic notes land in a 21deg..165deg warm->cool arc
+}
+// octave -> brightness (higher pitch = lighter)
+function lightFor(midi, active){
+  const t = Math.max(0, Math.min(1, (midi - 43) / (76 - 43)));
+  const base = 30 + t * 38;      // 30%..68%
+  return active ? base : base * .82;
+}
+function satFor(active){ return active ? 82 : 14; }
+
+/* ---- config / state ---- */
+const SYS = {
+  caged: { count:5, offset:-1, label:'CAGED' },
+  '3nps':{ count:7, offset:-1, label:'3-NPS' }
+};
+let system = 'caged';
+let pos = 1;                      // 0-based active position index within count
+
+function clampWin(w){ return { lo:Math.max(0,w.lo), hi:Math.min(FRETS,w.hi) }; }
+function winFor(p){
+  const cfg = SYS[system];
+  return clampWin(positionWindow(system, p + cfg.offset));
+}
+
+const board = document.getElementById('board');
+
+function drawStaticGrid(){
+  let h = '';
+  // strings
+  for(let s=0;s<6;s++){
+    h += `<div class="gridline string" style="top:${strY(s)}px"></div>`;
+    h += `<div class="slabel" style="top:${strY(s)}px">${OPEN[s].n}</div>`;
+  }
+  // frets
+  for(let f=0;f<=FRETS;f++){
+    const cls = f===0 ? 'gridline fret nut' : 'gridline fret';
+    h += `<div class="${cls}" style="left:${fretX(f)}px"></div>`;
+    h += `<div class="flabel" style="left:${fretX(f)}px">${f}</div>`;
+  }
+  // inlays
+  [3,5,7,9].forEach(f=>{
+    h += `<div class="inlay" style="left:${(fretX(f)+fretX(f-1))/2}px;top:${BH/2}px"></div>`;
+  });
+  [12].forEach(f=>{
+    h += `<div class="inlay" style="left:${(fretX(f)+fretX(f-1))/2}px;top:${strY(4)}px"></div>`;
+    h += `<div class="inlay" style="left:${(fretX(f)+fretX(f-1))/2}px;top:${strY(1)}px"></div>`;
+  });
+  board.insertAdjacentHTML('beforeend', h);
+}
+
+let notesLayer;
+function ensureLayer(){
+  notesLayer = document.createElement('div');
+  notesLayer.style.cssText='position:absolute;inset:0;';
+  board.appendChild(notesLayer);
+}
+
+function noteX(c){
+  // open notes at nut; fretted notes mid-fret for readability
+  return c.f===0 ? fretX(0) : (fretX(c.f) + fretX(c.f-1)) / 2;
+}
+
+function makeNote(c, kind, sharedSet){
+  const isRoot = c.degree === 1;
+  const active = kind === 'active';
+  const hue = hueFor(c.pc);
+  const sat = satFor(active);
+  const light = lightFor(c.midi, active);
+  // size: root largest; chord tones (3rd=deg3,5th=deg5) a touch larger
+  let r = active ? 13 : 10;
+  if(isRoot) r = active ? 18 : 13;
+  else if(c.degree===5 || c.degree===3) r = active ? 14.5 : 10.5;
+
+  const x = noteX(c), y = strY(c.s);
+  const col = `hsl(${hue},${sat}%,${light}%)`;
+  const el = document.createElement('div');
+  el.className = 'note' + (active?'':' ghost') + (isRoot?' root':'');
+  if(active && sharedSet && sharedSet.has(c.s+'_'+c.f)) el.className += ' bridge';
+  el.style.cssText =
+    `left:${x}px;top:${y}px;width:${r*2}px;height:${r*2}px;`;
+
+  // glow for active notes scales with brightness; root gets a strong halo
+  const glow = active
+    ? `box-shadow:0 0 ${isRoot?16:9}px ${isRoot?3:1}px hsla(${hue},${sat}%,${light}%,${isRoot?.85:.5});`
+    : '';
+  const coreBorder = active
+    ? `border:1px solid hsla(${hue},${sat}%,${Math.min(92,light+30)}%,.75);`
+    : `border:1px solid hsla(${hue},${sat}%,${light+18}%,.35);`;
+  el.innerHTML =
+    `<div class="core" style="background:${col};${glow}${coreBorder}"></div>`;
+
+  // root: anchor marker — inner light pip + outer ring so it is findable w/o text
+  if(isRoot){
+    const haloR = r*2 + (active?14:8);
+    const ringCol = active ? `hsla(${hue},90%,72%,.65)` : `hsla(${hue},25%,60%,.30)`;
+    el.insertAdjacentHTML('beforeend',
+      `<div class="halo" style="width:${haloR}px;height:${haloR}px;border:1.5px solid ${ringCol};"></div>`);
+    el.insertAdjacentHTML('beforeend',
+      `<div class="core" style="width:${r*0.7}px;height:${r*0.7}px;left:50%;top:50%;`+
+      `transform:translate(-50%,-50%);background:hsla(${hue},${active?95:25}%,${active?92:70}%,${active?1:.6});"></div>`);
+  }
+  return el;
+}
+
+function render(){
+  if(notesLayer) notesLayer.remove();
+  ensureLayer();
+
+  const cfg = SYS[system];
+  const aw = winFor(pos);
+  const activeCells = cellsInWindow(CELLS, aw);
+  const activeKey = new Set(activeCells.map(c=>c.s+'_'+c.f));
+
+  // neighbour windows -> ghosts; track shared (bridge) notes
+  const shared = new Set();
+  const ghostMap = new Map();      // key -> cell (dedupe, keep one)
+  [pos-1, pos+1].forEach(np=>{
+    if(np<0 || np>=cfg.count) return;
+    const nw = winFor(np);
+    cellsInWindow(CELLS, nw).forEach(c=>{
+      const k = c.s+'_'+c.f;
+      if(activeKey.has(k)){ shared.add(k); return; }   // shared shown as bridge on active
+      if(!ghostMap.has(k)) ghostMap.set(k, c);
+    });
+  });
+
+  // draw ghosts first (behind), then active
+  ghostMap.forEach(c => notesLayer.appendChild(makeNote(c,'ghost')));
+  activeCells.forEach(c => notesLayer.appendChild(makeNote(c,'active', shared)));
+
+  document.getElementById('posLabel').innerHTML =
+    `Position ${pos+1}<small>${cfg.label} · OF ${cfg.count}</small>`;
+}
+
+/* ---- controls ---- */
+document.getElementById('prev').onclick = ()=>{ pos=(pos-1+SYS[system].count)%SYS[system].count; render(); };
+document.getElementById('next').onclick = ()=>{ pos=(pos+1)%SYS[system].count; render(); };
+document.querySelectorAll('#sysToggle button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#sysToggle button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    system = b.dataset.sys;
+    pos = Math.min(pos, SYS[system].count-1);
+    render();
+  };
+});
+
+drawStaticGrid();
+render();
+</script>
+</body>
+</html>

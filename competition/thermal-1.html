@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=844, initial-scale=1, viewport-fit=cover">
+<title>Heat-Field Fretboard</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#07080c;color:#e9eef5;font-family:Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh}
+  #stage{
+    width:844px;height:390px;position:relative;overflow:hidden;
+    background:radial-gradient(140% 120% at 50% 0%,#10131c 0%,#070810 70%,#040509 100%);
+    border:1px solid #1c2230;
+  }
+  /* top bar */
+  #bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+    gap:12px;padding:0 14px;z-index:30;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    background:linear-gradient(180deg,rgba(10,12,18,.85),rgba(10,12,18,.2));backdrop-filter:blur(2px)}
+  #bar .title{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#aab4c4;font-weight:700}
+  #bar .key{font-size:11px;letter-spacing:.12em;color:#ff8a4c;text-transform:uppercase;font-weight:700}
+  .spacer{flex:1}
+  .seg{display:flex;border:1px solid rgba(255,255,255,.14);border-radius:20px;overflow:hidden}
+  .seg button{background:transparent;color:#9aa6b6;border:0;padding:6px 14px;font-size:11px;
+    letter-spacing:.08em;font-weight:700;cursor:pointer;text-transform:uppercase}
+  .seg button.on{background:linear-gradient(180deg,#ff7a33,#e8531a);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .step{display:flex;align-items:center;gap:8px}
+  .step button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.04);color:#dfe6f0;font-size:15px;cursor:pointer;line-height:1}
+  .step button:active{background:rgba(255,140,70,.25)}
+  .step .lbl{font-size:11px;letter-spacing:.1em;color:#cdd6e2;min-width:118px;text-align:center;font-weight:700}
+  .step .lbl small{display:block;font-size:9px;letter-spacing:.14em;color:#7c8696;font-weight:400;margin-top:1px}
+
+  /* board canvas region */
+  #board{position:absolute;left:0;right:0;top:44px;bottom:34px}
+  canvas{position:absolute;inset:0;width:100%;height:100%}
+
+  /* string labels */
+  .slabel{position:absolute;left:6px;font-size:11px;color:#8e9aad;font-weight:700;
+    transform:translateY(-50%);z-index:20;text-shadow:0 1px 3px #000}
+  /* fret numbers strip */
+  #frets{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:20;
+    border-top:1px solid rgba(255,255,255,.06)}
+  .fnum{position:absolute;bottom:8px;transform:translateX(-50%);font-size:10px;color:#5d677a;font-weight:600}
+  .fnum.dot{color:#9aa6b6}
+  .fnum.dot::after{content:"";position:absolute;left:50%;top:-9px;width:4px;height:4px;border-radius:50%;
+    background:#39424f;transform:translateX(-50%)}
+
+  /* legend */
+  #legend{position:absolute;right:12px;bottom:40px;z-index:25;display:flex;align-items:center;gap:8px;
+    background:rgba(8,10,16,.7);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 9px}
+  #legend .grad{width:108px;height:9px;border-radius:5px;
+    background:linear-gradient(90deg,#2a2340 0%,#5a2a55 25%,#b5371f 60%,#ff7a1e 82%,#ffe39a 100%)}
+  #legend .ends{display:flex;flex-direction:column;font-size:8px;letter-spacing:.1em;color:#8a94a6;line-height:1.2}
+  #legend .cap{font-size:8.5px;letter-spacing:.12em;color:#aab4c4;text-transform:uppercase;font-weight:700;white-space:nowrap}
+  #hint{position:absolute;left:70px;top:96px;z-index:25;font-size:9px;letter-spacing:.04em;
+    color:#737e90;width:150px;line-height:1.5;pointer-events:none;
+    text-shadow:0 1px 4px #000,0 0 8px #000}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bar">
+    <span class="title">Heat&nbsp;Field</span>
+    <span class="key" id="keyLbl">G major</span>
+    <span class="spacer"></span>
+    <div class="step">
+      <button id="prev" aria-label="previous position">&#8249;</button>
+      <span class="lbl" id="posLbl">Position 1<small>cooling trail behind</small></span>
+      <button id="next" aria-label="next position">&#8250;</button>
+    </div>
+    <div class="seg" id="sys">
+      <button data-sys="caged" class="on">CAGED</button>
+      <button data-sys="3nps">3&middot;NPS</button>
+    </div>
+  </div>
+
+  <div id="board">
+    <canvas id="cv" width="1688" height="624"></canvas>
+    <!-- string labels injected -->
+    <div id="frets"></div>
+  </div>
+
+  <div id="legend">
+    <span class="cap">cooler&nbsp;tones</span>
+    <div class="grad"></div>
+    <span class="cap" style="color:#ffd9a0">root&nbsp;=&nbsp;core</span>
+  </div>
+  <div id="hint">Root = white-hot core. Scale tones cool outward. Stepped-past positions linger as <b>embers</b>; dashed rings mark shared frets bridging positions.</div>
+
+<script>
+/* ===== SHARED FRETBOARD DATA — verbatim ===== */
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+// standard tuning low->high: E A D G B e ; open-string MIDI
+const OPEN=[{n:'E',midi:40},{n:'A',midi:45},{n:'D',midi:50},{n:'G',midi:55},{n:'B',midi:59},{n:'e',midi:64}];
+const MAJOR=[0,2,4,5,7,9,11]; const FRETS=12; const ROOT_PC=7; /* G major; 0=C */
+const midiFreq=m=>440*Math.pow(2,(m-69)/12);
+function scaleCells(){const inS=new Set(MAJOR.map(s=>(ROOT_PC+s)%12));const out=[];OPEN.forEach((st,si)=>{for(let f=0;f<=FRETS;f++){const midi=st.midi+f,pc=midi%12;if(inS.has(pc)){const degree=MAJOR.indexOf(((pc-ROOT_PC)%12+12)%12)+1;out.push({s:si,f,midi,pc,degree,oct:Math.floor(midi/12)-1,freq:midiFreq(midi)});}}});return out;}
+function positionWindow(system,idx){const rootFretLowE=((ROOT_PC-40)%12+12)%12; /* G=3 */ if(system==='caged'){const lo=rootFretLowE+idx*3;return{lo,hi:lo+4};} const lo=rootFretLowE-1+idx*2;return{lo,hi:lo+5};}
+function cellsInWindow(cells,w){return cells.filter(c=>c.f>=w.lo&&c.f<=w.hi);}
+// s = string index 0(lowE)..5(high e); f = fret 0..12; degree 1..7 (1=root)
+/* ===== END SHARED DATA ===== */
+
+const CELLS = scaleCells();
+const STR_NAMES = ['E','A','D','G','B','e']; // low -> high
+
+// ----- geometry -----
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;      // internal hi-res (1688 x 624)
+const PADL = 64, PADR = 26, PADT = 30, PADB = 26;
+const bw = W - PADL - PADR, bh = H - PADT - PADB;
+// fret 0 sits at left edge of playable area; fret f x-center
+function fx(f){ return PADL + (f/FRETS) * bw; }
+// strings: index 0 (low E) drawn at BOTTOM, high e at TOP (standard landscape view)
+function sy(s){ return PADT + ((5 - s)/5) * bh; }
+
+// ----- state -----
+let system = 'caged';
+let idx = 0;
+function posCount(){ return system==='caged' ? 5 : 7; }
+
+// clamp window to a window that actually has notes on the neck
+function validWindows(){
+  const arr=[];
+  for(let i=0;i<posCount();i++){
+    let w = positionWindow(system,i);
+    // clamp to 0..12
+    const lo = Math.max(0, w.lo), hi = Math.min(FRETS, w.hi);
+    if(hi-lo >= 2 && cellsInWindow(CELLS,{lo,hi}).length >= 6){
+      arr.push({i, lo, hi, raw:w});
+    }
+  }
+  return arr;
+}
+
+// ----- color: temperature ramp by harmonic role -----
+// root = hottest (white-gold core); degrees fall outward in scale order along a single warm->cool hue.
+// We DON'T print numbers; heat alone encodes role. Map degree(1..7) to a 0..1 "coolness".
+// order of "harmonic gravity": 1 hottest, then 5,3 (chord tones warm), then 2,6,4,7 cooler.
+const HEAT = {1:1.00, 5:0.82, 3:0.74, 2:0.52, 6:0.46, 4:0.34, 7:0.30};
+function heatColor(t, alpha){
+  // t in 0..1 (1=hot). Single warm ramp: deep ember -> orange -> gold -> white.
+  t = Math.max(0, Math.min(1, t));
+  let r,g,b;
+  if(t < 0.5){ // ember -> orange
+    const k = t/0.5;
+    r = 90 + k*(255-90);
+    g = 20 + k*(95-20);
+    b = 45 - k*(45-15);
+  } else { // orange -> gold -> near white
+    const k = (t-0.5)/0.5;
+    r = 255;
+    g = 95 + k*(232-95);
+    b = 15 + k*(180-15);
+  }
+  return `rgba(${r|0},${g|0},${b|0},${alpha})`;
+}
+
+// radial glow blob
+function glow(x,y,radius,t,intensity){
+  const g = ctx.createRadialGradient(x,y,0,x,y,radius);
+  g.addColorStop(0, heatColor(Math.min(1,t+0.12), 0.95*intensity));
+  g.addColorStop(0.35, heatColor(t, 0.7*intensity));
+  g.addColorStop(1, heatColor(t*0.6, 0));
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x,y,radius,0,Math.PI*2);
+  ctx.fill();
+}
+
+function drawNeck(){
+  ctx.clearRect(0,0,W,H);
+  // base neck wash
+  const bg = ctx.createLinearGradient(0,PADT,0,PADT+bh);
+  bg.addColorStop(0,'#0c0e16'); bg.addColorStop(1,'#090a11');
+  ctx.fillStyle = bg; ctx.fillRect(PADL-8,PADT-6,bw+16,bh+12);
+
+  // fret lines (vertical)
+  ctx.lineWidth = 2;
+  for(let f=0; f<=FRETS; f++){
+    const x = fx(f);
+    ctx.strokeStyle = (f===0) ? 'rgba(230,236,245,.55)' : 'rgba(255,255,255,.07)';
+    if(f===0) ctx.lineWidth = 5; else ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x,PADT-2); ctx.lineTo(x,PADT+bh+2); ctx.stroke();
+  }
+  // strings (horizontal) — thicker for low strings
+  for(let s=0;s<6;s++){
+    const y = sy(s);
+    ctx.strokeStyle = 'rgba(180,190,205,.22)';
+    ctx.lineWidth = 1 + (5-s)*0.45;
+    ctx.beginPath(); ctx.moveTo(PADL-6,y); ctx.lineTo(PADL+bw+4,y); ctx.stroke();
+  }
+}
+
+let lastDrawCells = null;
+
+function render(){
+  const wins = validWindows();
+  if(idx >= wins.length) idx = wins.length-1;
+  if(idx < 0) idx = 0;
+  const active = wins[idx];
+
+  drawNeck();
+
+  ctx.globalCompositeOperation = 'lighter'; // heat adds up
+
+  // 1) EMBERS: previously-left positions (lower index that we've stepped past) glow faint & cool.
+  //    We render ALL non-active windows as cool ghosts, but the one just behind (idx-1) is warmest ember.
+  for(let k=0;k<wins.length;k++){
+    if(k===idx) continue;
+    const w = wins[k];
+    const dist = Math.abs(k-idx);
+    // ember strength: neighbour strongest, fades with distance; trailing (k<idx) slightly warmer than ahead
+    let base = dist===1 ? 0.30 : dist===2 ? 0.14 : 0.07;
+    const trailing = k < idx ? 1.15 : 0.85; // cooling trail behind reads stronger
+    base *= trailing;
+    const cells = cellsInWindow(CELLS, {lo:w.lo, hi:w.hi});
+    cells.forEach(c=>{
+      const t = HEAT[c.degree] * 0.55; // ghosts are cooler than live
+      glow(fx(c.f), sy(c.s), 16, t, base);
+    });
+  }
+
+  // 2) ACTIVE position: full heat field.
+  const aCells = cellsInWindow(CELLS, {lo:active.lo, hi:active.hi});
+  // big soft field tinting the whole active zone
+  const x0 = fx(active.lo)-14, x1 = fx(active.hi)+14;
+  const fieldGrad = ctx.createLinearGradient(x0,0,x1,0);
+  fieldGrad.addColorStop(0,'rgba(120,40,30,0)');
+  fieldGrad.addColorStop(0.5,'rgba(150,55,25,.10)');
+  fieldGrad.addColorStop(1,'rgba(120,40,30,0)');
+  ctx.fillStyle = fieldGrad;
+  ctx.fillRect(x0,PADT-4,x1-x0,bh+8);
+
+  // shared-note bridge: notes in active that ALSO live in an adjacent window get a ring halo
+  const neighborSets = [];
+  [idx-1, idx+1].forEach(nk=>{
+    if(nk>=0 && nk<wins.length){
+      const nw = wins[nk];
+      neighborSets.push(new Set(cellsInWindow(CELLS,{lo:nw.lo,hi:nw.hi}).map(c=>c.s+'_'+c.f)));
+    }
+  });
+
+  aCells.forEach(c=>{
+    const t = HEAT[c.degree];
+    const x = fx(c.f), y = sy(c.s);
+    // size scales with heat too (hot = bigger), reinforcing role without numbers
+    const r = 17 + t*9;
+    glow(x,y,r+10,t,0.55);     // outer bloom
+    glow(x,y,r,t,1.0);         // core
+    // crisp hot center dot
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.beginPath();
+    ctx.arc(x,y, 3.0 + t*3.2, 0, Math.PI*2);
+    ctx.fillStyle = heatColor(Math.min(1,t+0.18), 0.95);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'lighter';
+  });
+
+  // ROOT emphasis: white-gold flare + thin ignition ring so it's instantly findable
+  ctx.globalCompositeOperation = 'source-over';
+  aCells.filter(c=>c.degree===1).forEach(c=>{
+    const x=fx(c.f), y=sy(c.s);
+    glowSO(x,y);
+  });
+
+  // bridge rings on shared notes
+  aCells.forEach(c=>{
+    const key=c.s+'_'+c.f;
+    if(neighborSets.some(set=>set.has(key))){
+      ctx.beginPath();
+      ctx.arc(x_=fx(c.f), y_=sy(c.s), 13 + HEAT[c.degree]*7, 0, Math.PI*2);
+      ctx.strokeStyle='rgba(255,235,200,.45)';
+      ctx.setLineDash([3,4]);
+      ctx.lineWidth=1.6;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  });
+
+  ctx.globalCompositeOperation = 'source-over';
+  paintFrets();
+}
+let x_,y_;
+
+function glowSO(x,y){
+  // source-over root flare (drawn crisp on top)
+  const g = ctx.createRadialGradient(x,y,0,x,y,30);
+  g.addColorStop(0,'rgba(255,250,235,.95)');
+  g.addColorStop(0.3,'rgba(255,225,160,.7)');
+  g.addColorStop(1,'rgba(255,150,60,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,30,0,Math.PI*2); ctx.fill();
+  // ignition ring
+  ctx.beginPath(); ctx.arc(x,y,15,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,240,210,.9)'; ctx.lineWidth=2; ctx.stroke();
+}
+
+// ---- DOM overlays: string labels + fret numbers ----
+function paintStringLabels(){
+  const board = document.getElementById('board');
+  // remove old
+  board.querySelectorAll('.slabel').forEach(e=>e.remove());
+  const rect = {h: board.clientHeight, w: board.clientWidth};
+  // canvas displayed at board size; map sy() to css px
+  for(let s=0;s<6;s++){
+    const el=document.createElement('div');
+    el.className='slabel';
+    el.textContent = STR_NAMES[s];
+    const yc = (sy(s)/H) * rect.h;
+    el.style.top = yc+'px';
+    board.appendChild(el);
+  }
+}
+function paintFrets(){
+  const host=document.getElementById('frets');
+  if(host.dataset.done) return;
+  const dots=new Set([3,5,7,9,12]);
+  for(let f=0;f<=FRETS;f++){
+    const el=document.createElement('div');
+    el.className='fnum'+(dots.has(f)?' dot':'');
+    el.textContent=f;
+    el.style.left = ((fx(f)/W)*100)+'%';
+    host.appendChild(el);
+  }
+  host.dataset.done='1';
+}
+
+// ----- controls -----
+document.getElementById('prev').onclick=()=>{ idx=Math.max(0,idx-1); update(); };
+document.getElementById('next').onclick=()=>{ const m=validWindows().length-1; idx=Math.min(m,idx+1); update(); };
+document.querySelectorAll('#sys button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('#sys button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    system=b.dataset.sys; idx=0; update();
+  };
+});
+
+function update(){
+  const wins=validWindows();
+  const n=wins.length;
+  document.getElementById('posLbl').firstChild.nodeValue =
+    'Position '+(idx+1)+' / '+n+'   ';
+  render();
+}
+
+// boot
+paintStringLabels();
+render();
+update();
+window.addEventListener('resize', paintStringLabels);
+</script>
+</div>
+</body>
+</html>

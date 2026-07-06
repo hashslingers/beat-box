@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Realistic Neck v4</title>
+<style>
+  :root{
+    --paper:#F4F2ED; --board:#EFEBE2; --ink:#141310; --note:#6B6864;
+    --string:#8A8680; --fret:#B7B2A8; --inlay:#D8D3C8; --salmon:#FA8763;
+    --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#26241f;font-family:var(--sans);-webkit-font-smoothing:antialiased;
+       display:flex;align-items:center;justify-content:center;min-height:100vh;padding:18px}
+  .stage{background:var(--paper);color:var(--ink);border:2px solid var(--ink);width:max-content;max-width:100%}
+  .top{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:2px solid var(--ink);flex-wrap:wrap}
+  .title{font-weight:900;font-size:16px;letter-spacing:.02em;text-transform:uppercase}
+  .title small{display:block;font-size:8.5px;letter-spacing:.24em;color:var(--note);font-weight:700;margin-top:2px}
+  .tag{margin-left:6px;font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;border:2px solid var(--ink);padding:3px 6px}
+  .sp{flex:1}
+  .lab{font-size:8.5px;letter-spacing:.18em;color:var(--note);font-weight:800;text-transform:uppercase}
+  .seg{display:inline-flex;border:2px solid var(--ink)}
+  .seg button{font:inherit;font-weight:900;font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:6px 10px;border:0;background:var(--paper);color:var(--ink);cursor:pointer}
+  .seg button.on{background:var(--ink);color:var(--paper)}
+  .step{display:flex;align-items:center;gap:8px}
+  .step button{font:inherit;font-weight:900;font-size:15px;width:32px;height:32px;border:2px solid var(--ink);background:var(--paper);cursor:pointer}
+  .posn{font-weight:900;font-size:13px;min-width:68px;text-align:center} .posn small{color:var(--note);font-size:9px}
+  .wrap{padding:12px 16px 6px;overflow-x:auto}
+  svg{display:block}
+  .legend{display:flex;gap:15px;align-items:center;padding:4px 16px 12px;flex-wrap:wrap}
+  .legend i{display:inline-flex;align-items:center;gap:7px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--note)}
+  .legend b{width:15px;height:15px;border-radius:50%;display:inline-block;border:1.5px solid rgba(0,0,0,.25)}
+  .legend b.ghost{background:transparent;border:1.5px solid var(--fret)}
+</style>
+</head>
+<body>
+<div class="stage" id="stage" data-v="A">
+  <div class="top">
+    <div class="title">Realistic Neck<small>G MAJOR · NOTES IN THE SPACES</small></div>
+    <span class="tag" id="tag">A</span>
+    <div class="sp"></div>
+    <span class="lab">Labels</span>
+    <div class="seg" id="labSeg"><button data-l="off" class="on">Off</button><button data-l="deg">Deg</button><button data-l="note">Note</button></div>
+    <div class="seg" id="seg"><button data-sys="caged" class="on">CAGED</button><button data-sys="nps">3 NPS</button></div>
+    <div class="step"><button id="prev">&larr;</button><div class="posn" id="posn">POS 1 <small>/5</small></div><button id="next">&rarr;</button></div>
+  </div>
+  <div class="wrap"><svg id="svg" width="900" height="292"></svg></div>
+  <div class="legend" id="legend"></div>
+</div>
+<script>
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const OPEN=[{n:'E',midi:40},{n:'A',midi:45},{n:'D',midi:50},{n:'G',midi:55},{n:'B',midi:59},{n:'e',midi:64}];
+const MAJOR=[0,2,4,5,7,9,11]; const MAXNECK=17; const ROOT_PC=7;
+function scaleCells(){const inS=new Set(MAJOR.map(s=>(ROOT_PC+s)%12));const out=[];OPEN.forEach((st,si)=>{for(let f=0;f<=MAXNECK;f++){const midi=st.midi+f,pc=midi%12;if(inS.has(pc)){const degree=MAJOR.indexOf(((pc-ROOT_PC)%12+12)%12)+1;out.push({s:si,f,pc,degree});}}});return out;}
+function positionWindow(sys,idx){const root=((ROOT_PC-40)%12+12)%12;if(sys==='caged'){const lo=root+idx*3;return{lo,hi:lo+4};}const lo=root-1+idx*2;return{lo,hi:lo+5};}
+const CELLS=scaleCells();
+
+const NUTX=52, S=1636, TOP=30, SS=38;
+const fretX = n => NUTX + S*(1 - Math.pow(2, -n/12));
+const spaceX = f => f===0 ? NUTX-22 : (fretX(f-1)+fretX(f))/2;
+const stringY = si => TOP + (5-si)*SS;
+const SVGNS='http://www.w3.org/2000/svg';
+const mk=(t,a,txt)=>{const e=document.createElementNS(SVGNS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e;};
+
+let sys='caged', pos=0, labelMode='off';
+const count=()=>sys==='caged'?5:7;
+const inW=(f,w)=>f>=w.lo&&f<=w.hi;
+function roleFill(v,deg){const root=deg===1,chord=[1,3,5,7].includes(deg);
+  if(v==='B') return root?'#E8552E':chord?'#E0944E':'#8AA0AE';
+  return root?'#FA8763':chord?'#1D1C18':'#AEA9A0';}
+function labelInk(v,deg){const root=deg===1,chord=[1,3,5,7].includes(deg);
+  if(v==='B') return (chord&&!root)?'#141310':'#fff';
+  return chord&&!root?'#F4F2ED':'#141310';} // A: dark on salmon/gray, light on black
+function labelFor(c){ if(labelMode==='deg') return c.degree===1?'R':String(c.degree);
+  if(labelMode==='note') return NOTES[c.pc]; return null; }
+
+function draw(){
+  const svg=document.getElementById('svg'); const v=document.getElementById('stage').dataset.v;
+  const aw=positionWindow(sys,pos),pw=pos>0?positionWindow(sys,pos-1):null,nw=pos<count()-1?positionWindow(sys,pos+1):null;
+  const hiFret=Math.min(MAXNECK, Math.max(12, aw.hi, nw?nw.hi:0, pw?pw.hi:0));
+  const W=Math.round(fretX(hiFret)+28), H=TOP+SS*5+38;
+  svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML='';
+  svg.appendChild(mk('rect',{x:NUTX-26,y:TOP-14,width:fretX(hiFret)-NUTX+42,height:SS*5+28,fill:'var(--board)'}));
+  [3,5,7,9,15].forEach(f=>{if(f<=hiFret)svg.appendChild(mk('circle',{cx:spaceX(f),cy:TOP+SS*2.5,r:6,fill:'var(--inlay)'}));});
+  if(hiFret>=12)[-0.5,0.5].forEach(o=>svg.appendChild(mk('circle',{cx:spaceX(12),cy:TOP+SS*(2.5+o*2),r:6,fill:'var(--inlay)'})));
+  for(let n=0;n<=hiFret;n++)svg.appendChild(mk('line',{x1:fretX(n),y1:TOP-8,x2:fretX(n),y2:TOP+SS*5+8,stroke:n===0?'var(--ink)':'var(--fret)','stroke-width':n===0?4:1.5}));
+  for(let si=0;si<6;si++)svg.appendChild(mk('line',{x1:NUTX-24,y1:stringY(si),x2:fretX(hiFret)+8,y2:stringY(si),stroke:'var(--string)','stroke-width':0.9+(5-si)*0.42}));
+  for(let f=1;f<=hiFret;f++)svg.appendChild(mk('text',{x:spaceX(f),y:TOP+SS*5+26,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'var(--note)','font-family':'inherit'},f));
+  CELLS.forEach(c=>{
+    if(c.f>hiFret) return;
+    const act=inW(c.f,aw), nb=(pw&&inW(c.f,pw))||(nw&&inW(c.f,nw));
+    if(!act&&!nb) return;
+    const cx=spaceX(c.f), cy=stringY(c.s), r=c.degree===1?15:13;
+    if(act){
+      if(nb) svg.appendChild(mk('circle',{cx,cy,r:r+4,fill:'none',stroke:'var(--salmon)','stroke-width':2,'stroke-dasharray':'3 3'}));
+      svg.appendChild(mk('circle',{cx,cy,r,fill:roleFill(v,c.degree),stroke:'#fff','stroke-width':2}));
+      const lt=labelFor(c);
+      if(lt!=null){svg.appendChild(mk('text',{x:cx,y:cy+0.5,'text-anchor':'middle','dominant-baseline':'central','font-size':c.degree===1?15:13,'font-weight':900,fill:labelInk(v,c.degree),'font-family':'inherit'},lt));}
+      else if(c.degree===1){svg.appendChild(mk('circle',{cx,cy,r:4,fill:v==='B'?'#fff':'#141310'}));}
+    } else { svg.appendChild(mk('circle',{cx,cy,r:10,fill:'none',stroke:'var(--fret)','stroke-width':1.6})); }
+  });
+  document.getElementById('posn').innerHTML=`POS ${pos+1} <small>/${count()}</small>`;
+}
+function legend(){
+  const v=document.getElementById('stage').dataset.v;
+  const items=v==='B'?[['#E8552E','Root'],['#E0944E','Chord tone'],['#8AA0AE','Color tone']]
+                     :[['#FA8763','Root'],['#1D1C18','Chord tone'],['#AEA9A0','Color tone']];
+  const L=document.getElementById('legend');L.innerHTML='';
+  items.forEach(([c,t])=>{const i=document.createElement('i');i.innerHTML=`<b style="background:${c}"></b>${t}`;L.appendChild(i);});
+  L.appendChild(Object.assign(document.createElement('i'),{innerHTML:'<b class="ghost"></b>Neighbour'}));
+  L.appendChild(Object.assign(document.createElement('i'),{innerHTML:'<span style="color:var(--salmon);font-weight:900">◌</span>Bridge'}));
+}
+document.getElementById('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');sys=b.dataset.sys;pos=Math.min(pos,count()-1);draw();});
+document.getElementById('labSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#labSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');labelMode=b.dataset.l;draw();});
+document.getElementById('prev').onclick=()=>{pos=(pos-1+count())%count();draw();};
+document.getElementById('next').onclick=()=>{pos=(pos+1)%count();draw();};
+const V=new URLSearchParams(location.search).get('v')||'A';
+document.getElementById('stage').dataset.v=V;
+document.getElementById('tag').textContent={A:'A · INK SHADE',B:'B · WARM / COOL'}[V]||V;
+legend(); draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkerboard Neck v2</title>
+<style>
+  :root{
+    --paper:#F4F2ED; --ink:#111110; --line:#111110;
+    --tint:#E7E4DD;            /* checker shade */
+    --salmon:#FA8763;          /* root anchor */
+    --ghost:#B9B5AC;           /* neighbour outline */
+    --note:#6B6864;
+    --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    --cellW:62px; --cellH:56px; --labelW:44px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#24221f;font-family:var(--sans);-webkit-font-smoothing:antialiased;
+       display:flex;align-items:center;justify-content:center;min-height:100vh;padding:22px}
+  .stage{background:var(--paper);color:var(--ink);border:2px solid var(--ink);width:max-content}
+
+  /* header */
+  .top{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:2px solid var(--ink)}
+  .title{font-weight:900;font-size:17px;letter-spacing:.02em;text-transform:uppercase}
+  .title small{display:block;font-size:9px;letter-spacing:.28em;color:var(--note);font-weight:700;margin-top:2px}
+  .spacer{flex:1}
+  .seg{display:inline-flex;border:2px solid var(--ink)}
+  .seg button{font:inherit;font-weight:900;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+              padding:7px 12px;border:0;background:var(--paper);color:var(--ink);cursor:pointer}
+  .seg button.on{background:var(--ink);color:var(--paper)}
+  .step{display:flex;align-items:center;gap:10px}
+  .step button{font:inherit;font-weight:900;font-size:15px;width:34px;height:34px;border:2px solid var(--ink);
+               background:var(--paper);cursor:pointer;line-height:1}
+  .posn{font-weight:900;font-size:15px;text-align:center;min-width:64px}
+  .posn small{display:block;font-size:9px;letter-spacing:.2em;color:var(--note);font-weight:700}
+
+  /* board */
+  .board{padding:10px 16px 4px}
+  .grid{display:grid;grid-template-columns:var(--labelW) repeat(13, var(--cellW));
+        grid-auto-rows:var(--cellH);border-top:2px solid var(--ink);border-left:2px solid var(--ink)}
+  .lbl{display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;
+       border-right:2px solid var(--ink);border-bottom:1px solid var(--line)}
+  .cell{position:relative;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .cell.fret0{border-right:3px solid var(--ink)}          /* nut */
+  .cell.checker{background:var(--tint)}
+  /* active-position notes — big solid fills */
+  .cell .fill{position:absolute;inset:5px}
+  .cell.chord .fill{background:var(--ink)}
+  .cell.color .fill{background:repeating-linear-gradient(45deg,var(--ink) 0 3px,transparent 3px 7px)} /* color tone = hatch */
+  .cell.root .fill{background:var(--salmon);border:2px solid var(--ink)}
+  .cell.root .fill::after{content:"";position:absolute;inset:36% ;background:var(--ink)} /* root center dot */
+  /* neighbour residual traces — quiet outline only */
+  .cell.ghost .fill{background:transparent;border:1.5px solid var(--ghost);inset:11px}
+  /* bridge — shared with the adjacent position */
+  .cell.bridge .fill{outline:2.5px dashed var(--salmon);outline-offset:2px}
+  /* fret ruler */
+  .ruler{display:grid;grid-template-columns:var(--labelW) repeat(13,var(--cellW));margin-top:5px}
+  .ruler span{text-align:center;font-size:11px;font-weight:700;color:var(--note)}
+  .ruler span.dot{color:var(--ink)}
+
+  .legend{display:flex;gap:18px;align-items:center;padding:9px 16px 13px;flex-wrap:wrap}
+  .legend i{display:inline-flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--note)}
+  .legend b{width:18px;height:18px;border:1.5px solid var(--ink);display:inline-block}
+  .legend b.r{background:var(--salmon)} .legend b.c{background:var(--ink)}
+  .legend b.t{background:repeating-linear-gradient(45deg,var(--ink) 0 3px,transparent 3px 6px)}
+  .legend b.g{border:1.5px solid var(--ghost);background:transparent}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="top">
+    <div class="title">Checkerboard Neck<small>G MAJOR · POSITION MAP</small></div>
+    <div class="spacer"></div>
+    <div class="seg" id="seg">
+      <button data-sys="caged" class="on">CAGED</button>
+      <button data-sys="nps">3 NPS</button>
+    </div>
+    <div class="step">
+      <button id="prev">&larr;</button>
+      <div class="posn" id="posn">POS 1<small>/ 5</small></div>
+      <button id="next">&rarr;</button>
+    </div>
+  </div>
+  <div class="board">
+    <div class="grid" id="grid"></div>
+    <div class="ruler" id="ruler"></div>
+  </div>
+  <div class="legend">
+    <i><b class="r"></b>Root</i>
+    <i><b class="c"></b>Chord tone</i>
+    <i><b class="t"></b>Color tone</i>
+    <i><b class="g"></b>Neighbour</i>
+    <i><span style="font-size:13px;color:var(--salmon)">⌐ ⌐</span>&nbsp;Shared bridge</i>
+  </div>
+</div>
+
+<script>
+// ===== SHARED FRETBOARD DATA (verbatim) =====
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const OPEN=[{n:'E',midi:40},{n:'A',midi:45},{n:'D',midi:50},{n:'G',midi:55},{n:'B',midi:59},{n:'e',midi:64}];
+const MAJOR=[0,2,4,5,7,9,11]; const FRETS=12; const ROOT_PC=7;
+const midiFreq=m=>440*Math.pow(2,(m-69)/12);
+function scaleCells(){const inS=new Set(MAJOR.map(s=>(ROOT_PC+s)%12));const out=[];OPEN.forEach((st,si)=>{for(let f=0;f<=FRETS;f++){const midi=st.midi+f,pc=midi%12;if(inS.has(pc)){const degree=MAJOR.indexOf(((pc-ROOT_PC)%12+12)%12)+1;out.push({s:si,f,midi,pc,degree,oct:Math.floor(midi/12)-1,freq:midiFreq(midi)});}}});return out;}
+function positionWindow(system,idx){const rootFretLowE=((ROOT_PC-40)%12+12)%12;if(system==='caged'){const lo=rootFretLowE+idx*3;return{lo,hi:lo+4};}const lo=rootFretLowE-1+idx*2;return{lo,hi:lo+5};}
+// ===== END SHARED DATA =====
+
+const CELLS = scaleCells();
+const ROW_ORDER = [5,4,3,2,1,0]; // high e (top) .. low E (bottom)
+const ROW_LABEL = {5:'e',4:'B',3:'G',2:'D',1:'A',0:'E'};
+let sys='caged', pos=0;
+const count = ()=> sys==='caged'?5:7;
+const inWin=(f,w)=> f>=w.lo && f<=w.hi;
+
+function build(){
+  const grid=document.getElementById('grid'); grid.innerHTML='';
+  const aw=positionWindow(sys,pos);
+  const pw=pos>0?positionWindow(sys,pos-1):null;
+  const nw=pos<count()-1?positionWindow(sys,pos+1):null;
+  ROW_ORDER.forEach(si=>{
+    const lab=document.createElement('div'); lab.className='lbl'; lab.textContent=ROW_LABEL[si]; grid.appendChild(lab);
+    for(let f=0;f<=FRETS;f++){
+      const cell=document.createElement('div');
+      cell.className='cell'+(f===0?' fret0':'')+(((si+f)%2)?' checker':'');
+      const note=CELLS.find(c=>c.s===si && c.f===f);
+      if(note){
+        const active=inWin(f,aw);
+        const neigh=(pw&&inWin(f,pw))||(nw&&inWin(f,nw));
+        if(active){
+          const fill=document.createElement('div'); fill.className='fill';
+          let role = note.degree===1?'root':([1,3,5,7].includes(note.degree)?'chord':'color');
+          cell.classList.add(role);
+          if(neigh) cell.classList.add('bridge'); // shared with an adjacent box
+          cell.appendChild(fill);
+        } else if(neigh){
+          cell.classList.add('ghost');
+          const fill=document.createElement('div'); fill.className='fill'; cell.appendChild(fill);
+        }
+      }
+      grid.appendChild(cell);
+    }
+  });
+  // ruler
+  const r=document.getElementById('ruler'); r.innerHTML='<span></span>';
+  const dots=new Set([3,5,7,9,12]);
+  for(let f=0;f<=FRETS;f++){const s=document.createElement('span');s.textContent=f;if(dots.has(f))s.className='dot';r.appendChild(s);}
+  document.getElementById('posn').innerHTML=`POS ${pos+1}<small>/ ${count()}</small>`;
+}
+document.getElementById('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  sys=b.dataset.sys; pos=Math.min(pos,count()-1); build();});
+document.getElementById('prev').onclick=()=>{pos=(pos-1+count())%count();build();};
+document.getElementById('next').onclick=()=>{pos=(pos+1)%count();build();};
+build();
+</script>
+</body>
+</html>

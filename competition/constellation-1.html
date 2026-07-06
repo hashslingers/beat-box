@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=844, initial-scale=1">
+<title>Constellation Fretboard — G Major</title>
+<style>
+  :root{ --ink:#dfe8f5; --dim:#8294ad; --hair:rgba(150,180,220,.18); }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ background:#05070d; color:var(--ink);
+    font-family:Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+  body{ display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .stage{ position:relative; width:844px; height:390px; overflow:hidden;
+    background:radial-gradient(120% 140% at 18% 0%, #0c1426 0%, #070b16 48%, #04060c 100%);
+    border:1px solid var(--hair); }
+  /* ---- top control bar ---- */
+  .bar{ position:absolute; top:0; left:0; right:0; height:46px; display:flex;
+    align-items:center; gap:14px; padding:0 14px; z-index:5;
+    border-bottom:1px solid var(--hair);
+    background:linear-gradient(180deg, rgba(8,12,22,.92), rgba(8,12,22,.55)); }
+  .title{ font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); }
+  .title b{ color:#ffcf6e; font-weight:bold; letter-spacing:.06em; }
+  .seg{ display:flex; border:1px solid var(--hair); border-radius:999px; overflow:hidden; }
+  .seg button{ background:transparent; color:var(--dim); border:0; cursor:pointer;
+    font:inherit; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    padding:6px 13px; }
+  .seg button.on{ background:rgba(143,227,208,.16); color:#bdf3e6; }
+  .step{ display:flex; align-items:center; gap:8px; margin-left:auto; }
+  .step button{ width:28px; height:28px; border-radius:50%; cursor:pointer;
+    background:transparent; border:1px solid var(--hair); color:var(--ink);
+    font-size:15px; line-height:1; }
+  .step button:active{ background:rgba(143,227,208,.18); }
+  .posname{ font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink); min-width:128px; text-align:center; }
+  .posname small{ display:block; color:var(--dim); font-size:9px; letter-spacing:.18em; }
+  /* ---- legend ---- */
+  .legend{ position:absolute; right:12px; bottom:9px; z-index:5; text-align:right;
+    font-size:9px; letter-spacing:.1em; color:var(--dim); line-height:1.55;
+    text-transform:uppercase; }
+  .legend i{ display:inline-block; border-radius:50%; vertical-align:middle;
+    margin:0 5px 1px 9px; }
+  .d-root{ width:11px; height:11px; background:#ffcf6e; box-shadow:0 0 7px #ffcf6e; }
+  .d-tone{ width:8px; height:8px; background:#e9f6ff; box-shadow:0 0 6px #cfeaff; }
+  .d-col{ width:5px; height:5px; background:#74a9d6; box-shadow:0 0 4px #4f86bd; }
+  .d-br{ width:9px; height:9px; background:transparent;
+    box-shadow:0 0 0 1.4px #8fe3d0, 0 0 7px #8fe3d0; }
+  svg{ position:absolute; inset:0; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="bar">
+    <div class="title">Constellation Neck · <b>G Major</b></div>
+    <div class="seg" id="sysSeg">
+      <button data-sys="caged" class="on">CAGED · 5</button>
+      <button data-sys="3nps">3NPS · 7</button>
+    </div>
+    <div class="step">
+      <button id="prev" aria-label="previous position">&#8249;</button>
+      <div class="posname" id="posName">Position 1 / 5<small>CAGED</small></div>
+      <button id="next" aria-label="next position">&#8250;</button>
+    </div>
+  </div>
+
+  <svg id="board" viewBox="0 0 844 390" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <filter id="halo" x="-250%" y="-250%" width="600%" height="600%">
+        <feGaussianBlur stdDeviation="4"/>
+      </filter>
+    </defs>
+    <g id="gStatic"></g>   <!-- strings, frets, inlays, labels -->
+    <g id="gGhost"></g>    <!-- faded adjacent constellations -->
+    <g id="gActive"></g>   <!-- crisp active constellation -->
+  </svg>
+
+  <div class="legend">
+    <span><i class="d-root"></i>home (root)</span><br>
+    <span><i class="d-tone"></i>chord tone</span>
+    <span><i class="d-col"></i>scale color</span><br>
+    <span><i class="d-br"></i>shared link · bridge</span>
+  </div>
+</div>
+
+<script>
+/* ===== SHARED FRETBOARD DATA — verbatim ===== */
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+// standard tuning low->high: E A D G B e ; open-string MIDI
+const OPEN=[{n:'E',midi:40},{n:'A',midi:45},{n:'D',midi:50},{n:'G',midi:55},{n:'B',midi:59},{n:'e',midi:64}];
+const MAJOR=[0,2,4,5,7,9,11]; const FRETS=12; const ROOT_PC=7; /* G major; 0=C */
+const midiFreq=m=>440*Math.pow(2,(m-69)/12);
+function scaleCells(){const inS=new Set(MAJOR.map(s=>(ROOT_PC+s)%12));const out=[];OPEN.forEach((st,si)=>{for(let f=0;f<=FRETS;f++){const midi=st.midi+f,pc=midi%12;if(inS.has(pc)){const degree=MAJOR.indexOf(((pc-ROOT_PC)%12+12)%12)+1;out.push({s:si,f,midi,pc,degree,oct:Math.floor(midi/12)-1,freq:midiFreq(midi)});}}});return out;}
+function positionWindow(system,idx){const rootFretLowE=((ROOT_PC-40)%12+12)%12; /* G=3 */ if(system==='caged'){const lo=rootFretLowE+idx*3;return{lo,hi:lo+4};} const lo=rootFretLowE-1+idx*2;return{lo,hi:lo+5};}
+function cellsInWindow(cells,w){return cells.filter(c=>c.f>=w.lo&&c.f<=w.hi);}
+// s = string index 0(lowE)..5(high e); f = fret 0..12; degree 1..7 (1=root)
+/* ===== END SHARED DATA ===== */
+
+const CELLS = scaleCells();
+
+// ---- geometry ----
+const BL=58, BR=820, BT=92, BB=300;
+const FSP=(BR-BL)/12, SSP=(BB-BT)/5;
+const X = f => BL + f*FSP;
+const Y = s => BB - s*SSP;            // s=0 (low E) bottom, s=5 (high e) top
+const SVGNS='http://www.w3.org/2000/svg';
+const el=(t,a)=>{const e=document.createElementNS(SVGNS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+
+// ---- state ----
+let system='caged', idx=0;
+const countFor = s => s==='caged'?5:7;
+
+// ---- degree -> star style (size + temperature + glow, single warm-cool axis) ----
+function star(degree){
+  if(degree===1) return {r:8.5, halo:18, fill:'#ffcf6e', glow:'#ffcf6e', root:true};      // home: gold, biggest
+  if(degree===3||degree===5) return {r:6, halo:13, fill:'#eaf6ff', glow:'#cfeaff'};        // chord tone: bright white
+  return {r:4.2, halo:8, fill:'#74a9d6', glow:'#4f86bd'};                                   // scale color: dim blue
+}
+function clampWin(w){ return {lo:Math.max(0,w.lo), hi:Math.min(12,w.hi)}; }
+function valid(w){ return w.lo<=w.hi; }
+const key = c => c.s+'_'+c.f;
+
+// ---- build the static neck once ----
+function buildStatic(){
+  const g=document.getElementById('gStatic'); g.innerHTML='';
+  // inlays (orientation dots) behind strings
+  const mids=[3,5,7,9];
+  mids.forEach(f=>{ g.appendChild(el('circle',{cx:X(f),cy:(BT+BB)/2,r:3.4,fill:'rgba(150,180,220,.10)'})); });
+  // double dot at 12
+  g.appendChild(el('circle',{cx:X(12),cy:Y(3.6),r:3.4,fill:'rgba(150,180,220,.12)'}));
+  g.appendChild(el('circle',{cx:X(12),cy:Y(1.4),r:3.4,fill:'rgba(150,180,220,.12)'}));
+  // fret wires
+  for(let f=0;f<=12;f++){
+    const nut=f===0;
+    g.appendChild(el('line',{x1:X(f),y1:BT-6,x2:X(f),y2:BB+6,
+      stroke: nut?'rgba(190,210,240,.5)':'rgba(150,180,220,.14)', 'stroke-width': nut?3:1}));
+    // fret numbers
+    const num=document.createElementNS(SVGNS,'text');
+    num.setAttribute('x',X(f)); num.setAttribute('y',BB+24);
+    num.setAttribute('text-anchor','middle'); num.setAttribute('fill','#5b6c85');
+    num.setAttribute('font-size','9'); num.setAttribute('font-family','Helvetica,Arial,sans-serif');
+    num.setAttribute('letter-spacing','.05em'); num.textContent=f;
+    g.appendChild(num);
+  }
+  // strings + labels
+  for(let s=0;s<6;s++){
+    g.appendChild(el('line',{x1:BL,y1:Y(s),x2:BR,y2:Y(s),
+      stroke:'rgba(150,180,220,.22)','stroke-width': 0.6+(5-s)*0.18}));
+    const lab=document.createElementNS(SVGNS,'text');
+    lab.setAttribute('x',BL-18); lab.setAttribute('y',Y(s)+4);
+    lab.setAttribute('text-anchor','middle'); lab.setAttribute('fill','#7f93ad');
+    lab.setAttribute('font-size','11'); lab.setAttribute('font-family','Helvetica,Arial,sans-serif');
+    lab.textContent=OPEN[s].n;
+    g.appendChild(lab);
+  }
+}
+
+// connect a constellation's cells in pitch-ascending order (the scale-run fingering path)
+function pathPoints(list){
+  const s=[...list].sort((a,b)=>a.midi-b.midi);
+  return s.map(c=>X(c.f)+','+Y(c.s)).join(' ');
+}
+
+function render(){
+  const N=countFor(system);
+  if(idx<0)idx=0; if(idx>N-1)idx=N-1;
+
+  const aw=clampWin(positionWindow(system,idx));
+  const nb=[];
+  if(idx-1>=0){const w=clampWin(positionWindow(system,idx-1)); if(valid(w))nb.push(w);}
+  if(idx+1<N){const w=clampWin(positionWindow(system,idx+1)); if(valid(w))nb.push(w);}
+
+  const aCells = valid(aw)?cellsInWindow(CELLS,aw):[];
+  const aKeys = new Set(aCells.map(key));
+  // bridging = active cells that also live inside a neighbour window (shared notes)
+  const bridge = new Set();
+  aCells.forEach(c=>{ for(const w of nb){ if(c.f>=w.lo && c.f<=w.hi){ bridge.add(key(c)); break; } } });
+
+  // ---------- GHOST layer (adjacent constellations) ----------
+  const gg=document.getElementById('gGhost'); gg.innerHTML='';
+  nb.forEach(w=>{
+    const list=cellsInWindow(CELLS,w);
+    // faint path
+    gg.appendChild(el('polyline',{points:pathPoints(list),fill:'none',
+      stroke:'rgba(143,227,208,.16)','stroke-width':1}));
+    // faint nodes, skip ones that coincide with active (they bridge there)
+    list.forEach(c=>{
+      if(aKeys.has(key(c))) return;
+      const st=star(c.degree);
+      gg.appendChild(el('circle',{cx:X(c.f),cy:Y(c.s),r:st.r*0.8,
+        fill:st.fill,opacity: st.root?0.4:0.26}));
+    });
+  });
+
+  // ---------- ACTIVE layer ----------
+  const ga=document.getElementById('gActive'); ga.innerHTML='';
+  // the constellation lines (fingering path)
+  ga.appendChild(el('polyline',{points:pathPoints(aCells),fill:'none',
+    stroke:'rgba(207,234,255,.55)','stroke-width':1.4,'stroke-linejoin':'round'}));
+  // nodes: halo then core
+  aCells.forEach(c=>{
+    const st=star(c.degree);
+    ga.appendChild(el('circle',{cx:X(c.f),cy:Y(c.s),r:st.halo,fill:st.glow,
+      opacity:st.root?0.55:0.4,filter:'url(#halo)'}));
+    // bridge ring for shared notes
+    if(bridge.has(key(c))){
+      ga.appendChild(el('circle',{cx:X(c.f),cy:Y(c.s),r:st.r+4.5,fill:'none',
+        stroke:'#8fe3d0','stroke-width':1.4,opacity:.95,'stroke-dasharray':'2.5 3'}));
+    }
+    ga.appendChild(el('circle',{cx:X(c.f),cy:Y(c.s),r:st.r,fill:st.fill,
+      stroke:'rgba(255,255,255,.5)','stroke-width':st.root?0.8:0.4}));
+    // root sparkle cross
+    if(st.root){
+      const L=st.r+6;
+      ga.appendChild(el('line',{x1:X(c.f)-L,y1:Y(c.s),x2:X(c.f)+L,y2:Y(c.s),
+        stroke:'#ffe6ad','stroke-width':0.9,opacity:.85}));
+      ga.appendChild(el('line',{x1:X(c.f),y1:Y(c.s)-L,x2:X(c.f),y2:Y(c.s)+L,
+        stroke:'#ffe6ad','stroke-width':0.9,opacity:.85}));
+    }
+  });
+
+  // ---------- chrome ----------
+  document.getElementById('posName').innerHTML =
+    'Position '+(idx+1)+' / '+N+'<small>'+(system==='caged'?'CAGED':'3 NOTES / STRING')+'</small>';
+  document.querySelectorAll('#sysSeg button').forEach(b=>
+    b.classList.toggle('on', b.dataset.sys===system));
+}
+
+// ---- events ----
+document.querySelectorAll('#sysSeg button').forEach(b=>{
+  b.addEventListener('click',()=>{ system=b.dataset.sys; idx=Math.min(idx,countFor(system)-1); render(); });
+});
+document.getElementById('prev').addEventListener('click',()=>{ idx=Math.max(0,idx-1); render(); });
+document.getElementById('next').addEventListener('click',()=>{ idx=Math.min(countFor(system)-1,idx+1); render(); });
+
+buildStatic();
+render();
+</script>
+</body>
+</html>
