@@ -2,6 +2,20 @@
 
 This document provides context for Claude Code when working on the BEAT-BOX project.
 
+## START HERE (read before doing anything)
+
+Before taking any action in a new session:
+1. Read this entire file, then read the **Session Log / Current Focus** section below.
+2. The user is **dogfooding** the current build and will report next steps. Do **not** make code changes, commits, or pushes until they've given direction.
+3. Begin by **summarizing the current state and suggesting concrete next steps**, then wait for the user to confirm what to work on.
+
+## Session Log / Current Focus
+
+- **Last worked**: early July 2026. Fretboard view was rebuilt (dual-view position visualizer, commit `79a39df`) and design-exploration prototypes were archived under `competition/` (commit `95e7c2f`). Working tree clean, `main` == `origin/main`.
+- **Fretboard mobile behavior**: landscape-only by design (portrait shows a rotate hint). See the Fretboard feature bullet below.
+- **Known caveat (not yet addressed)**: the fretboard needs `min-width: 700px`, so a narrow phone in landscape (<700px wide, e.g. iPhone SE ~667px) horizontally-scrolls the neck rather than shrinking it. Flag only — no fix requested.
+- **Status**: awaiting user's dogfooding feedback before further work.
+
 ## Project Overview
 
 BEAT-BOX is a minimalist web-based beat maker with an interactive piano keyboard for drone synthesis. Built as a single-file application focusing on simplicity and mobile-first design.
